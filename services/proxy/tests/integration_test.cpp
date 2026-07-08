@@ -316,7 +316,7 @@ static void run_scenario(const TestScenario& s) {
         brpc::Channel ch;
         brpc::ChannelOptions copts;
         copts.timeout_ms = 3000;
-        copts.protocol = "http";
+        copts.protocol = "baidu_std";
         ch.Init(("127.0.0.1:" + std::to_string(DISCOVERY_PORT)).c_str(), &copts);
         discovery::DiscoveryService_Stub stub(&ch);
         discovery_register_all(stub);
@@ -332,7 +332,7 @@ static void run_scenario(const TestScenario& s) {
     brpc::Channel channel;
     brpc::ChannelOptions opts;
     opts.timeout_ms      = 10000;
-    opts.protocol        = "http";
+    opts.protocol        = "baidu_std";
     opts.connection_type = "pooled";
 
     std::string proxy_addr = "127.0.0.1:" + std::to_string(PROXY_PORT);
@@ -368,7 +368,8 @@ static void run_scenario(const TestScenario& s) {
 // Main
 // ============================================================================
 
-int main(int /*argc*/, char* /*argv*/[]) {
+int main(int argc, char* argv[]) {
+    google::ParseCommandLineFlags(&argc, &argv, true);
     common::logger::AddConsoleSink();
     std::cout << "=== Proxy Integration Test ===" << std::endl;
 
