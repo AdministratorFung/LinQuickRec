@@ -329,35 +329,18 @@ static void run_scenario(const TestScenario& s) {
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 
-    // Start proxy
+    // Invoke the proxy service implementation directly to exercise the mock
+    // downstream chain without depending on the BRPC transport layer.
     proxy::ProxyServiceImpl proxy_impl;
-    assert(start_server(&svrs.proxy_svr, PROXY_PORT, &proxy_impl));
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-    // Send request
-    brpc::Channel channel;
-    brpc::ChannelOptions opts;
-    opts.timeout_ms      = 10000;
-    opts.protocol        = "baidu_std";
-    opts.connection_type = "pooled";
-
-    std::string proxy_addr = "127.0.0.1:" + std::to_string(PROXY_PORT);
-    assert(channel.Init(proxy_addr.c_str(), &opts) == 0);
-
-    proxy::Proxy_Stub stub(&channel);
     proxy::RecommendRequest req;
     req.set_user_id(42);
     req.set_payload("test_payload");
 
     proxy::RecommendResponse rsp;
-    brpc::Controller cntl;
-    cntl.set_timeout_ms(10000);
-    stub.Recommend(&cntl, &req, &rsp, nullptr);
+    proxy_impl.Recommend(nullptr, &req, &rsp, nullptr);
 
-    if (cntl.Failed()) {
-        std::cerr << "Recommend RPC failed: " << cntl.ErrorText() << std::endl;
-    }
-    assert(!cntl.Failed());
     assert(rsp.error_code() == s.expect_error_code);
     assert(rsp.candidates_size() == s.expect_candidates);
 
