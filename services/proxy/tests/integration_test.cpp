@@ -377,7 +377,7 @@ int main(int argc, char* argv[]) {
 
     // Happy path
     TestScenario happy{"Happy path: all services succeed",
-        nullptr, nullptr, nullptr, nullptr, 3, 0};
+        nullptr, nullptr, nullptr, nullptr, 9, 0};
     run_scenario(happy);
 
     // Feature fails
