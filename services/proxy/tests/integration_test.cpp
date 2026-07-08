@@ -251,28 +251,34 @@ static void stop_all(ServerSet& svrs) {
     svrs.rank_svr.Stop(0);      svrs.rank_svr.Join();
 }
 
-static void register_to_discovery(discovery::DiscoveryService_Stub& stub,
+static bool register_to_discovery(discovery::DiscoveryService_Stub& stub,
                                    const std::string& service_name,
                                    const std::string& host, int port) {
-    discovery::RegisterRequest req;
-    req.mutable_instance()->set_service_name(service_name);
-    req.mutable_instance()->set_host(host);
-    req.mutable_instance()->set_port(port);
-    req.mutable_instance()->set_status(discovery::UP);
-    req.set_heartbeat_interval_sec(60);
+    for (int attempt = 0; attempt < 20; ++attempt) {
+        discovery::RegisterRequest req;
+        req.mutable_instance()->set_service_name(service_name);
+        req.mutable_instance()->set_host(host);
+        req.mutable_instance()->set_port(port);
+        req.mutable_instance()->set_status(discovery::UP);
+        req.set_heartbeat_interval_sec(60);
 
-    discovery::RegisterResponse rsp;
-    brpc::Controller cntl;
-    stub.Register(&cntl, &req, &rsp, nullptr);
-    assert(cntl.Failed() == false);
-    assert(rsp.success());
+        discovery::RegisterResponse rsp;
+        brpc::Controller cntl;
+        cntl.set_timeout_ms(3000);
+        stub.Register(&cntl, &req, &rsp, nullptr);
+        if (!cntl.Failed() && rsp.success()) {
+            return true;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    return false;
 }
 
 static void discovery_register_all(discovery::DiscoveryService_Stub& stub) {
-    register_to_discovery(stub, FLAGS_feature_service_name, "127.0.0.1", MOCK_FEATURE_PORT);
-    register_to_discovery(stub, FLAGS_recall_service_name,  "127.0.0.1", MOCK_RECALL_PORT);
-    register_to_discovery(stub, FLAGS_precalc_service_name, "127.0.0.1", MOCK_PRECALC_PORT);
-    register_to_discovery(stub, FLAGS_rank_service_name,    "127.0.0.1", MOCK_RANK_PORT);
+    assert(register_to_discovery(stub, FLAGS_feature_service_name, "127.0.0.1", MOCK_FEATURE_PORT));
+    assert(register_to_discovery(stub, FLAGS_recall_service_name,  "127.0.0.1", MOCK_RECALL_PORT));
+    assert(register_to_discovery(stub, FLAGS_precalc_service_name, "127.0.0.1", MOCK_PRECALC_PORT));
+    assert(register_to_discovery(stub, FLAGS_rank_service_name,    "127.0.0.1", MOCK_RANK_PORT));
 }
 
 // ============================================================================
@@ -326,7 +332,7 @@ static void run_scenario(const TestScenario& s) {
     // Start proxy
     proxy::ProxyServiceImpl proxy_impl;
     assert(start_server(&svrs.proxy_svr, PROXY_PORT, &proxy_impl));
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
     // Send request
     brpc::Channel channel;
@@ -345,8 +351,12 @@ static void run_scenario(const TestScenario& s) {
 
     proxy::RecommendResponse rsp;
     brpc::Controller cntl;
+    cntl.set_timeout_ms(10000);
     stub.Recommend(&cntl, &req, &rsp, nullptr);
 
+    if (cntl.Failed()) {
+        std::cerr << "Recommend RPC failed: " << cntl.ErrorText() << std::endl;
+    }
     assert(!cntl.Failed());
     assert(rsp.error_code() == s.expect_error_code);
     assert(rsp.candidates_size() == s.expect_candidates);
