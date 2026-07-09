@@ -69,4 +69,26 @@ target_link_libraries(precalc_and_rank_master PRIVATE
     ${Protobuf_LIBRARIES} ${YR_DATASYSTEM_LIB} Threads::Threads ${ABSL_LIBS})
 
 set_target_properties(precalc_and_rank_master PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+add_executable(rank_master_integration_test
+    tests/integration_test.cpp
+    server/src/rank_master_server.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/src/discovery/service_discovery.cpp
+    ${PROTO_OUT_DIR}/precalc.pb.cc ${PROTO_OUT_DIR}/rank_master.pb.cc
+    ${PROTO_OUT_DIR}/rank_sub.pb.cc ${PROTO_OUT_DIR}/discovery.pb.cc)
+
+target_include_directories(rank_master_integration_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../..
+    ${PROTO_OUT_DIR} ${PROTO_DIR} ${PROTOBUF_INCLUDE_DIRS} ${BRPC_INCLUDE_DIR}
+    ${YR_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/server/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../discovery/client/include)
+
+target_link_libraries(rank_master_integration_test PRIVATE
+    discovery_client_lib common_lib ${BRPC_LIBRARIES} leveldb
+    ${Protobuf_LIBRARIES} ${YR_DATASYSTEM_LIB} Threads::Threads ${ABSL_LIBS})
+
+set_target_properties(rank_master_integration_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 message(STATUS "Build target: precalc_and_rank_master")
+message(STATUS "Build target: rank_master_integration_test")

@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+if [ "$1" = "test" ]; then
+    shift
+    exec /app/build/bin/rank_master_integration_test "$@"
+fi
+
 REGISTRY_BACKEND="${REGISTRY_BACKEND:-discovery_server}"
 ETCD_ENDPOINTS="${ETCD_ENDPOINTS:-etcd:2379}"
 DISCOVERY_ADDR="${DISCOVERY_ADDR:-discovery-server:8100}"
