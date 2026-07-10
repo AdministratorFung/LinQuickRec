@@ -20,6 +20,14 @@
 #include "rank_master_server.h"
 #undef private
 
+DECLARE_string(registry_backend);
+DECLARE_string(discovery_addr);
+DECLARE_string(etcd_endpoints);
+DECLARE_int32(discovery_refresh_interval_ms);
+DECLARE_string(sub_worker_service_type);
+DECLARE_int32(sub_worker_timeout_ms);
+DECLARE_string(sub_worker_connection_type);
+
 constexpr int DISCOVERY_PORT = 18100;
 constexpr int RANK_MASTER_PORT = 18004;
 constexpr int RANK_SUB_PORT = 18005;
