@@ -64,6 +64,7 @@ int main(int argc, char* argv[]) {
     }
 
     brpc::ServerOptions opts;
+    opts.has_builtin_services = false;
     if (FLAGS_server_num_threads > 0) opts.num_threads = FLAGS_server_num_threads;
 
     if (server.Start(FLAGS_server_port, &opts) != 0) {
