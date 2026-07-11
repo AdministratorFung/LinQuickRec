@@ -234,7 +234,8 @@ static void test_api_handler_health() {
     ch_opts.protocol = "http";
     ch_opts.timeout_ms = 2000;
     ch_opts.max_retry = 0;
-    ret = channel.Init("127.0.0.1:" + std::to_string(port), &ch_opts);
+    std::string addr = "127.0.0.1:" + std::to_string(port);
+    ret = channel.Init(addr.c_str(), &ch_opts);
     assert(ret == 0);
 
     brpc::Controller cntl;
@@ -280,7 +281,8 @@ static void test_api_handler_stats() {
     ch_opts.protocol = "http";
     ch_opts.timeout_ms = 2000;
     ch_opts.max_retry = 0;
-    ret = channel.Init("127.0.0.1:" + std::to_string(port), &ch_opts);
+    std::string addr = "127.0.0.1:" + std::to_string(port);
+    ret = channel.Init(addr.c_str(), &ch_opts);
     assert(ret == 0);
 
     // Test missing params
@@ -341,7 +343,8 @@ static void test_api_handler_not_found() {
     ch_opts.protocol = "http";
     ch_opts.timeout_ms = 2000;
     ch_opts.max_retry = 0;
-    ret = channel.Init("127.0.0.1:" + std::to_string(port), &ch_opts);
+    std::string addr = "127.0.0.1:" + std::to_string(port);
+    ret = channel.Init(addr.c_str(), &ch_opts);
     assert(ret == 0);
 
     brpc::Controller cntl;
@@ -386,7 +389,8 @@ static void test_perf_service_dump() {
     ch_opts.protocol = "http";
     ch_opts.timeout_ms = 2000;
     ch_opts.max_retry = 0;
-    ret = channel.Init("127.0.0.1:" + std::to_string(port), &ch_opts);
+    std::string addr = "127.0.0.1:" + std::to_string(port);
+    ret = channel.Init(addr.c_str(), &ch_opts);
     assert(ret == 0);
 
     brpc::Controller cntl;
