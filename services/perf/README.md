@@ -2,10 +2,10 @@
 
 ## 模块简介
 
-Perf 是 LinQuickRec 的实时性能监控服务，负责采集、聚合、持久化、可视化全链路性能数据。它由两部分组成：
+Perf 是 LinQuickRec 的实时性能监控系统，由两个独立 Pod 组成：
 
-1. 嵌入各业务服务的轻量 RingBuffer（`common/perf_registry.h`），通过 CAS 原子操作零阻塞记录 span；
-2. 独立的 `perf-collector` 服务，定时拉取各服务 span、增量计算统计指标、持久化到 SQLite、并通过 REST API + WebUI 对外暴露。
+1. **perf-collector**：定时拉取各服务 span、增量计算统计指标、持久化到 SQLite，通过 ClusterIP 暴露 REST API；
+2. **perf-webui**：基于 nginx 的静态前端，通过 NodePort 32000 对外提供 WebUI，API 请求反向代理到 collector。
 
 Perf 通过 etcd 或 discovery_server 动态发现下游服务（proxy、feature、recall 等），每秒通过 BRPC 调用各服务的 `/debug/perf` RPC 拉取 span 数据。collector 宕机时业务服务不受影响（ring buffer 自旋），恢复后自动补拉数据。
 
@@ -36,11 +36,14 @@ curl -s http://localhost:8080/api/v1/health
 
 ### WebUI
 
-Perf-collector 的 K8s Service 通过 NodePort 32000 暴露，可直接在浏览器中访问：
+Perf 的前端和后端已拆分为两个独立 Pod：
 
-```
-http://<任一节点IP>:32000
-```
+| Pod | 镜像 | Service | 端口 | 说明 |
+|-----|------|---------|------|------|
+| perf-collector | `linquickrec/perf-collector` | perf-collector-service (ClusterIP) | 8080 | 数据采集 + REST API |
+| perf-webui | `linquickrec/perf-webui` | perf-webui (NodePort) | 32000 | nginx 静态前端 + API 反向代理 |
+
+浏览器访问 `http://<任一节点IP>:32000`，nginx 将 `/api/*` 请求转发到 collector。
 
 #### Dashboard
 - 下拉选择监控的 stage（proxy_e2e、recall_total 等）
@@ -83,7 +86,10 @@ services/perf/
 │       ├── series_manager.cpp        # Series lifecycle API
 │       └── api_handlers.cpp          # REST API handlers
 ├── webui/
-│   ├── index.html                    # Dashboard + Series + Trace (Tabler-style SPA)
+│   ├── Dockerfile                     # nginx:alpine based image
+│   ├── index.html                     # Dashboard + Series + Trace (Tabler-style SPA)
+│   ├── nginx/
+│   │   └── default.conf               # Reverse proxy /api/* → collector
 │   └── js/
 │       ├── api.js                     # API fetch wrappers
 │       ├── dashboard.js               # 6 metric cards + canvas chart
@@ -202,32 +208,37 @@ make perf_collector perf_integration_test -j$(nproc)
 
 ## 容器搭建
 
+Perf 拆分为两个独立镜像：collector（数据采集 + API）和 webui（nginx 静态前端）。
+
 ### 构建镜像
 
 ```bash
-# 在项目根目录下执行
+# collector
 docker build -t linquickrec/perf-collector:latest \
   -f services/perf/collector/Dockerfile .
+
+# webui
+docker build -t linquickrec/perf-webui:latest \
+  -f services/perf/webui/Dockerfile .
+
+# 或通过 docker-compose
+docker compose -f deploy/docker/docker-compose.yml build perf-collector perf-webui
 ```
 
 ### 运行容器
 
 ```bash
-# etcd 模式（默认）
+# 启动 collector（仅暴露 ClusterIP，不直接对外）
 docker run -d --name perf-collector \
-  -p 32000:8080 \
   -e REGISTRY_BACKEND=etcd \
   -e ETCD_ENDPOINTS=<etcd-ip>:2379 \
   -v perf-data:/var/lib/perf \
   linquickrec/perf-collector:latest
 
-# discovery_server 模式
-docker run -d --name perf-collector \
-  -p 32000:8080 \
-  -e REGISTRY_BACKEND=discovery_server \
-  -e DISCOVERY_ADDR=<discovery-server-ip>:8100 \
-  -v perf-data:/var/lib/perf \
-  linquickrec/perf-collector:latest
+# 启动 webui（NodePort 32000）
+docker run -d --name perf-webui \
+  -p 32000:32000 \
+  linquickrec/perf-webui:latest
 ```
 
 
@@ -286,4 +297,5 @@ curl -s "http://127.0.0.1:32000/api/v1/outliers?service=proxy&stage=proxy_e2e"
 
 | 端口 | 服务 | 协议 | 说明 |
 |------|------|------|------|
-| 32000 | perf-collector | HTTP | REST API + WebUI |
+| 8080 | perf-collector-service | HTTP | REST API（ClusterIP，内部访问） |
+| 32000 | perf-webui | HTTP | nginx 静态 WebUI + API 反向代理（NodePort） |

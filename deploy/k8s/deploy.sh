@@ -27,6 +27,7 @@ _svc precalc  deployment  precalc-and-rank-master-service       3
 _svc recall   deployment  recall-service                        2
 _svc rank-sub deployment  rank-sub-service                      3
 _svc perf     deployment  perf-collector-service                1
+_svc webui    deployment  perf-webui                            1
 unset -f _svc
 
 usage() {
@@ -39,7 +40,7 @@ Actions:
   restart      Stop then start (--all) / rollout restart (single service)
   delete       Delete all resources / a single service
 
-Service names: etcd feature proxy precalc recall rank-sub perf
+Service names: etcd feature proxy precalc recall rank-sub perf webui
 
 Options:
   --recall-mode vllm|novllm              Recall mode (default: novllm, --all only)
@@ -120,6 +121,7 @@ resources:
   - base/proxy.yaml
   - base/precalc-and-rank-master.yaml
   - base/perf-collector.yaml
+  - base/perf-webui.yaml
   - base/rank-sub.yaml
 KUSTOMIZE
 
@@ -148,7 +150,7 @@ COMP
 
 images:
 IMAGES
-        for img in base proxy feature recall precalc-and-rank-master perf-collector rank-sub kv-worker etcd discovery; do
+        for img in base proxy feature recall precalc-and-rank-master perf-collector perf-webui rank-sub kv-worker etcd discovery; do
             cat >> "$OVERLAY_DIR/kustomization.yaml" <<LINE
   - name: linquickrec/${img}
     newName: ${REGISTRY}/linquickrec/${img}
@@ -234,10 +236,17 @@ main() {
     parse_args "$@"
     check_prereqs
 
-    if [[ -n "$SERVICE" ]]; then
-        svc_action
-        return
+if [[ -n "$SERVICE" ]]; then
+    # perf-collector-service is now collector only (ClusterIP). WebUI is perf-webui.
+    # When starting perf, also ensure webui is running.
+    if [[ "$SERVICE" == "perf" && "$ACTION" == "start" ]]; then
+        local r="${REPLICAS:-${SVC_REPLICAS[webui]}}"
+        echo kubectl scale deployment perf-webui --replicas="$r" -n "${NAMESPACE}"
+        kubectl scale deployment perf-webui --replicas="$r" -n "${NAMESPACE}"
     fi
+    svc_action
+    return
+fi
 
     case "$ACTION" in
         start)  do_start ;;

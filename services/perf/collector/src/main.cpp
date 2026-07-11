@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
 
     if (server.AddService(new perf::ApiHandlerService(&sqlite),
                           brpc::SERVER_OWNS_SERVICE,
-                          "/api/* => Handle, / => Handle, /index.html => Handle") != 0) {
+                          "/api/* => Handle") != 0) {
         LOG_ERROR << "Failed to add ApiHandlerService";
         return -1;
     }

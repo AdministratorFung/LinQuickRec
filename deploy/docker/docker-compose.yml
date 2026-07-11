@@ -69,6 +69,16 @@ services:
         PROXY_PORT: "${PROXY_PORT:-3128}"
     image: linquickrec/perf-collector:latest
 
+  perf-webui:
+    build:
+      context: ../..
+      dockerfile: services/perf/webui/Dockerfile
+    image: linquickrec/perf-webui:latest
+    ports:
+      - "32000:32000"
+    depends_on:
+      - perf-collector
+
   # === --profile discovery-server 时构建 ===
   discovery-server:
     profiles:
