@@ -81,7 +81,8 @@ void ApiHandlerService::Handle(
     } else if (uri.find("/api/js/") != std::string::npos) {
         size_t pos = uri.find("/js/");
         HandleStatic(cntl, uri.substr(pos));
-    } else if (uri.find("/js/") != std::string::npos || uri == "/" || uri.empty()) {
+    } else if (uri == "/" || uri.empty() || uri == "/index.html" ||
+               uri.find("/js/") != std::string::npos) {
         std::string path = (uri == "/" || uri.empty()) ? "/index.html" : uri;
         HandleStatic(cntl, path);
     } else {
