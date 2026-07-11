@@ -44,19 +44,23 @@ http://<任一节点IP>:32000
 
 #### Dashboard
 - 下拉选择监控的 stage（proxy_e2e、recall_total 等）
-- 实时显示 count / avg / p50 / p99 四个指标卡片 + 柱状图
+- 6 个实时指标卡片：Count / Average / P50 / P99 / Min / Max
+- 纯 Canvas 绘制的柱状图（无需 CDN 依赖）
 - 每 3 秒自动刷新
+- 右上角 🌙 按钮切换深色/浅色主题，偏好持久化到 localStorage
 
 #### Series（请求系列）
-- **Start**：点击 + New Series 开始记录一个请求系列
-- **Stop**：点击 Stop Active 停止当前系列
-- 表格列出所有系列（名称、状态、span 数量）
-- 点击系列名查看统计值
+- **+ New Series**：开始记录一个请求系列
+- **Stop Active**：停止当前活跃系列
+- 表格列出所有系列（ID / Name / Status / Span Count）
+- 点击系列行查看详情（status / span_count）
 
 #### Trace（链路追踪）
-- 输入 trace_id → 搜索
+- 输入 trace_id → Search
 - 瀑布图展示该请求跨所有服务的 Span 耗时分布
-- 每个 Span 显示 service / stage / duration（数值 + 横向柱）
+- 按服务类型着色（proxy=蓝、recall=绿、precalc=橙 等）
+- 行尾 status 用彩色 Badge 标记（OK=绿、error=红）
+- 底部 10ⁿ ms 参考条 + span 总数 / 总耗时摘要
 
 ## 目录结构
 
@@ -79,13 +83,13 @@ services/perf/
 │       ├── series_manager.cpp        # Series lifecycle API
 │       └── api_handlers.cpp          # REST API handlers
 ├── webui/
-│   ├── index.html                    # Dashboard
-│   ├── trace.html                    # Trace waterfall
-│   ├── compare.html                  # A/B comparison
+│   ├── index.html                    # Dashboard + Series + Trace (Tabler-style SPA)
 │   └── js/
-│       ├── api.js
-│       ├── dashboard.js
-│       └── trace.js
+│       ├── api.js                     # API fetch wrappers
+│       ├── dashboard.js               # 6 metric cards + canvas chart
+│       ├── series.js                  # Series lifecycle management
+│       ├── theme.js                   # Dark/light theme toggle
+│       └── trace.js                   # Waterfall tree with color-coded spans
 └── tests/
     └── integration_test.cpp          # Integration test with mock services
 

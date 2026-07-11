@@ -2,54 +2,78 @@ async function loadSeries() {
     const list = await fetchSeriesList();
     const container = document.getElementById('series-list');
     if (!list.length) {
-        container.innerHTML = '<p>No series yet. Click + New Series to start.</p>';
+        container.innerHTML = '<div class="empty-state">No series yet. Click <strong>+ New Series</strong> to start.</div>';
         return;
     }
 
-    let html = '<table><tr><th>ID</th><th>Name</th><th>Status</th><th>Span Count</th></tr>';
+    let html = '<div class="table-wrap"><table class="table"><thead><tr><th>ID</th><th>Name</th><th>Status</th><th>Span Count</th></tr></thead><tbody>';
     for (const s of list) {
-        html += `<tr>
-            <td>${s.id}</td>
-            <td><a href="#" onclick="viewSeries(${s.id},'${s.name}')">${s.name}</a></td>
-            <td>${s.status}</td>
+        const badgeClass = s.status === 'active' ? 'badge badge-green' : 'badge badge-gray';
+        html += `<tr class="clickable" onclick="viewSeries(${s.id},'${s.name}')">
+            <td class="text-secondary">#${s.id}</td>
+            <td class="fw-medium">${s.name}</td>
+            <td><span class="${badgeClass}">${s.status}</span></td>
             <td>${s.span_count || 0}</td>
         </tr>`;
     }
-    html += '</table>';
+    html += '</tbody></table></div>';
     container.innerHTML = html;
 }
 
 async function startSeries() {
-    const name = prompt('Series name:', 'baseline-' + new Date().toISOString().slice(0,19));
+    const name = prompt('Series name:', 'baseline-' + new Date().toISOString().slice(0, 19));
     if (!name) return;
-    await startSeriesReq(name);
+    const result = await startSeriesReq(name);
+    if (result.error) {
+        showToast('Failed to start series: ' + result.error, 'error');
+        return;
+    }
+    showToast('Series "' + name + '" started', 'success');
     loadSeries();
 }
 
 async function stopSeries() {
-    await stopSeriesReq();
+    const result = await stopSeriesReq();
+    if (result.error) {
+        showToast('Failed to stop series', 'error');
+        return;
+    }
+    showToast('Series stopped', 'success');
     loadSeries();
 }
 
 async function viewSeries(id, name) {
-    // Fetch stats for this series by querying all known stages
     document.getElementById('series-detail').style.display = 'block';
-    document.getElementById('series-detail-title').textContent = `Series: ${name} (ID: ${id})`;
+    document.getElementById('series-detail-title').textContent = 'Series: ' + name;
 
-    // Display series summary from the list
     const list = await fetchSeriesList();
     const info = list.find(s => s.id == id);
-    const statsContainer = document.getElementById('series-stats');
+    const container = document.getElementById('series-stats');
     if (info) {
-        statsContainer.innerHTML = `<div class="card">
-            <h3>Status</h3><div class="metric">${info.status}</div>
-            <div class="metric-label">${info.span_count || 0} spans</div>
-        </div>`;
+        const badgeClass = info.status === 'active' ? 'badge badge-green' : 'badge badge-gray';
+        container.innerHTML = `
+            <div class="stat-card" style="border-left-color:#206bc4">
+                <div class="stat-body">
+                    <div class="stat-label">Status</div>
+                    <div class="stat-value"><span class="${badgeClass}">${info.status}</span></div>
+                </div>
+            </div>
+            <div class="stat-card" style="border-left-color:#4299e1">
+                <div class="stat-body">
+                    <div class="stat-label">Span Count</div>
+                    <div class="stat-value">${info.span_count || 0}</div>
+                    <div class="stat-unit">spans</div>
+                </div>
+            </div>`;
     }
 }
 
-function loadSeriesSpans() {
-    document.getElementById('series-spans-table').style.display = 'table';
+function showToast(msg, type) {
+    const el = document.createElement('div');
+    el.className = 'toast toast-' + type;
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2500);
 }
 
 loadSeries();
