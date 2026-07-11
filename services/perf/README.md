@@ -17,17 +17,22 @@ Perf collector 自身暴露可供拉取数据的 HTTP 端口，可通过 Prometh
 
 | Method | Path | 说明 |
 |--------|------|------|
-| `GET` | `/api/v1/health` | 健康检查 |
-| `GET` | `/api/v1/metrics?window=1m` | collector 自身指标 |
-| `GET` | `/api/v1/stats/current?stage=proxy_e2e` | 当前实时统计 (avg/p50/p99/...) |
-| `GET` | `/api/v1/stats/history?stage=proxy_e2e&from=...&to=...` | 历史统计 (按 10s 窗口聚合) |
-| `GET` | `/api/v1/stats/compare?stages=proxy_e2e,recall_total&window=5m` | 多 stage 对比 |
-| `GET` | `/api/v1/trace/{trace_id}` | 按 trace_id 查询完整请求链路 |
-| `POST` | `/api/v1/series/start?name=baseline` | 开始新请求系列 |
-| `POST` | `/api/v1/series/stop` | 停止当前系列 |
-| `GET` | `/api/v1/series` | 列出所有系列 |
-| `GET` | `/api/v1/series/{id}/stats` | 某系列各 stage 统计 |
-| `DELETE` | `/api/v1/series/{id}` | 删除系列 |
+| `GET` | `/api/v1/health` | 健康检查，返回 `{"status":"ok"}` |
+| `GET` | `/api/v1/stats/current?service=<name>&stage=<name>` | 实时统计：avg / p50 / p99 / min / max / stddev / count |
+| `GET` | `/api/v1/trace/{trace_id}` | 按 trace_id 查询完整调用链树 |
+| `POST` | `/api/v1/series/start?name=<name>` | 开始新请求系列 |
+| `POST` | `/api/v1/series/stop` | 停止当前活跃系列 |
+| `GET` | `/api/v1/series` | 列出所有系列（id / name / span_count / status） |
+| `GET` | `/api/v1/outliers?service=<name>&stage=<name>` | 离群值检测（z-score） |
+| `GET` | `/debug/perf` | 拉取原始 span 数据（供 collector puller 调用） |
+
+```bash
+# 健康检查
+curl -s http://localhost:8080/api/v1/health
+# → {"status":"ok"}
+```
+
+其余统计查询、调用链、系列管理等功能建议通过 WebUI 使用，见下方 [WebUI](#webui) 章节。
 
 ### WebUI
 
@@ -236,33 +241,41 @@ docker run -d --name perf-collector \
 docker run --rm linquickrec/perf-collector:latest test
 ```
 
-覆盖 4 个场景：
+覆盖 16 个测试用例：
 
-| 场景 | 验证内容 |
+| 类别 | 测试内容 |
 |------|----------|
-| 基本统计 | 注入 100 条 span (avg=50, stddev=5)，验证 avg=47~53, count=100 |
-| 分位数 | 验证 p99 在合理范围内 |
-| 离群值检测 | 注入 99 条正常 + 1 条异常 (10× avg)，验证被标记 |
-| 系列管理 | start → 注入 50 条 → stop → 验证 series 统计 count=50 |
+| PerfRingRegistry | 基本 push/take、溢出丢弃 |
+| BRPC 注册 | PerfService + ApiHandlerService 注册与启停 |
+| API 处理器 | `/health` 200、`/stats/current` 200/400/404、`/not_found` 404 |
+| PerfService | `/debug/perf` 返回 spans JSON |
+| OutlierDetector | z-score 正常/异常/边界判断 |
+| SqliteStore | 批量写入、轨迹查询、过期清理、空 batch、无效路径 |
+| 统计引擎 | 100 条 span 注入，验证 avg/p50/p99 |
+| 系列管理 | start/stop、span 计数、列表查询 |
+| SpanTree | 跨服务调用链树构建 |
 
-### 手动测试
+### curl 测试
 
 ```bash
-# 创建请求系列
-curl -X POST "http://127.0.0.1:32000/api/v1/series/start?name=baseline"
+# 健康检查
+curl -s http://127.0.0.1:32000/api/v1/health
 
-# 发一批请求到 proxy
-bash scripts/send_proxy_request.sh --k8s -n 100
+# 查看所有已发现下游服务的阶段统计
+for svc in proxy feature_service recall_service precalc_service rank_service rank_sub; do
+  echo "=== $svc ==="
+  curl -s "http://127.0.0.1:32000/api/v1/stats/current?service=$svc&stage=${svc}_e2e"
+  echo
+done
 
-# 等 3s 让 collector 拉取
-sleep 3
+# 系列管理
+curl -s -X POST "http://127.0.0.1:32000/api/v1/series/start?name=baseline"
+sleep 5
+curl -s -X POST "http://127.0.0.1:32000/api/v1/series/stop"
+curl -s http://127.0.0.1:32000/api/v1/series
 
-# 停止系列
-curl -X POST "http://127.0.0.1:32000/api/v1/series/stop"
-
-# 查看系列统计
-curl "http://127.0.0.1:32000/api/v1/series/1/stats" | jq '.proxy_e2e'
-# 预期: {"avg": ..., "p99": ..., "count": 100}
+# 离群值检测
+curl -s "http://127.0.0.1:32000/api/v1/outliers?service=proxy&stage=proxy_e2e"
 ```
 
 ## 端口对照表
