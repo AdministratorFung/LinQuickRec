@@ -92,7 +92,8 @@ static void test_sqlite_empty_flush() {
     std::remove(db_path);
 
     SqliteStore store;
-    assert(store.Open(db_path));
+    bool ok = store.Open(db_path);
+    assert(ok);
 
     std::vector<Span> empty;
     store.Flush(empty);
@@ -103,7 +104,8 @@ static void test_sqlite_empty_flush() {
 
 static void test_sqlite_bad_path() {
     SqliteStore store;
-    assert(!store.Open("/nonexistent/dir/perf.db"));
+    bool failed = !store.Open("/nonexistent/dir/perf.db");
+    assert(failed);
 
     printf("[PASS] sqlite_bad_path: returns false for invalid path\n");
 }
@@ -113,7 +115,8 @@ static void test_sqlite_cleanup() {
     std::remove(db_path);
 
     SqliteStore store;
-    assert(store.Open(db_path));
+    bool ok = store.Open(db_path);
+    assert(ok);
 
     // Insert old spans
     std::vector<Span> old_batch;
@@ -186,7 +189,8 @@ static void test_brpc_services_registered() {
     const char* db_path = "/tmp/test_perf_brpc.db";
     std::remove(db_path);
     SqliteStore sqlite;
-    assert(sqlite.Open(db_path));
+    bool ok = sqlite.Open(db_path);
+    assert(ok);
 
     brpc::Server server;
 
@@ -214,21 +218,24 @@ static void test_api_handler_health() {
     const char* db_path = "/tmp/test_perf_health.db";
     std::remove(db_path);
     SqliteStore sqlite;
-    assert(sqlite.Open(db_path));
+    bool ok2 = sqlite.Open(db_path);
+    assert(ok2);
 
     brpc::Server server;
     server.AddService(new ApiHandlerService(&sqlite), brpc::SERVER_OWNS_SERVICE);
 
     brpc::ServerOptions opts;
     int port = 19877;
-    assert(server.Start(port, &opts) == 0);
+    int ret = server.Start(port, &opts);
+    assert(ret == 0);
 
     brpc::Channel channel;
     brpc::ChannelOptions ch_opts;
     ch_opts.protocol = "http";
     ch_opts.timeout_ms = 2000;
     ch_opts.max_retry = 0;
-    assert(channel.Init("127.0.0.1:" + std::to_string(port), &ch_opts) == 0);
+    ret = channel.Init("127.0.0.1:" + std::to_string(port), &ch_opts);
+    assert(ret == 0);
 
     brpc::Controller cntl;
     cntl.http_request().uri() = "/api/v1/health";
@@ -257,21 +264,24 @@ static void test_api_handler_stats() {
     const char* db_path = "/tmp/test_perf_stats.db";
     std::remove(db_path);
     SqliteStore sqlite;
-    assert(sqlite.Open(db_path));
+    bool ok3 = sqlite.Open(db_path);
+    assert(ok3);
 
     brpc::Server server;
     server.AddService(new ApiHandlerService(&sqlite), brpc::SERVER_OWNS_SERVICE);
 
     brpc::ServerOptions opts;
     int port = 19878;
-    assert(server.Start(port, &opts) == 0);
+    int ret = server.Start(port, &opts);
+    assert(ret == 0);
 
     brpc::Channel channel;
     brpc::ChannelOptions ch_opts;
     ch_opts.protocol = "http";
     ch_opts.timeout_ms = 2000;
     ch_opts.max_retry = 0;
-    assert(channel.Init("127.0.0.1:" + std::to_string(port), &ch_opts) == 0);
+    ret = channel.Init("127.0.0.1:" + std::to_string(port), &ch_opts);
+    assert(ret == 0);
 
     // Test missing params
     {
@@ -315,21 +325,24 @@ static void test_api_handler_not_found() {
     const char* db_path = "/tmp/test_perf_nf.db";
     std::remove(db_path);
     SqliteStore sqlite;
-    assert(sqlite.Open(db_path));
+    bool ok4 = sqlite.Open(db_path);
+    assert(ok4);
 
     brpc::Server server;
     server.AddService(new ApiHandlerService(&sqlite), brpc::SERVER_OWNS_SERVICE);
 
     brpc::ServerOptions opts;
     int port = 19879;
-    assert(server.Start(port, &opts) == 0);
+    int ret = server.Start(port, &opts);
+    assert(ret == 0);
 
     brpc::Channel channel;
     brpc::ChannelOptions ch_opts;
     ch_opts.protocol = "http";
     ch_opts.timeout_ms = 2000;
     ch_opts.max_retry = 0;
-    assert(channel.Init("127.0.0.1:" + std::to_string(port), &ch_opts) == 0);
+    ret = channel.Init("127.0.0.1:" + std::to_string(port), &ch_opts);
+    assert(ret == 0);
 
     brpc::Controller cntl;
     cntl.http_request().uri() = "/api/v1/no_such_endpoint";
@@ -365,14 +378,16 @@ static void test_perf_service_dump() {
 
     brpc::ServerOptions opts;
     int port = 19880;
-    assert(server.Start(port, &opts) == 0);
+    int ret = server.Start(port, &opts);
+    assert(ret == 0);
 
     brpc::Channel channel;
     brpc::ChannelOptions ch_opts;
     ch_opts.protocol = "http";
     ch_opts.timeout_ms = 2000;
     ch_opts.max_retry = 0;
-    assert(channel.Init("127.0.0.1:" + std::to_string(port), &ch_opts) == 0);
+    ret = channel.Init("127.0.0.1:" + std::to_string(port), &ch_opts);
+    assert(ret == 0);
 
     brpc::Controller cntl;
     cntl.http_request().uri() = "/debug/perf";
@@ -424,7 +439,8 @@ static void test_sqlite_store() {
     std::remove(db_path);
 
     SqliteStore store;
-    assert(store.Open(db_path));
+    bool ok = store.Open(db_path);
+    assert(ok);
 
     std::vector<Span> batch;
     for (int i = 0; i < 10; ++i) {
