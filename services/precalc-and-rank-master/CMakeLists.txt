@@ -70,6 +70,8 @@ target_link_libraries(precalc_and_rank_master PRIVATE
 
 set_target_properties(precalc_and_rank_master PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+add_subdirectory(tests/mock_datasystem ${CMAKE_BINARY_DIR}/mock_datasystem)
+
 add_executable(rank_master_integration_test
     tests/integration_test.cpp
     server/src/precalc_server.cpp
@@ -81,13 +83,14 @@ add_executable(rank_master_integration_test
 target_include_directories(rank_master_integration_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../..
     ${PROTO_OUT_DIR} ${PROTO_DIR} ${PROTOBUF_INCLUDE_DIRS} ${BRPC_INCLUDE_DIR}
-    ${YR_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/server/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/mock_datasystem
+    ${CMAKE_CURRENT_SOURCE_DIR}/server/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../discovery/client/include)
 
 target_link_libraries(rank_master_integration_test PRIVATE
     discovery_client_lib common_lib ${BRPC_LIBRARIES} leveldb
-    ${Protobuf_LIBRARIES} ${YR_DATASYSTEM_LIB} Threads::Threads ${ABSL_LIBS})
+    ${Protobuf_LIBRARIES} mock_datasystem Threads::Threads ${ABSL_LIBS})
 
 set_target_properties(rank_master_integration_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 

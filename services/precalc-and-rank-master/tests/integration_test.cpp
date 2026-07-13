@@ -16,6 +16,8 @@
 #include "rank_master.pb.h"
 #include "rank_sub.pb.h"
 
+#include "mock_datasystem.h"
+
 #define private public
 #include "rank_master_server.h"
 #undef private
@@ -123,6 +125,8 @@ static void run_scenario(const Scenario& s) {
     FLAGS_sub_worker_service_type = "rank_sub";
     FLAGS_sub_worker_timeout_ms = 5000;
     FLAGS_sub_worker_connection_type = "pooled";
+
+    datasystem::KVClient::mock_data_["user_feat_key"] = "mock_user_feature_data";
 
     rank::RankMasterServiceImpl service;
     rank::RankSubResponse sub_rsp;
