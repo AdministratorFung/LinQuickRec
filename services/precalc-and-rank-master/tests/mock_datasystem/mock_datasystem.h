@@ -4,6 +4,9 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <cstring>
+#include <sys/mman.h>
+#include <unistd.h>
 
 namespace datasystem {
 
@@ -39,13 +42,27 @@ public:
 
 class Buffer {
 public:
-    const void* ImmutableData() const { return data_.data(); }
-    size_t GetSize() const { return data_.size(); }
-    void SetData(const std::string& data) { data_ = data; }
-    void* MutableData() { return data_.data(); }
+    Buffer() : data_(nullptr), size_(0), owns_memory_(false) {}
+    explicit Buffer(size_t size) : data_(mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)), size_(size), owns_memory_(true) {}
+    ~Buffer() {
+        if (owns_memory_ && data_ != nullptr && data_ != MAP_FAILED) {
+            munmap(data_, size_);
+        }
+    }
+    const void* ImmutableData() const { return data_; }
+    size_t GetSize() const { return size_; }
+    void SetData(const std::string& data) {
+        if (size_ > 0 && data.size() > 0) {
+            memcpy(data_, data.data(), std::min(size_, data.size()));
+        }
+    }
+    void* MutableData() { return data_; }
+    void TransferOwnership() { owns_memory_ = false; }
 
 private:
-    std::string data_;
+    void* data_;
+    size_t size_;
+    bool owns_memory_;
 };
 
 template<typename T>
