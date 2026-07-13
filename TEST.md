@@ -42,24 +42,27 @@
 
 **测试的功能：**
 
-| 场景 | Mock vLLM 响应 | 实际 error_code | 实际耗时 |
-|------|---------------|----------------|---------|
-| 正常路径 | 5个有效SKU | 0 (OK) | vllm_rpc≈1ms, recall_total≈1.2ms |
-| vLLM不可达 | Connection refused | 0x01000002 (SERVICE_ERROR[2]) | vllm_rpc≈0.6ms |
-| vLLM返回非法JSON | `{ this is not valid json` | 0x01000003 (SERVICE_ERROR[3]) | vllm_rpc≈0.6ms |
-| vLLM返回空choices | `{"choices":[]}` | 0x01000003 (SERVICE_ERROR[3]) | vllm_rpc≈0.9ms |
-| vLLM返回不足5个SKU | 3个SKU（需要报错） | 0 (OK, 随机补足2个) | vllm_rpc≈0.4ms, recall_total≈0.5ms |
+| 场景 | Mock vLLM 响应 | timeout | 实际 error_code | 实际耗时 |
+|------|---------------|---------|----------------|---------|
+| 正常路径 | 5个有效SKU | 3000ms | 0 (OK) | vllm_rpc≈1.3ms, recall_total≈1.5ms |
+| vLLM不可达 | Connection refused | 3000ms | 0x01000002 (SERVICE_ERROR[2]) | vllm_rpc≈0.7ms |
+| vLLM返回非法JSON | `{ this is not valid json` | 3000ms | 0x01000003 (SERVICE_ERROR[3]) | vllm_rpc≈0.9ms |
+| vLLM返回空choices | `{"choices":[]}` | 3000ms | 0x01000004 (NO_CHOICES) → 0x01000003 | vllm_rpc≈0.6ms |
+| vLLM返回不足5个SKU | 3个SKU | 3000ms | 0 (OK, 随机补足2个) | recall_total≈1ms |
+| vLLM返回HTTP 504 | Gateway Timeout | 3000ms | 0x01000002 (SERVICE_ERROR[2]) | vllm_rpc≈1ms |
+| vLLM返回纯文本 | Internal Server Error | 3000ms | 0x01000002 (SERVICE_ERROR[2]) | vllm_rpc≈0.6ms |
+| SKU含非数字字符 | `123abc,456xyz,111111,222222,333333` | 3000ms | 0 (过滤后OK) | recall_total≈0.7ms |
+| SKU不足6位 | `123,456789,234567,345678,456789` | 3000ms | 0 (过滤+补足OK) | recall_total≈1ms |
+| SKU重复去重 | `111,222,333,111,222` | 3000ms | 0 (去重+补足OK) | recall_total≈0.7ms |
+| 解析后SKU为0 | `aaa,bbb,ccc` | 3000ms | 0x01000007 (NO_SKU_RETURNED) | recall_total≈1ms |
+| vLLM HTTP超时 | 响应延迟500ms | **100ms** | 0x01000002 (SERVICE_ERROR[2]) | vllm_rpc≈500ms |
 
-**已有的测试覆盖：** vLLM HTTP 可用性、JSON解析、SKU数量不足时的随机填充、SKU去重。
+**已有的测试覆盖：** vLLM HTTP 可用性、JSON解析、SKU数量不足时的随机填充、SKU去重、SKU格式异常过滤、HTTP错误码、非JSON响应、超时触发。
 
 **待补充的异常测试：**
-- vLLM返回超时（HTTP 504）
-- vLLM返回非JSON格式（如纯文本）
-- vLLM返回的SKU格式异常（包含非数字字符、长度不足6位）
-- vLLM返回重复SKU（去重逻辑验证）
 - FLAGS_enable_vllm=false 时的降级逻辑
-- HTTP请求超时场景（FLAGS_vllm_timeout_ms 触发）
 - 重试逻辑（FLAGS_vllm_max_retry > 0）
+- vLLM连接超时（FLAGS_vllm_connect_timeout_ms 触发）
 
 ---
 
