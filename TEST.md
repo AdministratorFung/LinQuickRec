@@ -74,15 +74,15 @@
 
 | 场景 | user_feat | trace_id | 实际 error_code | 实际耗时 |
 |------|----------|---------|----------------|---------|
-| 正常路径 | 非空 | trace_12345678abcd | 0 | precalc_total≈0.15ms |
-| user_feat为空 | "" | trace_87654321dcba | 0x01000001 (INVALID_INPUT[1]) | — |
-| trace_id<16字符哈希回退 | 非空 | short_trace | 0, key=da90d5511426f728 | precalc_total≈0.14ms |
+| 正常路径 | 非空 | trace_12345678abcd | 0, key=ace_12345678abcd | precalc_total≈0.164ms |
+| user_feat为空 | "" | — | 0x01000001 (INVALID_INPUT[1]) | — |
+| trace_id<16字符哈希回退 | 非空 | short_trace | 0, key=da90d5511426f728 | precalc_total≈0.129ms |
 | KVClient.Init()失败 | 非空 | trace_init_fail_1234 | 0x01000002 (SERVICE_ERROR[2]) | — |
 | KVClient.Create()失败 | 非空 | trace_create_fail_123 | 0x01000003 (SERVICE_ERROR[3]) | — |
 | KVClient.Set()失败 | 非空 | trace_set_fail_12345 | 0x01000004 (SERVICE_ERROR[4]) | — |
-| precalc_result_size_mb=0 | 非空 | trace_zero_size_12345 | 0, payload=0字节 | precalc_total≈0.11ms |
-| TTL=0 | 非空 | trace_ttl_zero_123456 | 0 | precalc_total≈0.15ms |
-| precalc_sleep_time=10ms | 非空 | trace_sleep_1234567890 | 0 | precalc_total≈10.81ms |
+| precalc_result_size_mb=0 | 非空 | trace_zero_size_12345 | 0 | precalc_total≈0.119ms |
+| TTL=0 | 非空 | trace_ttl_zero_123456 | 0 | precalc_total≈0.131ms |
+| precalc_sleep_time=10ms | 非空 | trace_sleep_1234567890 | 0 | precalc_total≈10.289ms |
 
 **已有的测试覆盖：** 输入验证（user_feat非空）、KVWorker写入（Init/Create/Set三阶段）、payload返回、trace_id哈希回退、KVClient错误传播、边界值（size=0/TTL=0）、sleep模拟。
 
@@ -99,19 +99,19 @@
 
 **测试的功能：**
 
-| 场景 | user_feat_key | sku_ids | 预期结果 |
-|------|--------------|---------|---------|
-| 正常路径 | 非空 | [1001,1002] | error_code=0, 返回2个排序后SKU |
-| user_feat_key为空 | "" | [1001,1002] | error_code=EMPTY_USER_FEAT_KEY |
-| sku_ids为空 | 非空 | [] | error_code=EMPTY_SKUS |
+| 场景 | user_feat_key | sku_ids | 实际 error_code | 实际耗时 |
+|------|--------------|---------|----------------|---------|
+| 正常路径 | user_feat_key | [1001,1002] | 0, candidates=2 | rank_master_total≈3.200ms |
+| user_feat_key为空 | "" | [1001,1002] | 0x01000001 (INVALID_INPUT[1]) | — |
+| sku_ids为空 | user_feat_key | [] | 0x01000002 (INVALID_INPUT[2]) | — |
+| RankSub Discover失败 | user_feat_key | [1001,1002] | 0x01000003 (SERVICE_ERROR[3]) | — |
+| RankSub返回空结果 | user_feat_key | [1001,1002] | 0, candidates=0 | rank_master_total≈2.837ms |
+| RankSub返回1000候选 | user_feat_key | [1个] | 0, candidates=1000 | rank_master_total≈2.868ms |
+| KVClient.Get() key不存在 | nonexistent_key | [1001,1002] | 0, candidates=2 | rank_master_total≈2.680ms |
 
-**已有的测试覆盖：** 输入验证、RankSub下游调用。
+**已有的测试覆盖：** 输入验证（user_feat_key/sku_ids非空）、RankSub Discover失败、RankSub返回空/大量候选、KVClient.Get() key不存在、KVClient错误传播。
 
 **待补充的异常测试：**
-- RankSub服务不可用（Discover失败、超时）
-- RankSub返回空结果
-- RankSub返回大量候选（性能/边界）
-- KVClient.Get() key不存在
 - KVClient.Get() 返回数据损坏
 - 并发请求场景（多个用户同时请求）
 - 服务发现刷新间隔内的缓存一致性
@@ -160,27 +160,27 @@
 
 **测试的功能：**
 
-| 场景 | 故障服务 | 实际 error_code | 实际耗时 | 实际候选数 |
-|------|---------|----------------|---------|---------|
-| 正常路径 | 无 | 0 | proxy_e2e≈9.3ms | 3（去重后） |
-| Feature故障 | MockFeatureServiceFailing | 0x01030001 | proxy_e2e≈2.7ms | 0 |
-| Recall故障 | MockRecallServiceFailing | 0x01030002 | proxy_e2e≈6.6ms | 0 |
-| Precalc故障 | MockPrecalcServiceFailing | 0x01030003 | proxy_e2e≈6.4ms | 0 |
-| Rank故障 | MockRankServiceFailing | 0x01030004 | proxy_e2e≈9.7ms | 0 |
+| 场景 | 故障服务 | 预期error_code | 预期候选数 |
+|------|---------|---------------|---------|
+| 正常路径 | 无 | 0 | 3 |
+| Feature故障 | MockFeatureServiceFailing | 0x01030001 | 0 |
+| Recall故障 | MockRecallServiceFailing | 0x01030002 | 0 |
+| Precalc故障 | MockPrecalcServiceFailing | 0x01030003 | 0 |
+| Rank故障 | MockRankServiceFailing | 0x01030004 | 0 |
+| Recall返回空SKUs | MockRecallServiceEmpty | 0x01030004 | 0 |
+| Feature返回空payload | MockFeatureServiceEmptyPayload | 0 | 3 |
+| Rank返回空候选 | MockRankServiceEmpty | 0x01030004 | 0 |
+| Precalc返回大payload(5MB) | MockPrecalcServiceLargePayload | 0 | 3 |
+| 多服务同时故障 | MockMultiServiceFailing | 0x01030001 | 0 |
+| 5线程并发请求 | 无 | 0 | 3（每个请求） |
 
-**已有的测试覆盖：** 完整pipeline链路、下游服务任意一环失败时的错误传播。
+**已有的测试覆盖：** 完整pipeline链路、下游服务任意一环失败时的错误传播、空边界场景（空SKU/空payload/空候选）、大payload处理、多服务同时故障、并发请求。
 
 **待补充的异常测试：**
-- 多个下游服务同时故障
-- 下游服务超时（而非立即失败）
-- Discovery服务不可用时Proxy启动失败
-- Retry场景（下游单次失败后重试成功）
-- 熔断场景（下游持续失败触发熔断）
-- 用户特征为空时的降级行为
-- Recall返回候选不足（如0个）时的处理
-- Precalc返回的payload大小异常
-- Rank排序后候选为空
-- 并发请求（多线程同时调用Recommend）
+- 下游服务超时（而非立即失败）— 需要修改 proxy_server.cpp 的 timeout 逻辑
+- Discovery服务不可用时Proxy启动失败 — 需要 proxy_server.cpp 改动
+- Retry场景（下游单次失败后重试成功）— 属于 service_discovery 实现
+- 熔断场景（下游持续失败触发熔断）— 属于 service_discovery 实现
 
 ---
 
@@ -260,9 +260,9 @@
 |------|-----------|------------|
 | Feature | 11 | 7+ |
 | Recall | 12 | 3+ |
-| Precalc | 9 | 0 |
-| RankMaster | 3 | 6+ |
+| Precalc | 9 | 3 |
+| RankMaster | 7 | 3 |
 | RankSub | 18 (单元11+集成7) | 2 |
-| Proxy | 5 | 9+ |
+| Proxy | 11 | 4 |
 | Discovery | 9 (跨3个测试文件) | 6+ |
 | PerfCollector | 4 | 7+ |
