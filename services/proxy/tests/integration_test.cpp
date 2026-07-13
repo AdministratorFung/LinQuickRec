@@ -30,9 +30,9 @@ DEFINE_string(precalc_service_name, "precalc_service", "");
 DEFINE_string(rank_service_name, "rank_service", "");
 DEFINE_int32(discovery_refresh_interval_ms, 100, "");
 DEFINE_int32(downstream_max_retries, 0, "");
-DEFINE_int32(top_k, 100, "");
-DEFINE_int32(rank_master_parallelism, 4, "");
-DEFINE_string(downstream_connection_type, "pooled", "");
+DECLARE_int32(top_k);
+DECLARE_int32(rank_master_parallelism);
+DECLARE_string(downstream_connection_type);
 
 constexpr int DISCOVERY_PORT    = 18100;
 constexpr int MOCK_FEATURE_PORT = 18001;
