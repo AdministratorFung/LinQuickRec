@@ -426,45 +426,54 @@ int main(int argc, char* argv[]) {
     common::logger::InitializeDefault();
     std::cout << "=== Proxy Integration Tests ===" << std::endl;
 
+    MockFeatureServiceFailing mock_feat_fail;
+    MockRecallServiceFailing mock_recall_fail;
+    MockPrecalcServiceFailing mock_precalc_fail;
+    MockRankServiceFailing mock_rank_fail;
+    MockRecallServiceEmpty mock_recall_empty;
+    MockFeatureServiceEmptyPayload mock_feat_empty;
+    MockRankServiceEmpty mock_rank_empty;
+    MockPrecalcServiceLargePayload mock_precalc_large;
+
     run_scenario({"Happy path",
         nullptr, nullptr, nullptr, nullptr, 9, 0});
 
     run_scenario({"Feature fails",
-        &MockFeatureServiceFailing(),
+        &mock_feat_fail,
         nullptr, nullptr, nullptr, 0, 0x01030001});
 
     run_scenario({"Recall fails",
         nullptr,
-        &MockRecallServiceFailing(),
+        &mock_recall_fail,
         nullptr, nullptr, 0, 0x01030002});
 
     run_scenario({"Precalc fails",
         nullptr, nullptr,
-        &MockPrecalcServiceFailing(),
+        &mock_precalc_fail,
         nullptr, 0, 0x01030003});
 
     run_scenario({"Rank fails",
         nullptr, nullptr, nullptr,
-        &MockRankServiceFailing(),
+        &mock_rank_fail,
         0, 0x01030004});
 
     run_scenario({"Recall returns empty SKUs",
         nullptr,
-        &MockRecallServiceEmpty(),
+        &mock_recall_empty,
         nullptr, nullptr, 0, 0x01030004});
 
     run_scenario({"Feature returns empty payload",
-        &MockFeatureServiceEmptyPayload(),
+        &mock_feat_empty,
         nullptr, nullptr, nullptr, 3, 0});
 
     run_scenario({"Rank returns empty candidates",
         nullptr, nullptr, nullptr,
-        &MockRankServiceEmpty(),
+        &mock_rank_empty,
         0, 0x01030004});
 
     run_scenario({"Precalc returns large payload (5MB)",
         nullptr, nullptr,
-        &MockPrecalcServiceLargePayload(),
+        &mock_precalc_large,
         nullptr, 3, 0});
 
     std::cout << "\n--- Multi-service failure (Feature fails first) ---" << std::endl;
