@@ -68,7 +68,9 @@ target_link_libraries(precalc_and_rank_master PRIVATE
     discovery_client_lib common_lib ${BRPC_LIBRARIES} leveldb
     ${Protobuf_LIBRARIES} ${YR_DATASYSTEM_LIB} Threads::Threads ${ABSL_LIBS})
 
-set_target_properties(precalc_and_rank_master PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set_target_properties(precalc_and_rank_master PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../..)
+set_target_properties(rank_master_integration_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set_target_properties(precalc_integration_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_library(rank_master_server_lib STATIC
     server/src/precalc_server.cpp
