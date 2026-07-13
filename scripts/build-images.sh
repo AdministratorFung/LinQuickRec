@@ -107,7 +107,7 @@ main() {
         if [[ ${#SERVICES[@]} -gt 0 ]]; then
             push_targets="${SERVICES[*]}"
         fi
-        "${SCRIPT_DIR}/push-to-registry.sh" -r "$PUSH_REG" ${push_targets:-all}
+        bash "${SCRIPT_DIR}/push-to-registry.sh" -r "$PUSH_REG" ${push_targets:-all}
     fi
 
 }
