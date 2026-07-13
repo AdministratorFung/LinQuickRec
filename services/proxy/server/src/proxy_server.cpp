@@ -374,8 +374,10 @@ common::error::Status ProxyServiceImpl::call_rank_service(
     }
 
     std::vector<std::future<void>> futures;
+    std::string current_trace_id = tls_trace_id;
     for (auto& t : tasks) {
-        futures.push_back(std::async(std::launch::async, [this, &t, &precalc_rsp]() {
+        futures.push_back(std::async(std::launch::async, [this, &t, &precalc_rsp, current_trace_id]() {
+            tls_trace_id = current_trace_id;
             std::string host; int port; std::string iid;
             if (!service_discovery_->GetInstance(FLAGS_rank_service_name, host, port, iid)) return;
             auto ch = make_channel(host + ":" + std::to_string(port), FLAGS_rank_timeout_ms, FLAGS_rank_backup_request_ms);
