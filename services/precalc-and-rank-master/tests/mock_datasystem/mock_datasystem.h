@@ -42,6 +42,7 @@ public:
     const void* ImmutableData() const { return data_.data(); }
     size_t GetSize() const { return data_.size(); }
     void SetData(const std::string& data) { data_ = data; }
+    void* MutableData() { return data_.data(); }
 
 private:
     std::string data_;
@@ -63,6 +64,17 @@ struct ConnectOptions {
     std::shared_ptr<ServiceDiscovery> serviceDiscovery;
 };
 
+enum class WriteMode { NONE_L2_CACHE };
+enum class ExistenceOpt { NONE };
+enum class CacheType { MEMORY };
+
+struct SetParam {
+    int ttlSecond = 5;
+    WriteMode writeMode = WriteMode::NONE_L2_CACHE;
+    ExistenceOpt existence = ExistenceOpt::NONE;
+    CacheType cacheType = CacheType::MEMORY;
+};
+
 class KVClient {
 public:
     KVClient(const ConnectOptions& opts) {}
@@ -70,6 +82,14 @@ public:
     Status Init();
 
     Status Get(const std::string& key, Optional<Buffer>& buffer);
+
+    Status Create(const std::string& key, size_t size, const SetParam& param,
+                  std::shared_ptr<Buffer>& buffer);
+
+    Status Set(const std::shared_ptr<Buffer>& buffer) {
+        (void)buffer;
+        return Status::Ok();
+    }
 
     static inline std::unordered_map<std::string, std::string> mock_data_;
 };

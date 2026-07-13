@@ -17,4 +17,13 @@ Status KVClient::Get(const std::string& key, Optional<Buffer>& buffer) {
     return Status::Error("Key not found");
 }
 
+Status KVClient::Create(const std::string& key, size_t size, const SetParam& param,
+                         std::shared_ptr<Buffer>& buffer) {
+    (void)key;
+    (void)size;
+    (void)param;
+    buffer = std::make_shared<Buffer>();
+    return Status::Ok();
+}
+
 }
