@@ -160,13 +160,13 @@
 
 **测试的功能：**
 
-| 场景 | 故障服务 | 预期error_code |
-|------|---------|---------------|
-| 正常路径 | 无 | 0, 返回9个候选（3轮pipeline各3个） |
-| Feature故障 | MockFeatureServiceFailing | 0x01030001 |
-| Recall故障 | MockRecallServiceFailing | 0x01030002 |
-| Precalc故障 | MockPrecalcServiceFailing | 0x01030003 |
-| Rank故障 | MockRankServiceFailing | 0x01030004 |
+| 场景 | 故障服务 | 实际 error_code | 实际耗时 | 实际候选数 |
+|------|---------|----------------|---------|---------|
+| 正常路径 | 无 | 0 | proxy_e2e≈9.3ms | 3（去重后） |
+| Feature故障 | MockFeatureServiceFailing | 0x01030001 | proxy_e2e≈2.7ms | 0 |
+| Recall故障 | MockRecallServiceFailing | 0x01030002 | proxy_e2e≈6.6ms | 0 |
+| Precalc故障 | MockPrecalcServiceFailing | 0x01030003 | proxy_e2e≈6.4ms | 0 |
+| Rank故障 | MockRankServiceFailing | 0x01030004 | proxy_e2e≈9.7ms | 0 |
 
 **已有的测试覆盖：** 完整pipeline链路、下游服务任意一环失败时的错误传播。
 
@@ -259,7 +259,7 @@
 | 服务 | 已覆盖场景 | 待补充场景数 |
 |------|-----------|------------|
 | Feature | 11 | 7+ |
-| Recall | 5 | 7+ |
+| Recall | 12 | 3+ |
 | Precalc | 9 | 0 |
 | RankMaster | 3 | 6+ |
 | RankSub | 18 (单元11+集成7) | 2 |
