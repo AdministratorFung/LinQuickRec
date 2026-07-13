@@ -8,6 +8,7 @@ if [ "$1" = "test" ]; then
     echo ""
     echo "=== Running precalc integration test ==="
     /app/build/bin/precalc_integration_test "$@"
+    exit 0
 fi
 
 REGISTRY_BACKEND="${REGISTRY_BACKEND:-discovery_server}"
