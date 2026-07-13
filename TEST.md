@@ -69,20 +69,22 @@
 
 **测试的功能：**
 
-| 场景 | 输入 | 预期结果 |
-|------|------|---------|
-| 正常路径 | user_feat非空, trace_id有效 | error_code=0, user_feat_key非空 |
-| user_feat为空 | user_feat="" | error_code=EMPTY_USER_FEAT |
+| 场景 | user_feat | trace_id | 实际 error_code | 实际耗时 |
+|------|----------|---------|----------------|---------|
+| 正常路径 | 非空 | trace_12345678abcd | 0 | precalc_total≈0.15ms |
+| user_feat为空 | "" | trace_87654321dcba | 0x01000001 (INVALID_INPUT[1]) | — |
+| trace_id<16字符哈希回退 | 非空 | short_trace | 0, key=da90d5511426f728 | precalc_total≈0.14ms |
+| KVClient.Init()失败 | 非空 | trace_init_fail_1234 | 0x01000002 (SERVICE_ERROR[2]) | — |
+| KVClient.Create()失败 | 非空 | trace_create_fail_123 | 0x01000003 (SERVICE_ERROR[3]) | — |
+| KVClient.Set()失败 | 非空 | trace_set_fail_12345 | 0x01000004 (SERVICE_ERROR[4]) | — |
+| precalc_result_size_mb=0 | 非空 | trace_zero_size_12345 | 0, payload=0字节 | precalc_total≈0.11ms |
+| TTL=0 | 非空 | trace_ttl_zero_123456 | 0 | precalc_total≈0.15ms |
+| precalc_sleep_time=10ms | 非空 | trace_sleep_1234567890 | 0 | precalc_total≈10.81ms |
 
-**已有的测试覆盖：** 输入验证（user_feat非空）、KVWorker写入、payload返回。
+**已有的测试覆盖：** 输入验证（user_feat非空）、KVWorker写入（Init/Create/Set三阶段）、payload返回、trace_id哈希回退、KVClient错误传播、边界值（size=0/TTL=0）、sleep模拟。
 
 **待补充的异常测试：**
-- trace_id 长度不足16字符时的哈希回退逻辑
-- KVClient.Init() 失败的场景
-- KVClient.Create() 失败的场景
-- KVClient.Set() 失败的场景
-- precalc_result_size_mb 为0或负数
-- TTL=0 的边界情况
+- precalc_result_size_mb 为负数
 - 并发写入同一 user_feat_key（覆盖逻辑）
 - Discovery服务不可用时的fallback
 
@@ -251,7 +253,7 @@
 |------|-----------|------------|
 | Feature | 11 | 7+ |
 | Recall | 5 | 7+ |
-| Precalc | 2 | 7+ |
+| Precalc | 9 | 0 |
 | RankMaster | 3 | 6+ |
 | RankSub | 14 (单元11+集成3) | 4+ |
 | Proxy | 5 | 9+ |
