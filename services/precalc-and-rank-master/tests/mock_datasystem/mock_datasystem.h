@@ -82,7 +82,7 @@ public:
         return Status::Error("Key not found");
     }
 
-    static std::unordered_map<std::string, std::string> mock_data_;
+    static inline std::unordered_map<std::string, std::string> mock_data_;
 };
 
 } // namespace datasystem
