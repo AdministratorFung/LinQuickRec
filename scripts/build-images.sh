@@ -27,7 +27,7 @@ Usage: $(basename "$0") [service...] [options]
 Build LinQuickRec Docker images.
 
 Services: etcd kv-worker feature precalc-and-rank-master rank-sub
-          proxy recall perf-collector perf-webui discovery
+          proxy recall perf-collector perf-webui
           (default: all)
 
 Options:
@@ -60,7 +60,7 @@ parse_args() {
                 [[ $# -lt 2 ]] && die "Missing value for --push"
                 PUSH_REG="${2%/}"; shift 2 ;;
             etcd|kv-worker|feature|precalc-and-rank-master|rank-sub|\
-            proxy|recall|perf-collector|perf-webui|discovery)
+            proxy|recall|perf-collector|perf-webui)
                 SERVICES+=("$1"); shift ;;
             *) die "Unknown option or service: $1" ;;
         esac
@@ -77,17 +77,15 @@ main() {
     log "Compose file: ${COMPOSE_FILE}"
     log "vLLM mode:    ${ENABLE_VLLM}"
 
-    local compose_args=()
-    compose_args+=(-f "$COMPOSE_FILE")
-    [[ "$NO_CACHE" == true ]] && compose_args+=(--no-cache)
+    local compose_opts=("-f" "$COMPOSE_FILE")
+    [[ "$NO_CACHE" == true ]] && compose_opts+=(--no-cache)
 
+    local build_services=()
     if [[ ${#SERVICES[@]} -gt 0 ]]; then
-        compose_args+=("${SERVICES[@]}")
+        build_services=("${SERVICES[@]}")
     else
-        compose_args+=("etcd" "kv-worker" "feature" "precalc-and-rank-master"
-                       "rank-sub" "proxy" "recall" "perf-collector" "perf-webui")
-        # discovery is profile-only, build explicitly if requested or when all
-        compose_args+=("--profile" "discovery-server")
+        build_services=("etcd" "kv-worker" "feature" "precalc-and-rank-master"
+                        "rank-sub" "proxy" "recall" "perf-collector" "perf-webui")
     fi
 
     if [[ "$CLEAN" == true ]]; then
@@ -99,7 +97,7 @@ main() {
 
     log "Building images..."
     export ENABLE_VLLM
-    docker compose "${compose_args[@]}" build
+    docker compose "${compose_opts[@]}" build "${build_services[@]}"
 
     log "Build complete"
 
