@@ -38,7 +38,7 @@ Usage: $(basename "$0") <start|stop|delete|restart> [service] [options]
 Actions:
   start        Deploy all services / scale a service to its replicas
   stop         Scale all workloads to 0 / scale a service to 0 (preserve definitions)
-  restart      Stop then start (--all) / rollout restart (single service)
+  restart      Rollout restart all / single service (preserves image/environment)
   delete       Delete all resources / a single service
 
 Service names: etcd feature proxy precalc recall rank-sub perf webui
@@ -252,7 +252,8 @@ fi
     case "$ACTION" in
         start)  do_start ;;
         stop)   do_stop ;;
-        restart) do_stop; do_start ;;
+        restart) kubectl rollout restart deployment,statefulset,daemonset -n "$NAMESPACE";
+                log "All workloads rollout restarted" ;;
         delete) do_delete ;;
     esac
 }
