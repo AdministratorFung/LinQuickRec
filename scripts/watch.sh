@@ -91,6 +91,10 @@ phase "Phase 0: Cluster Reachability"
 if ! kubectl cluster-info >/dev/null 2>&1; then
     die_block "Cannot reach Kubernetes cluster. Check kubeconfig."
 fi
+
+if ! kubectl get namespace "$NAMESPACE" >/dev/null 2>&1; then
+    die_block "Namespace ${NAMESPACE} does not exist."
+fi
 ok "Cluster reachable"
 
 # ============================================================================
