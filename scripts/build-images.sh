@@ -34,7 +34,7 @@ Options:
   --vllm             Enable vLLM mode for recall (sets ENABLE_VLLM=true)
   --push <reg>       Tag and push to private registry after build
   --no-cache         Pass --no-cache to docker compose build
-  --clean            Prune dangling images after build
+  --clean            Remove all images built by this compose file (no build)
   -h, --help         Show this help
 
 Examples:
@@ -87,6 +87,13 @@ main() {
         compose_args+=("--profile" "discovery-server")
     fi
 
+    if [[ "$CLEAN" == true ]]; then
+        log "Cleaning images..."
+        docker compose -f "$COMPOSE_FILE" down --rmi all
+        log "Clean complete"
+        exit 0
+    fi
+
     log "Building images..."
     export ENABLE_VLLM
     docker compose "${compose_args[@]}" build
@@ -102,10 +109,6 @@ main() {
         "${SCRIPT_DIR}/push-to-registry.sh" -r "$PUSH_REG" ${push_targets:-all}
     fi
 
-    if [[ "$CLEAN" == true ]]; then
-        docker image prune -f
-        log "Dangling images pruned"
-    fi
 }
 
 main "$@"
