@@ -25,7 +25,7 @@
 DECLARE_string(registry_backend);
 DECLARE_string(discovery_addr);
 DECLARE_string(etcd_endpoints);
-DECLARE_int32(discovery_refresh_interval_ms);
+DEFINE_int32(discovery_refresh_interval_ms, 0, "");
 DECLARE_string(sub_worker_service_type);
 DECLARE_int32(sub_worker_timeout_ms);
 DECLARE_string(sub_worker_connection_type);

@@ -128,6 +128,7 @@ target_include_directories(rank_master_integration_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../discovery/client/include)
 
+target_link_options(rank_master_integration_test PRIVATE -Wl,--allow-multiple-definition)
 target_link_libraries(rank_master_integration_test PRIVATE
     rank_master_test_lib mock_datasystem Threads::Threads)
 
