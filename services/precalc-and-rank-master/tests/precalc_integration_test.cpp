@@ -156,7 +156,6 @@ static void run_scenario(const Scenario& s) {
 int main(int argc, char* argv[]) {
     google::ParseCommandLineFlags(&argc, &argv, true);
     common::logger::InitializeDefault();
-    common::logger::AddConsoleSink();
 
     std::cout << "=== Precalc Service Integration Tests ===" << std::endl;
 

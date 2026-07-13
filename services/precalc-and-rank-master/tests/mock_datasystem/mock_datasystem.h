@@ -1,8 +1,6 @@
 #ifndef MOCK_DATASYSTEM_H
 #define MOCK_DATASYSTEM_H
 
-#include <atomic>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -38,10 +36,7 @@ public:
 
 class ServiceDiscovery {
 public:
-    ServiceDiscovery(const ServiceDiscoveryOptions& opts) {
-        static std::atomic<int> counter(0);
-        std::cout << "[DEBUG] ServiceDiscovery constructed #" << ++counter << std::endl;
-    }
+    ServiceDiscovery(const ServiceDiscoveryOptions& opts) {}
     Status Init() { return Status::Ok(); }
 };
 
