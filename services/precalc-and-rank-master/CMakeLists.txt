@@ -83,7 +83,7 @@ add_executable(rank_master_integration_test
 target_include_directories(rank_master_integration_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../..
     ${PROTO_OUT_DIR} ${PROTO_DIR} ${PROTOBUF_INCLUDE_DIRS} ${BRPC_INCLUDE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/tests/mock_datasystem
+    ${YR_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/tests/mock_datasystem
     ${CMAKE_CURRENT_SOURCE_DIR}/server/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../discovery/client/include)
