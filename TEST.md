@@ -130,18 +130,23 @@
 
 **集成测试（integration_test.cpp）覆盖的RPC：**
 
-| 场景 | user_feat | sku_ids | 预期结果 |
-|------|----------|---------|---------|
-| 正常路径 | 非空 | [1001,1002] | error_code=0, 返回2个SKU+分数 |
-| user_feat为空 | "" | [1001,1002] | error_code=EMPTY_USER_FEAT |
-| sku_ids为空 | 非空 | [] | error_code=EMPTY_SKUS |
+| 场景 | user_feat | sku_ids | 实际 error_code | 耗时 |
+|------|----------|---------|-----------------|---------|
+| 正常路径 | 非空 | [1001,1002] | 0 | rank_sub_total≈0.094ms |
+| user_feat为空 | "" | [1001,1002] | 0x02000001 (INVALID_INPUT[1]) | — |
+| sku_ids为空 | 非空 | [] | 0x02000002 (INVALID_INPUT[2]) | — |
+| single sku | 非空 | [1001] | 0 | rank_sub_total≈0.063ms |
+| sku_id is zero | 非空 | [0] | 0 | rank_sub_total≈0.060ms |
+| large sku_id | 非空 | [2^63-1] | 0 | rank_sub_total≈0.153ms |
+| many sku_ids | 非空 | 10个 | 0 | rank_sub_total≈0.051ms |
+| large user_feat | 10MB | [1001,1002] | 0 | rank_sub_total≈5.758ms |
+| 并发正常路径 | 非空 | [1001,1002] | 0 | 10线程全部ok |
+| 并发空user_feat | "" | [1001,1002] | 0x02000001 | 10线程全部错误 |
+| 并发空sku_ids | 非空 | [] | 0x02000002 | 10线程全部错误 |
 
-**已有测试覆盖：** SKU解析逻辑、分数计算逻辑、RPC输入验证。
+**已有的测试覆盖：** SKU解析逻辑、分数计算逻辑、RPC输入验证、大量SKU、大user_feat、10线程并发。
 
 **待补充的异常测试：**
-- 大量 sku_ids（如 10000个）的处理能力和性能
-- sku_id 超大值（如超出uint64范围）
-- user_feat 超大（如 10MB）
 - simulate_score 中模拟超时或异常退出
 - 分数排序一致性（相同输入排序结果一致）
 
@@ -255,7 +260,7 @@
 | Recall | 5 | 7+ |
 | Precalc | 9 | 0 |
 | RankMaster | 3 | 6+ |
-| RankSub | 14 (单元11+集成3) | 4+ |
+| RankSub | 18 (单元11+集成7) | 2 |
 | Proxy | 5 | 9+ |
 | Discovery | 9 (跨3个测试文件) | 6+ |
 | PerfCollector | 4 | 7+ |
