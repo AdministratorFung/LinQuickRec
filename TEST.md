@@ -125,8 +125,8 @@
 
 | 函数 | 测试用例 |
 |------|---------|
-| parse_skus_from_string | 空字符串、正常3个SKU、尾部不足6位、短字符串(<6位)、500个SKU |
-| simulate_score | 确定性（同输入同输出）、[0,100)范围、SKU不同、user_feat不同、feat不同长度、SKU为0 |
+| parse_skus_from_string | 空字符串、正常3个SKU、尾部不足6位、短字符串(<6位)、500个SKU、**超大SKU ID(1e18)** |
+| simulate_score | 确定性（同输入同输出）、[0,100)范围、SKU不同、user_feat不同、feat不同长度、SKU为0、**10MB user_feat**、**排序一致性** |
 
 **集成测试（integration_test.cpp）覆盖的RPC：**
 
@@ -135,20 +135,19 @@
 | 正常路径 | 非空 | [1001,1002] | 0 | rank_sub_total≈0.094ms |
 | user_feat为空 | "" | [1001,1002] | 0x02000001 (INVALID_INPUT[1]) | — |
 | sku_ids为空 | 非空 | [] | 0x02000002 (INVALID_INPUT[2]) | — |
-| single sku | 非空 | [1001] | 0 | rank_sub_total≈0.063ms |
+| single sku | 非空 | [999999] | 0 | rank_sub_total≈0.063ms |
 | sku_id is zero | 非空 | [0] | 0 | rank_sub_total≈0.060ms |
-| large sku_id | 非空 | [2^63-1] | 0 | rank_sub_total≈0.153ms |
+| large sku_id | 非空 | [UINT64_MAX] | 0 | rank_sub_total≈0.153ms |
 | many sku_ids | 非空 | 10个 | 0 | rank_sub_total≈0.051ms |
-| large user_feat | 10MB | [1001,1002] | 0 | rank_sub_total≈5.758ms |
+| large user_feat (10MB) | 10MB | [1001,1002] | 0 | rank_sub_total≈5.758ms |
 | 并发正常路径 | 非空 | [1001,1002] | 0 | 10线程全部ok |
-| 并发空user_feat | "" | [1001,1002] | 0x02000001 | 10线程全部错误 |
-| 并发空sku_ids | 非空 | [] | 0x02000002 | 10线程全部错误 |
+| 并发空user_feat | "" | [1001,1002] | 0x02000001 | 10线程全部ok |
+| 并发空sku_ids | 非空 | [] | 0x02000002 | 10线程全部ok |
 
-**已有的测试覆盖：** SKU解析逻辑、分数计算逻辑、RPC输入验证、大量SKU、大user_feat、10线程并发。
+**已有的测试覆盖：** SKU解析逻辑、分数计算逻辑、RPC输入验证、大量SKU、大user_feat、10线程并发、排序一致性。
 
 **待补充的异常测试：**
 - simulate_score 中模拟超时或异常退出
-- 分数排序一致性（相同输入排序结果一致）
 
 ---
 
