@@ -117,7 +117,7 @@ struct SetParam {
     CacheType cacheType = CacheType::MEMORY;
 };
 
-enum class KVErrorMode { NONE, INIT_FAILED, CREATE_FAILED, SET_FAILED };
+enum class KVErrorMode { NONE, INIT_FAILED, CREATE_FAILED, SET_FAILED, GET_FAILED };
 
 class KVClient {
 public:

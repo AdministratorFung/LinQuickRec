@@ -10,6 +10,9 @@ Status KVClient::Init() {
 }
 
 Status KVClient::Get(const std::string& key, Optional<Buffer>& buffer) {
+    if (kv_error_mode_ == KVErrorMode::GET_FAILED) {
+        return Status::Error("mock Get failed");
+    }
     auto it = mock_data_.find(key);
     if (it != mock_data_.end()) {
         Buffer buf(it->second.size());
