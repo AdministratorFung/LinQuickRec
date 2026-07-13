@@ -72,7 +72,6 @@ set_target_properties(precalc_and_rank_master PROPERTIES RUNTIME_OUTPUT_DIRECTOR
 
 add_executable(rank_master_integration_test
     tests/integration_test.cpp
-    server/src/main.cpp
     server/src/precalc_server.cpp
     server/src/rank_master_server.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../common/src/discovery/service_discovery.cpp
