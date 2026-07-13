@@ -112,10 +112,7 @@ public:
     Status Create(const std::string& key, size_t size, const SetParam& param,
                   std::shared_ptr<Buffer>& buffer);
 
-    Status Set(const std::shared_ptr<Buffer>& buffer) {
-        (void)buffer;
-        return Status::Ok();
-    }
+    Status Set(const std::shared_ptr<Buffer>& buffer);
 
     static inline std::unordered_map<std::string, std::string> mock_data_;
 };

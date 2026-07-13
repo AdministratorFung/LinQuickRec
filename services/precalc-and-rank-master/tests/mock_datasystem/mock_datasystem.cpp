@@ -9,8 +9,8 @@ Status KVClient::Init() {
 Status KVClient::Get(const std::string& key, Optional<Buffer>& buffer) {
     auto it = mock_data_.find(key);
     if (it != mock_data_.end()) {
-        auto buf = std::make_shared<Buffer>(it->second.size());
-        buf->SetData(it->second);
+        Buffer buf(it->second.size());
+        buf.SetData(it->second);
         buffer.SetValue(buf);
         return Status::Ok();
     }
