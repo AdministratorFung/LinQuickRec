@@ -174,7 +174,6 @@ static void run_concurrent_scenario(const char* name,
 int main(int argc, char* argv[]) {
     google::ParseCommandLineFlags(&argc, &argv, true);
     common::logger::InitializeDefault();
-    common::logger::AddConsoleSink();
 
     std::cout << "=== Feature Service Integration Tests ===" << std::endl;
 
