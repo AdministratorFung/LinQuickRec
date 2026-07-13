@@ -49,6 +49,28 @@ add_custom_command(
     DEPENDS ${DISCOVERY_PROTO_FILE}
 )
 
+set(PERF_PROTO_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../../../proto/perf_handler.proto)
+set(PERF_PROTO_SRC ${CMAKE_CURRENT_BINARY_DIR}/perf_handler.pb.cc)
+add_custom_command(
+    OUTPUT ${PERF_PROTO_SRC} ${CMAKE_CURRENT_BINARY_DIR}/perf_handler.pb.h
+    COMMAND ${Protobuf_PROTOC_EXECUTABLE}
+    ARGS --proto_path ${CMAKE_CURRENT_SOURCE_DIR}/../../../proto
+         --cpp_out ${CMAKE_CURRENT_BINARY_DIR}
+         perf_handler.proto
+    DEPENDS ${PERF_PROTO_FILE}
+)
+
+set(API_PROTO_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../../../proto/api_handlers.proto)
+set(API_PROTO_SRC ${CMAKE_CURRENT_BINARY_DIR}/api_handlers.pb.cc)
+add_custom_command(
+    OUTPUT ${API_PROTO_SRC} ${CMAKE_CURRENT_BINARY_DIR}/api_handlers.pb.h
+    COMMAND ${Protobuf_PROTOC_EXECUTABLE}
+    ARGS --proto_path ${CMAKE_CURRENT_SOURCE_DIR}/../../../proto
+         --cpp_out ${CMAKE_CURRENT_BINARY_DIR}
+         api_handlers.proto
+    DEPENDS ${API_PROTO_FILE}
+)
+
 add_executable(perf_collector
     src/main.cpp
     src/puller.cpp
@@ -58,6 +80,8 @@ add_executable(perf_collector
     src/series_manager.cpp
     src/span_tree.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/discovery.pb.cc
+    ${PERF_PROTO_SRC}
+    ${API_PROTO_SRC}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../common/src/discovery/service_discovery.cpp
 )
 
@@ -89,14 +113,20 @@ add_executable(perf_integration_test
     src/sqlite_store.cpp
     src/series_manager.cpp
     src/span_tree.cpp
+    src/api_handlers.cpp
+    ${PERF_PROTO_SRC}
+    ${API_PROTO_SRC}
 )
 target_include_directories(perf_integration_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../common/include
+    ${CMAKE_CURRENT_BINARY_DIR}
     ${BRPC_INCLUDE_DIR}
     src
 )
 target_link_libraries(perf_integration_test PRIVATE
     common_lib
+    ${BRPC_LIBRARIES}
+    leveldb
     ${Protobuf_LIBRARIES}
     ${ABSL_LIBS}
     ${SQLITE3_LIB}

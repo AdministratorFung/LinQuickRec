@@ -2,11 +2,11 @@
 # Send requests to Proxy and optionally run a concurrent load test.
 #
 # Examples:
-#   bash scripts/send_proxy_request.sh
-#   bash scripts/send_proxy_request.sh -n 100 -c 10
-#   bash scripts/send_proxy_request.sh --url=http://127.0.0.1:8080/Proxy/Recommend -n 100 -c 10
-#   bash scripts/send_proxy_request.sh --k8s -n 1000 -c 50
-#   bash scripts/send_proxy_request.sh --k8s --namespace=linquickrec --service=proxy-service
+#   bash scripts/send-proxy-request.sh
+#   bash scripts/send-proxy-request.sh -n 100 -c 10
+#   bash scripts/send-proxy-request.sh --url=http://127.0.0.1:8080/Proxy/Recommend -n 100 -c 10
+#   bash scripts/send-proxy-request.sh --k8s -n 1000 -c 50
+#   bash scripts/send-proxy-request.sh --k8s --namespace=linquickrec --service=proxy-service
 
 set -euo pipefail
 
@@ -31,7 +31,7 @@ KUBE_PROXY_LOG=""
 
 usage() {
     cat <<EOF
-Usage: bash scripts/send_proxy_request.sh [options]
+Usage: bash scripts/send-proxy-request.sh [options]
 
 Target options:
   --host=HOST                 Proxy host for direct mode, default: ${PROXY_HOST}

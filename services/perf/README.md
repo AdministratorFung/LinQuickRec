@@ -2,10 +2,10 @@
 
 ## 模块简介
 
-Perf 是 LinQuickRec 的实时性能监控服务，负责采集、聚合、持久化、可视化全链路性能数据。它由两部分组成：
+Perf 是 LinQuickRec 的实时性能监控系统，由两个独立 Pod 组成：
 
-1. 嵌入各业务服务的轻量 RingBuffer（`common/perf_registry.h`），通过 CAS 原子操作零阻塞记录 span；
-2. 独立的 `perf-collector` 服务，定时拉取各服务 span、增量计算统计指标、持久化到 SQLite、并通过 REST API + WebUI 对外暴露。
+1. **perf-collector**：定时拉取各服务 span、增量计算统计指标、持久化到 SQLite，通过 ClusterIP 暴露 REST API；
+2. **perf-webui**：基于 nginx 的静态前端，通过 NodePort 32000 对外提供 WebUI，API 请求反向代理到 collector。
 
 Perf 通过 etcd 或 discovery_server 动态发现下游服务（proxy、feature、recall 等），每秒通过 BRPC 调用各服务的 `/debug/perf` RPC 拉取 span 数据。collector 宕机时业务服务不受影响（ring buffer 自旋），恢复后自动补拉数据。
 
@@ -17,41 +17,53 @@ Perf collector 自身暴露可供拉取数据的 HTTP 端口，可通过 Prometh
 
 | Method | Path | 说明 |
 |--------|------|------|
-| `GET` | `/api/v1/health` | 健康检查 |
-| `GET` | `/api/v1/metrics?window=1m` | collector 自身指标 |
-| `GET` | `/api/v1/stats/current?stage=proxy_e2e` | 当前实时统计 (avg/p50/p99/...) |
-| `GET` | `/api/v1/stats/history?stage=proxy_e2e&from=...&to=...` | 历史统计 (按 10s 窗口聚合) |
-| `GET` | `/api/v1/stats/compare?stages=proxy_e2e,recall_total&window=5m` | 多 stage 对比 |
-| `GET` | `/api/v1/trace/{trace_id}` | 按 trace_id 查询完整请求链路 |
-| `POST` | `/api/v1/series/start?name=baseline` | 开始新请求系列 |
-| `POST` | `/api/v1/series/stop` | 停止当前系列 |
-| `GET` | `/api/v1/series` | 列出所有系列 |
-| `GET` | `/api/v1/series/{id}/stats` | 某系列各 stage 统计 |
-| `DELETE` | `/api/v1/series/{id}` | 删除系列 |
+| `GET` | `/api/v1/health` | 健康检查，返回 `{"status":"ok"}` |
+| `GET` | `/api/v1/stats/current?service=<name>&stage=<name>` | 实时统计：avg / p50 / p99 / min / max / stddev / count |
+| `GET` | `/api/v1/trace/{trace_id}` | 按 trace_id 查询完整调用链树 |
+| `POST` | `/api/v1/series/start?name=<name>` | 开始新请求系列 |
+| `POST` | `/api/v1/series/stop` | 停止当前活跃系列 |
+| `GET` | `/api/v1/series` | 列出所有系列（id / name / span_count / status） |
+| `GET` | `/api/v1/outliers?service=<name>&stage=<name>` | 离群值检测（z-score） |
+| `GET` | `/debug/perf` | 拉取原始 span 数据（供 collector puller 调用） |
+
+```bash
+# 健康检查
+curl -s http://localhost:8080/api/v1/health
+# → {"status":"ok"}
+```
+
+其余统计查询、调用链、系列管理等功能建议通过 WebUI 使用，见下方 [WebUI](#webui) 章节。
 
 ### WebUI
 
-Perf-collector 的 K8s Service 通过 NodePort 32000 暴露，可直接在浏览器中访问：
+Perf 的前端和后端已拆分为两个独立 Pod：
 
-```
-http://<任一节点IP>:32000
-```
+| Pod | 镜像 | Service | 端口 | 说明 |
+|-----|------|---------|------|------|
+| perf-collector | `linquickrec/perf-collector` | perf-collector-service (ClusterIP) | 8080 | 数据采集 + REST API |
+| perf-webui | `linquickrec/perf-webui` | perf-webui (NodePort) | 32000 | nginx 静态前端 + API 反向代理 |
+
+浏览器访问 `http://<任一节点IP>:32000`，nginx 将 `/api/*` 请求转发到 collector。
 
 #### Dashboard
 - 下拉选择监控的 stage（proxy_e2e、recall_total 等）
-- 实时显示 count / avg / p50 / p99 四个指标卡片 + 柱状图
+- 6 个实时指标卡片：Count / Average / P50 / P99 / Min / Max
+- 纯 Canvas 绘制的柱状图（无需 CDN 依赖）
 - 每 3 秒自动刷新
+- 右上角 🌙 按钮切换深色/浅色主题，偏好持久化到 localStorage
 
 #### Series（请求系列）
-- **Start**：点击 + New Series 开始记录一个请求系列
-- **Stop**：点击 Stop Active 停止当前系列
-- 表格列出所有系列（名称、状态、span 数量）
-- 点击系列名查看统计值
+- **+ New Series**：开始记录一个请求系列
+- **Stop Active**：停止当前活跃系列
+- 表格列出所有系列（ID / Name / Status / Span Count）
+- 点击系列行查看详情（status / span_count）
 
 #### Trace（链路追踪）
-- 输入 trace_id → 搜索
+- 输入 trace_id → Search
 - 瀑布图展示该请求跨所有服务的 Span 耗时分布
-- 每个 Span 显示 service / stage / duration（数值 + 横向柱）
+- 按服务类型着色（proxy=蓝、recall=绿、precalc=橙 等）
+- 行尾 status 用彩色 Badge 标记（OK=绿、error=红）
+- 底部 10ⁿ ms 参考条 + span 总数 / 总耗时摘要
 
 ## 目录结构
 
@@ -74,13 +86,16 @@ services/perf/
 │       ├── series_manager.cpp        # Series lifecycle API
 │       └── api_handlers.cpp          # REST API handlers
 ├── webui/
-│   ├── index.html                    # Dashboard
-│   ├── trace.html                    # Trace waterfall
-│   ├── compare.html                  # A/B comparison
+│   ├── Dockerfile                     # nginx:alpine based image
+│   ├── index.html                     # Dashboard + Series + Trace (Tabler-style SPA)
+│   ├── nginx/
+│   │   └── default.conf               # Reverse proxy /api/* → collector
 │   └── js/
-│       ├── api.js
-│       ├── dashboard.js
-│       └── trace.js
+│       ├── api.js                     # API fetch wrappers
+│       ├── dashboard.js               # 6 metric cards + canvas chart
+│       ├── series.js                  # Series lifecycle management
+│       ├── theme.js                   # Dark/light theme toggle
+│       └── trace.js                   # Waterfall tree with color-coded spans
 └── tests/
     └── integration_test.cpp          # Integration test with mock services
 
@@ -193,32 +208,37 @@ make perf_collector perf_integration_test -j$(nproc)
 
 ## 容器搭建
 
+Perf 拆分为两个独立镜像：collector（数据采集 + API）和 webui（nginx 静态前端）。
+
 ### 构建镜像
 
 ```bash
-# 在项目根目录下执行
+# collector
 docker build -t linquickrec/perf-collector:latest \
   -f services/perf/collector/Dockerfile .
+
+# webui
+docker build -t linquickrec/perf-webui:latest \
+  -f services/perf/webui/Dockerfile .
+
+# 或通过 docker-compose
+docker compose -f deploy/docker/docker-compose.yml build perf-collector perf-webui
 ```
 
 ### 运行容器
 
 ```bash
-# etcd 模式（默认）
+# 启动 collector（仅暴露 ClusterIP，不直接对外）
 docker run -d --name perf-collector \
-  -p 32000:8080 \
   -e REGISTRY_BACKEND=etcd \
   -e ETCD_ENDPOINTS=<etcd-ip>:2379 \
   -v perf-data:/var/lib/perf \
   linquickrec/perf-collector:latest
 
-# discovery_server 模式
-docker run -d --name perf-collector \
-  -p 32000:8080 \
-  -e REGISTRY_BACKEND=discovery_server \
-  -e DISCOVERY_ADDR=<discovery-server-ip>:8100 \
-  -v perf-data:/var/lib/perf \
-  linquickrec/perf-collector:latest
+# 启动 webui（NodePort 32000）
+docker run -d --name perf-webui \
+  -p 32000:32000 \
+  linquickrec/perf-webui:latest
 ```
 
 
@@ -236,37 +256,46 @@ docker run -d --name perf-collector \
 docker run --rm linquickrec/perf-collector:latest test
 ```
 
-覆盖 4 个场景：
+覆盖 16 个测试用例：
 
-| 场景 | 验证内容 |
+| 类别 | 测试内容 |
 |------|----------|
-| 基本统计 | 注入 100 条 span (avg=50, stddev=5)，验证 avg=47~53, count=100 |
-| 分位数 | 验证 p99 在合理范围内 |
-| 离群值检测 | 注入 99 条正常 + 1 条异常 (10× avg)，验证被标记 |
-| 系列管理 | start → 注入 50 条 → stop → 验证 series 统计 count=50 |
+| PerfRingRegistry | 基本 push/take、溢出丢弃 |
+| BRPC 注册 | PerfService + ApiHandlerService 注册与启停 |
+| API 处理器 | `/health` 200、`/stats/current` 200/400/404、`/not_found` 404 |
+| PerfService | `/debug/perf` 返回 spans JSON |
+| OutlierDetector | z-score 正常/异常/边界判断 |
+| SqliteStore | 批量写入、轨迹查询、过期清理、空 batch、无效路径 |
+| 统计引擎 | 100 条 span 注入，验证 avg/p50/p99 |
+| 系列管理 | start/stop、span 计数、列表查询 |
+| SpanTree | 跨服务调用链树构建 |
 
-### 手动测试
+### curl 测试
 
 ```bash
-# 创建请求系列
-curl -X POST "http://127.0.0.1:32000/api/v1/series/start?name=baseline"
+# 健康检查
+curl -s http://127.0.0.1:32000/api/v1/health
 
-# 发一批请求到 proxy
-bash scripts/send_proxy_request.sh --k8s -n 100
+# 查看所有已发现下游服务的阶段统计
+for svc in proxy feature_service recall_service precalc_service rank_service rank_sub; do
+  echo "=== $svc ==="
+  curl -s "http://127.0.0.1:32000/api/v1/stats/current?service=$svc&stage=${svc}_e2e"
+  echo
+done
 
-# 等 3s 让 collector 拉取
-sleep 3
+# 系列管理
+curl -s -X POST "http://127.0.0.1:32000/api/v1/series/start?name=baseline"
+sleep 5
+curl -s -X POST "http://127.0.0.1:32000/api/v1/series/stop"
+curl -s http://127.0.0.1:32000/api/v1/series
 
-# 停止系列
-curl -X POST "http://127.0.0.1:32000/api/v1/series/stop"
-
-# 查看系列统计
-curl "http://127.0.0.1:32000/api/v1/series/1/stats" | jq '.proxy_e2e'
-# 预期: {"avg": ..., "p99": ..., "count": 100}
+# 离群值检测
+curl -s "http://127.0.0.1:32000/api/v1/outliers?service=proxy&stage=proxy_e2e"
 ```
 
 ## 端口对照表
 
 | 端口 | 服务 | 协议 | 说明 |
 |------|------|------|------|
-| 32000 | perf-collector | HTTP | REST API + WebUI |
+| 8080 | perf-collector-service | HTTP | REST API（ClusterIP，内部访问） |
+| 32000 | perf-webui | HTTP | nginx 静态 WebUI + API 反向代理（NodePort） |

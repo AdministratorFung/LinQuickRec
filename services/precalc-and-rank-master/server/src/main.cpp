@@ -49,9 +49,11 @@ int main(int argc, char* argv[]) {
     assert(ret == 0);
 
     precalc_svr.AddService(new common::perf::PerfService,
-                           brpc::SERVER_OWNS_SERVICE);
+                           brpc::SERVER_OWNS_SERVICE,
+                           "/debug/perf => Dump");
     rank_master_svr.AddService(new common::perf::PerfService,
-                               brpc::SERVER_OWNS_SERVICE);
+                                brpc::SERVER_OWNS_SERVICE,
+                                "/debug/perf => Dump");
 
     brpc::ServerOptions precalc_opts;
     configure_opts(precalc_opts);

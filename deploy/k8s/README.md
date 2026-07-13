@@ -24,7 +24,6 @@ deploy/k8s/
 │   ├── discovery/                    # discovery-server, 由 --discovery-backend 控制
 │   ├── recall-vllm/                  # vLLM 模式 recall, 由 --recall-mode 控制
 │   └── recall-novllm/                # novllm 模式 recall, 由 --recall-mode 控制
-├── deploy.sh
 └── README.md
 ```
 
@@ -57,20 +56,18 @@ Proxy (:8080)
 | `components/discovery/` | Component | 可选：discovery-server, 由 `--discovery-backend` 控制 |
 | `components/recall-vllm/` | Component | 可选：vLLM 模式 recall，由 `--recall-mode` 控制 |
 | `components/recall-novllm/` | Component | 可选：novllm 模式 recall，由 `--recall-mode` 控制 |
-| `deploy.sh` | 部署脚本 | `start|stop|delete` 命令，支持 `--registry --recall-mode --discovery-backend` 参数 |
+| `scripts/deploy-to-k8s.sh` | 部署脚本 | `start|stop|delete` 命令，支持 `--registry --recall-mode --discovery-backend` 参数 |
 
 ## 集群部署
 
 ### 脚本一键部署
 
 ```bash
-cd deploy/k8s
-
 # 默认启动（novllm + etcd），使用本地镜像
-bash deploy.sh start
+bash scripts/deploy-to-k8s.sh start
 
 # 使用私有镜像仓库
-bash deploy.sh start -r <your-docker-hub-ip>:<your-docker-hub-port>
+bash scripts/deploy-to-k8s.sh start -r <your-docker-hub-ip>:<your-docker-hub-port>
 ```
 
 | 参数 | 默认值 | 说明 |
@@ -83,10 +80,10 @@ bash deploy.sh start -r <your-docker-hub-ip>:<your-docker-hub-port>
 
 ```bash
 # 停止（缩容到 0，保留定义）
-bash deploy.sh stop
+bash scripts/deploy-to-k8s.sh stop
 
 # 删除所有资源
-bash deploy.sh delete
+bash scripts/deploy-to-k8s.sh delete
 ```
 
 ### 手动部署
@@ -101,7 +98,7 @@ kubectl apply -k base/
 kubectl apply -k components/discovery && kubectl apply -k base/
 ```
 
-`base/` 和 `components/discovery` / `components/recall-vllm` 互斥（同资源名），不要同时应用。建议使用 `deploy.sh` 脚本自动处理。
+`base/` 和 `components/discovery` / `components/recall-vllm` 互斥（同资源名），不要同时应用。建议使用 `scripts/deploy-to-k8s.sh` 脚本自动处理。
 
 ### 查看状态
 
@@ -142,13 +139,13 @@ kubectl scale deployment proxy-service --replicas=3 -n linquickrec
 ```bash
 # 从本机通过 Kubernetes API service proxy 访问 proxy-service
 # 请求进入 K8s Service，由 Service 转发到后端 Proxy Pod
-bash scripts/send_proxy_request.sh --k8s -n 1000 -c 50
+bash scripts/send-proxy-request.sh --k8s -n 1000 -c 50
 
 # 指定命名空间、Service 名或 Service 端口
-bash scripts/send_proxy_request.sh --k8s --namespace=linquickrec --service=proxy-service --service-port=8080 -n 1000 -c 50
+bash scripts/send-proxy-request.sh --k8s --namespace=linquickrec --service=proxy-service --service-port=8080 -n 1000 -c 50
 
 # 如果直接暴露了 NodePort/LoadBalancer，也可以用直连模式
-bash scripts/send_proxy_request.sh --url=http://<node-or-lb>:8080/Proxy/Recommend -n 1000 -c 50
+bash scripts/send-proxy-request.sh --url=http://<node-or-lb>:8080/Proxy/Recommend -n 1000 -c 50
 ```
 
 `kubectl port-forward` 更适合临时调试，通常会固定转发到某一个 Pod；多副本压测建议使用上面的 `--k8s` 模式或直接访问 NodePort/LoadBalancer 的 Service 入口。
@@ -171,16 +168,16 @@ kubectl rollout undo deployment/recall-service -n linquickrec
 **etcd 模式**（默认）：`--discovery-backend=etcd`
 
 ```bash
-bash deploy.sh start --discovery-backend etcd
+bash scripts/deploy-to-k8s.sh start --discovery-backend etcd
 ```
 
 **discovery_server 模式**：`--discovery-backend=discovery-server`
 
 ```bash
-bash deploy.sh start --discovery-backend discovery-server
+bash scripts/deploy-to-k8s.sh start --discovery-backend discovery-server
 ```
 
-> 只需修改 deploy.sh 的 `--discovery-backend` 参数即可切换模式，容器 entrypoint.sh 自动适配，无需修改 Deployment。
+> 只需修改 deploy-to-k8s.sh 的 `--discovery-backend` 参数即可切换模式，容器 entrypoint.sh 自动适配，无需修改 Deployment。
 
 ### recall-vllm 与 novllm 选用
 

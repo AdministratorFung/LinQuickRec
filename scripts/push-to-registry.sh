@@ -20,6 +20,7 @@ SERVICES=(
     "rank-sub:linquickrec/rank-sub:latest"
     "proxy:linquickrec/proxy:latest"
     "perf-collector:linquickrec/perf-collector:latest"
+    "perf-webui:linquickrec/perf-webui:latest"
 )
 
 ALIASES=(

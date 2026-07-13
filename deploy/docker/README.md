@@ -6,7 +6,6 @@
 deploy/docker/
 ├── docker-compose.yml          # 构建编排文件
 ├── .env                        # 构建参数
-├── push-to-registry.sh         # 推送镜像到私有 registry
 ├── README.md                   # 本文档
 ├── discovery/
 │   ├── Dockerfile              # Discovery 服务镜像
@@ -82,21 +81,21 @@ docker images | grep linquickrec
 
 ## 推送镜像
 
-构建完成后，使用 `push-to-registry.sh` 推送到私有镜像仓库：
+构建完成后，使用 `scripts/push-to-registry.sh` 推送到私有镜像仓库：
 
 ```bash
 # 必须通过-r/--registry参数指定私有仓库的<ip:port>
 
 # dry-run 用来查看将要运行的命令和处理的镜像，不真正运行
 # 建议先尝试一下--dry-run来看看结果是否符合预期
-bash ./push-to-registry.sh -r 192.168.0.1:5000 --dry-run all
+bash scripts/push-to-registry.sh -r 192.168.0.1:5000 --dry-run all
 
 # 推送全部
-bash ./push-to-registry.sh -r 192.168.0.1:5000
-bash ./push-to-registry.sh -r 192.168.0.1:5000 all
+bash scripts/push-to-registry.sh -r 192.168.0.1:5000
+bash scripts/push-to-registry.sh -r 192.168.0.1:5000 all
 
 # 推送单个
-bash ./push-to-registry.sh -r 192.168.0.1:5000 recall
+bash scripts/push-to-registry.sh -r 192.168.0.1:5000 recall
 ```
 
 ## 验证镜像

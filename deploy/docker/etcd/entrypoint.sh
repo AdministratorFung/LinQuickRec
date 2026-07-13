@@ -28,13 +28,13 @@ fi
 
 # DNS 解析验证（最多重试 3 次，失败后 sleep 等调试）
 RETRY=0
-while ! timeout 3 nslookup kubernetes.default.svc.cluster.local >/dev/null 2>&1; do
+while ! timeout 3 getent hosts kubernetes.default.svc.cluster.local >/dev/null 2>&1; do
     RETRY=$((RETRY + 1))
-    if [ $RETRY -ge 3 ]; then
-        echo "ERROR: CoreDNS not resolving after 3 attempts, sleeping for manual debug"
+    if [ $RETRY -ge 30 ]; then
+        echo "ERROR: CoreDNS not resolving after 60s, sleeping for manual debug"
         exec sleep infinity
     fi
-    echo "CoreDNS not resolving (${RETRY}/3), retrying..."
+    echo "CoreDNS not resolving (${RETRY}/30), retrying..."
     sleep 2
 done
 echo "CoreDNS is reachable"
@@ -50,8 +50,8 @@ MY_IP=""
 while [ -z "$MY_IP" ]; do
     MY_IP=$(getent hosts "$MY_DNS" 2>/dev/null | head -1 | awk '{print $1}')
     RETRY=$((RETRY + 1))
-    if [ -z "$MY_IP" ] && [ $RETRY -ge 30 ]; then
-        echo "ERROR: DNS lookup failed for ${MY_DNS} after 30s, sleeping for manual debug"
+    if [ -z "$MY_IP" ] && [ $RETRY -ge 600 ]; then
+        echo "ERROR: DNS lookup failed for ${MY_DNS} after 10 min, sleeping for manual debug"
         exec sleep infinity
     fi
     [ -z "$MY_IP" ] && sleep 1
@@ -68,8 +68,8 @@ for i in $(seq 0 $((CLUSTER_SIZE - 1))); do
     while [ -z "$PEER_IP" ]; do
         PEER_IP=$(getent hosts "$PEER" 2>/dev/null | head -1 | awk '{print $1}')
         RETRY=$((RETRY + 1))
-        if [ -z "$PEER_IP" ] && [ $RETRY -ge 30 ]; then
-            echo "ERROR: DNS lookup failed for ${PEER} after 30s, sleeping for manual debug"
+        if [ -z "$PEER_IP" ] && [ $RETRY -ge 600 ]; then
+            echo "ERROR: DNS lookup failed for ${PEER} after 10 min, sleeping for manual debug"
             exec sleep infinity
         fi
         [ -z "$PEER_IP" ] && sleep 1
@@ -82,21 +82,7 @@ done
 echo "Cluster: ${CLUSTER}"
 echo "State: ${STATE}"
 
-# Wait for all peers to be reachable before starting etcd
-echo "Waiting for all peers to be reachable..."
-for i in $(seq 0 $((CLUSTER_SIZE - 1))); do
-    PEER="etcd-${i}.${SERVICE}.${NS}.svc.cluster.local"
-    RETRY=0
-    while ! ping -W 2 -c 1 "$PEER" >/dev/null 2>&1; do
-        RETRY=$((RETRY + 1))
-        if [ $RETRY -ge 10 ]; then
-            echo "ERROR: ${PEER} not reachable after 10s, sleeping for manual debug"
-            exec sleep infinity
-        fi
-        sleep 1
-    done
-    echo "  ${PEER} reachable"
-done
+echo "All peers DNS-resolved, starting etcd (peer discovery handled by etcd)"
 
 exec etcd \
   --name "$HOSTNAME" \

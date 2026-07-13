@@ -1,4 +1,11 @@
 syntax = "proto3";
 package common.perf;
 
+option cc_generic_services = true;
+
 message PerfRequest {}
+message PerfResponse {}
+
+service Perf {
+  rpc Dump(PerfRequest) returns (PerfResponse);
+}

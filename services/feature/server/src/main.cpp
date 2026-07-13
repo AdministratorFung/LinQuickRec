@@ -39,7 +39,8 @@ int main(int argc, char* argv[]) {
     }
 
     if (server.AddService(new common::perf::PerfService,
-                          brpc::SERVER_OWNS_SERVICE) != 0) {
+                          brpc::SERVER_OWNS_SERVICE,
+                          "/debug/perf => Dump") != 0) {
         LOG_ERROR << "Failed to add PerfService";
     }
 
