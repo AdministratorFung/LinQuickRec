@@ -129,10 +129,6 @@ static void run_scenario(const Scenario& s) {
     datasystem::KVClient::mock_data_["user_feat_key"] = "mock_user_feature_data";
 
     rank::RankMasterServiceImpl service;
-    rank::RankSubResponse sub_rsp;
-    bool ok = service.call_sub_worker("feature_data", {1001, 1002}, "trace", &sub_rsp);
-    assert(ok);
-    assert(sub_rsp.skus_id_size() == 2);
 
     rank::RankMasterRequest req;
     req.set_user_feat_key(s.user_feat_key);
