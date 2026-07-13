@@ -22,10 +22,9 @@ fail()   { echo -e "  ${RED}✗${NC} $*"; }
 
 die_block() {
     echo ""
-    echo -e "${RED}┌─────────────────────────────────────────┐${NC}"
-    echo -e "${RED}│  WATCH FAILED                            │${NC}"
-    echo -e "${RED}└─────────────────────────────────────────┘${NC}"
-    echo -e "${RED}$*${NC}"
+    echo -e "${RED}========================================${NC}"
+    echo -e "${RED}ERROR: $*${NC}"
+    echo -e "${RED}========================================${NC}"
     exit 1
 }
 
@@ -34,23 +33,22 @@ die() { die_block "$@"; }
 success_block() {
     local webui_status="$1"
     echo ""
-    echo -e "${GREEN}┌─────────────────────────────────────────┐${NC}"
-    echo -e "${GREEN}│  ALL SYSTEMS READY                       │${NC}"
-    echo -e "${GREEN}├─────────────────────────────────────────┤${NC}"
-    echo -e "${GREEN}│  ✓ Cluster reachable                     │${NC}"
-    echo -e "${GREEN}│  ✓ etcd cluster healthy                  │${NC}"
-    echo -e "${GREEN}│  ✓ Pods ready                            │${NC}"
-    echo -e "${GREEN}│  ✓ Services registered in etcd           │${NC}"
+    echo -e "${GREEN}========================================${NC}"
+    echo -e "${GREEN}  ALL SYSTEMS READY${NC}"
+    echo -e "${GREEN}========================================${NC}"
+    echo -e "${GREEN}  ✓ Cluster reachable${NC}"
+    echo -e "${GREEN}  ✓ etcd cluster healthy${NC}"
+    echo -e "${GREEN}  ✓ Pods ready${NC}"
+    echo -e "${GREEN}  ✓ Services registered in etcd${NC}"
     if [ "$webui_status" = "ok" ]; then
-        echo -e "${GREEN}│  ✓ WebUI reachable                       │${NC}"
+        echo -e "${GREEN}  ✓ WebUI reachable${NC}"
     elif [ "$webui_status" = "skip" ]; then
-        echo -e "${GREEN}│  − WebUI skipped (no perf-webui pod)      │${NC}"
+        echo -e "${GREEN}  − WebUI skipped (no perf-webui pod)${NC}"
     else
-        echo -e "${YELLOW}│  ⚠ WebUI not reachable                   │${NC}"
+        echo -e "${YELLOW}  ⚠ WebUI not reachable${NC}"
     fi
-    echo -e "${GREEN}├─────────────────────────────────────────┤${NC}"
-    echo -e "${GREEN}│  Test: scripts/send-proxy-request.sh     │${NC}"
-    echo -e "${GREEN}└─────────────────────────────────────────┘${NC}"
+    echo -e "${GREEN}========================================${NC}"
+    echo -e "${GREEN}  Test: scripts/send-proxy-request.sh${NC}"
     exit 0
 }
 
