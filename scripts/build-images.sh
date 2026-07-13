@@ -39,9 +39,9 @@ Options:
 
 Examples:
   $(basename "$0")                                        # build all
+  $(basename "$0") --push 127.0.0.1:5000                  # build all + push to registry
   $(basename "$0") perf-collector perf-webui              # build specific services
   $(basename "$0") recall --vllm                          # build recall with vLLM
-  $(basename "$0") --push 127.0.0.1:5000                  # build all + push to registry
   $(basename "$0") --push 127.0.0.1:5000 recall --vllm    # build recall + push
   $(basename "$0") --no-cache                             # force rebuild (no cache)
   $(basename "$0") --clean                                # remove all local images (no build)
