@@ -37,26 +37,30 @@ WORKDIR /app
 # 条件安装 vLLM、torch、triton、transformers，以及拷贝模型和启动脚本。
 # 使用 --mount=type=bind 访问构建上下文，ENABLE_VLLM=false 时此步骤为空操作，
 # 不产生任何镜像层内容，避免将大文件写入镜像。
-RUN --mount=type=bind,source=.,target=/ctx \
+# 每个文件单独 mount，避免 source=. 导致整个 repo 变动就缓存失效。
+RUN --mount=type=bind,source=${TORCH_WHL},target=/tmp/torch.whl \
+    --mount=type=bind,source=${VLLM_WHL},target=/tmp/vllm.whl \
+    --mount=type=bind,source=${START_VLLM_BACK},target=/tmp/start_vllm_back.sh \
+    --mount=type=bind,source=${START_VLLM},target=/tmp/start_vllm.sh \
     if [ "$ENABLE_VLLM" = "true" ]; then \
         export http_proxy=http://${PROXY_IP}:${PROXY_PORT} && \
         export https_proxy="${http_proxy}" && \
-        pip3 install /ctx/${TORCH_WHL} && \
-        pip3 install /ctx/${VLLM_WHL} && \
+        pip3 install /tmp/torch.whl && \
+        pip3 install /tmp/vllm.whl && \
         pip3 install --force-reinstall \
             "fastapi==0.115.14" \
             "starlette==0.46.2" \
             "prometheus-fastapi-instrumentator==7.1.0" && \
-        pip3 install /ctx/${TORCH_WHL} && \
+        pip3 install /tmp/torch.whl && \
         pip3 install pytorch-triton==3.3.0+gitab727c40 \
             --index-url https://download.pytorch.org/whl/nightly/cu129 \
             --trusted-host download.pytorch.org \
             --trusted-host download-r2.pytorch.org && \
         pip uninstall -y transformers && pip install "transformers>=4.51.1,<5" && \
         mkdir -p /app/models && \
-        cp /ctx/${START_VLLM_BACK} /app/start_vllm_back.sh && \
+        cp /tmp/start_vllm_back.sh /app/start_vllm_back.sh && \
         chmod +x /app/start_vllm_back.sh && \
-        cp /ctx/${START_VLLM} /app/start_vllm.sh && \
+        cp /tmp/start_vllm.sh /app/start_vllm.sh && \
         chmod +x /app/start_vllm.sh; \
     fi
 
