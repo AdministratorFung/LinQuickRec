@@ -103,7 +103,7 @@ target_include_directories(rank_master_integration_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../discovery/client/include)
 
 target_link_libraries(rank_master_integration_test PRIVATE
-    rank_master_server_lib mock_datasystem Threads::Threads)
+    mock_datasystem rank_master_server_lib Threads::Threads)
 
 set_target_properties(rank_master_integration_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 

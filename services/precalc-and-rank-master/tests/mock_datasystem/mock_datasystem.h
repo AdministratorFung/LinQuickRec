@@ -67,20 +67,9 @@ class KVClient {
 public:
     KVClient(const ConnectOptions& opts) {}
 
-    Status Init() {
-        return Status::Ok();
-    }
+    Status Init();
 
-    Status Get(const std::string& key, Optional<Buffer>& buffer) {
-        auto it = mock_data_.find(key);
-        if (it != mock_data_.end()) {
-            Buffer buf;
-            buf.SetData(it->second);
-            buffer.SetValue(buf);
-            return Status::Ok();
-        }
-        return Status::Error("Key not found");
-    }
+    Status Get(const std::string& key, Optional<Buffer>& buffer);
 
     static inline std::unordered_map<std::string, std::string> mock_data_;
 };
