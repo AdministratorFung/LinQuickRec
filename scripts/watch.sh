@@ -82,6 +82,7 @@ error_diagnose() {
     fi
 }
 
+main() {
 # ============================================================================
 # Phase 0: Cluster reachability
 # ============================================================================
@@ -109,7 +110,6 @@ phase "Phase 2: etcd Cluster Health (NodePort ${ETCD_NODEPORT})"
 
 while true; do
     check_timeout
-    local health_resp
     health_resp=$(curl -s --connect-timeout 5 --max-time 5 "http://localhost:${ETCD_NODEPORT}/health" 2>/dev/null) || true
 
     if echo "$health_resp" | grep -q '"health"' && echo "$health_resp" | grep -q 'true'; then
@@ -118,7 +118,6 @@ while true; do
     fi
 
     # Determine if etcd pods are failed or still initializing
-    local etcd_line
     etcd_line=$(kubectl get pods -n "$NAMESPACE" -l app=etcd --no-headers 2>/dev/null) || true
 
     if [[ -z "$etcd_line" ]]; then
@@ -129,7 +128,6 @@ while true; do
 
     # Check for hard error states
     if echo "$etcd_line" | grep -qE "CrashLoopBackOff|ImagePullBackOff|ErrImagePull|Error|OOMKilled"; then
-        local bad_pod
         bad_pod=$(echo "$etcd_line" | grep -E "CrashLoopBackOff|ImagePullBackOff|ErrImagePull|Error|OOMKilled" | awk '{print $1}' | head -1)
         fail "etcd pod ${bad_pod} is in error state"
         error_diagnose "$bad_pod"
@@ -147,14 +145,12 @@ phase "Phase 3: Pod Readiness Check"
 
 while true; do
     check_timeout
-    local pods_json
     pods_json=$(kubectl get pods -n "$NAMESPACE" -o json 2>/dev/null) || true
 
     if [[ -z "$pods_json" ]]; then
         die "Cannot parse pod data"
     fi
 
-    local total ready bad_pod
     total=$(echo "$pods_json" | python3 -c "
 import json,sys
 pods=json.load(sys.stdin)['items']
@@ -230,7 +226,6 @@ done
 # ============================================================================
 phase "Phase 4: etcd Service Registration"
 
-local reg_output
 reg_output=$(kubectl exec -n "$NAMESPACE" etcd-0 -- \
     etcdctl get --prefix /linquickrec/services/ --keys-only 2>/dev/null) || reg_output=""
 
@@ -240,7 +235,6 @@ if [[ -z "$reg_output" ]]; then
 fi
 
 echo "$reg_output" | grep -oP '/linquickrec/services/\K[^/]+' | sort -u | while read svc; do
-    local count
     count=$(echo "$reg_output" | grep -c "/linquickrec/services/${svc}/") || count=0
     echo -e "  ${GREEN}✓${NC} ${svc}: ${count} instance(s)"
 done
@@ -251,14 +245,12 @@ ok "Services registered in etcd"
 # ============================================================================
 phase "Phase 5: WebUI Reachability"
 
-local webui_status="skip"
-local webui_exists
+webui_status="skip"
 webui_exists=$(kubectl get pods -n "$NAMESPACE" -l app=perf-webui --no-headers 2>/dev/null) || true
 
 if [[ -z "$webui_exists" ]]; then
     info "perf-webui pod not found — skipping WebUI check"
 else
-    local webui_resp
     webui_resp=$(curl -s --connect-timeout 5 --max-time 5 http://localhost:32000/ 2>/dev/null) || true
     if echo "$webui_resp" | head -1 | grep -q '<!DOCTYPE html\|<html'; then
         ok "WebUI reachable (http://localhost:32000/)"
@@ -270,3 +262,6 @@ else
 fi
 
 success_block "$webui_status"
+}
+
+main "$@"
