@@ -31,7 +31,7 @@ DEFINE_string(rank_service_name, "rank_service", "");
 DEFINE_int32(discovery_refresh_interval_ms, 100, "");
 DEFINE_int32(downstream_max_retries, 0, "");
 DEFINE_int32(top_k, 100, "");
-DEFINE_int32(rank_master_parallelism, 1, "");
+DEFINE_int32(rank_master_parallelism, 4, "");
 DEFINE_string(downstream_connection_type, "pooled", "");
 
 constexpr int DISCOVERY_PORT    = 18100;
@@ -427,7 +427,7 @@ int main(int argc, char* argv[]) {
     std::cout << "=== Proxy Integration Tests ===" << std::endl;
 
     run_scenario({"Happy path",
-        nullptr, nullptr, nullptr, nullptr, 3, 0});
+        nullptr, nullptr, nullptr, nullptr, 9, 0});
 
     run_scenario({"Feature fails",
         &MockFeatureServiceFailing(),
