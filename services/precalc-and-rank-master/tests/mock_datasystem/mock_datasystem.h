@@ -85,8 +85,6 @@ public:
     static std::unordered_map<std::string, std::string> mock_data_;
 };
 
-extern std::unordered_map<std::string, std::string> KVClient::mock_data_;
-
 } // namespace datasystem
 
 #endif
