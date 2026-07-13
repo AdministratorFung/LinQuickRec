@@ -36,3 +36,6 @@ Thumbs.db
 #claude code
 .claude/
 CLAUDE.md
+
+share/*.tar.gz
+share/*.whl
