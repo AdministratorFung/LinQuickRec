@@ -17,7 +17,7 @@ COPY ${DISCOVERY_DIR} /app/services/discovery/
 
 RUN mkdir -p /app/build && cd /app/build && \
     cmake ../services/precalc-and-rank-master -DCMAKE_BUILD_TYPE=Release && \
-    make -j$(nproc) precalc_and_rank_master rank_master_integration_test
+    make -j$(nproc) precalc_and_rank_master rank_master_integration_test precalc_integration_test
 RUN mkdir -p /tmp/build_discovery && cd /tmp/build_discovery && \
     cmake /app/services/discovery -DCMAKE_BUILD_TYPE=Release && \
     make discovery_client -j$(nproc) && cp bin/discovery_client /app/discovery_client && rm -rf /tmp/build_discovery
