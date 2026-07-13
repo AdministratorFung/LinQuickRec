@@ -436,7 +436,7 @@ int main(int argc, char* argv[]) {
     MockPrecalcServiceLargePayload mock_precalc_large;
 
     run_scenario({"Happy path",
-        nullptr, nullptr, nullptr, nullptr, 9, 0});
+        nullptr, nullptr, nullptr, nullptr, 3, 0});
 
     run_scenario({"Feature fails",
         &mock_feat_fail,
