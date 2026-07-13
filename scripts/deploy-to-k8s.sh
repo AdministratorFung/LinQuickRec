@@ -2,8 +2,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="${SCRIPT_DIR}/.."
 NAMESPACE="linquickrec"
-OVERLAY_DIR="${SCRIPT_DIR}"
+OVERLAY_DIR="${REPO_ROOT}/deploy/k8s"
 
 RECALL_MODE="novllm"
 DISCOVERY_BACKEND="etcd"

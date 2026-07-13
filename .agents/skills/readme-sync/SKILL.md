@@ -14,7 +14,7 @@ This skill applies whenever you modify:
 |---------|----------|
 | C++ source/header | `services/*/server/src/*.cpp`, `common/**/*.h` |
 | Dockerfile | `deploy/docker/**/Dockerfile`, `services/*/Dockerfile` |
-| Bash scripts | `deploy/docker/**/entrypoint.sh`, `deploy.sh`, `build.sh` |
+| Bash scripts | `deploy/docker/**/entrypoint.sh`, `scripts/deploy-to-k8s.sh`, `build.sh` |
 | YAML | `deploy/k8s/**/*.yaml`, `deploy/docker/docker-compose.yml` |
 
 ## Mandatory: Update the corresponding README
