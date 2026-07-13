@@ -44,12 +44,28 @@ class Buffer {
 public:
     Buffer() : data_(nullptr), size_(0), owns_memory_(false) {}
     explicit Buffer(size_t size) : data_(mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)), size_(size), owns_memory_(true) {}
-    Buffer(const Buffer& other) : data_(other.data_), size_(other.size_), owns_memory_(false) {}
+    Buffer(const Buffer& other) : data_(other.data_), size_(other.size_), owns_memory_(false) {
+        if (other.owns_memory_) {
+            data_ = mmap(nullptr, other.size_, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+            if (data_ != MAP_FAILED) {
+                memcpy(data_, other.data_, other.size_);
+                owns_memory_ = true;
+            }
+        }
+    }
     Buffer& operator=(const Buffer& other) {
         if (this != &other) {
+            if (owns_memory_ && data_ != MAP_FAILED) munmap(data_, size_);
             data_ = other.data_;
             size_ = other.size_;
             owns_memory_ = false;
+            if (other.owns_memory_) {
+                data_ = mmap(nullptr, other.size_, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+                if (data_ != MAP_FAILED) {
+                    memcpy(data_, other.data_, other.size_);
+                    owns_memory_ = true;
+                }
+            }
         }
         return *this;
     }
