@@ -25,7 +25,7 @@ DEFINE_int32(rank_master_server_port, 8004, "RankMaster server listen port");
 DECLARE_string(registry_backend);
 DECLARE_string(discovery_addr);
 DECLARE_string(etcd_endpoints);
-DEFINE_int32(discovery_refresh_interval_ms, 5000, "");
+DECLARE_int32(discovery_refresh_interval_ms);
 DEFINE_int32(sub_worker_timeout_ms, 5000, "Sub-worker call timeout (ms)");
 DEFINE_string(sub_worker_service_type, "rank_sub", "");
 DEFINE_string(sub_worker_connection_type, "pooled", "");
