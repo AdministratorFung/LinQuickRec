@@ -160,21 +160,21 @@
 
 **测试的功能：**
 
-| 场景 | 故障服务 | 预期error_code | 预期候选数 |
-|------|---------|---------------|---------|
-| 正常路径 | 无 | 0 | 3 |
-| Feature故障 | MockFeatureServiceFailing | 0x01030001 | 0 |
-| Recall故障 | MockRecallServiceFailing | 0x01030002 | 0 |
-| Precalc故障 | MockPrecalcServiceFailing | 0x01030003 | 0 |
-| Rank故障 | MockRankServiceFailing | 0x01030004 | 0 |
-| Recall返回空SKUs | MockRecallServiceEmpty | 0x01030004 | 0 |
-| Feature返回空payload | MockFeatureServiceEmptyPayload | 0 | 3 |
-| Rank返回空候选 | MockRankServiceEmpty | 0x01030004 | 0 |
-| Precalc返回大payload(5MB) | MockPrecalcServiceLargePayload | 0 | 3 |
-| 多服务同时故障 | MockMultiServiceFailing | 0x01030001 | 0 |
-| 5线程并发请求 | 无 | 0 | 3（每个请求） |
+| 场景 | 故障服务 | 预期error_code | 预期候选数 | 验证 |
+|------|---------|---------------|---------|------|
+| 正常路径 | 无 | 0 | 3 | ✅ 已验证 |
+| Feature故障 | MockFeatureServiceFailing | 0x01030001 | 0 | ✅ 已验证 |
+| Recall故障 | MockRecallServiceFailing | 0x01030002 | 0 | ✅ 已验证 |
+| Precalc故障 | MockPrecalcServiceFailing | 0x01030003 | 0 | ✅ 已验证 |
+| Rank故障 | MockRankServiceFailing | 0x01030004 | 0 | ✅ 已验证 |
+| Recall返回空SKUs | MockRecallServiceEmpty | 0x01030004 | 0 | ✅ 已验证 |
+| Feature返回空payload | MockFeatureServiceEmptyPayload | 0 | 3 | ✅ 已验证 |
+| Rank返回空候选 | MockRankServiceEmpty | 0x01030004 | 0 | ✅ 已验证 |
+| Precalc返回大payload(5MB) | MockPrecalcServiceLargePayload | 0 | 3 | ✅ 已验证 |
+| 多服务同时故障 | MockMultiServiceFailing | 0x01030001 | 0 | ✅ 已验证 |
+| 5线程并发请求 | 无 | 0 | 3（每个请求） | ✅ 已验证 |
 
-**已有的测试覆盖：** 完整pipeline链路、下游服务任意一环失败时的错误传播、空边界场景（空SKU/空payload/空候选）、大payload处理、多服务同时故障、并发请求。
+**已有的测试覆盖：** 完整pipeline链路、下游服务任意一环失败时的错误传播、空边界场景（空SKU/空payload/空候选）、大payload处理、多服务同时故障、并发请求。**全部 11 个场景已 Docker 验证通过，无日志双打。**
 
 **待补充的异常测试：**
 - 下游服务超时（而非立即失败）— 需要修改 proxy_server.cpp 的 timeout 逻辑
