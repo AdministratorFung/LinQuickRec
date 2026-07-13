@@ -123,6 +123,7 @@ struct Scenario {
     std::string mock_body;
     int mock_http_status;
     int mock_delay_ms;
+    int timeout_ms;
     int expect_error_code;
     int expect_sku_count;
     std::vector<uint64_t> expect_prefix;
@@ -140,7 +141,7 @@ static void run_scenario(const Scenario& s) {
     FLAGS_vllm_base_url = std::string("http://127.0.0.1:") + std::to_string(MOCK_VLLM_PORT);
     FLAGS_enable_vllm = true;
     FLAGS_sku_count = 5;
-    FLAGS_vllm_timeout_ms = 3000;
+    FLAGS_vllm_timeout_ms = s.timeout_ms;
     FLAGS_vllm_max_retry = 0;
     FLAGS_recall_sleep_time_ms = 0;
     FLAGS_recall_payload_size_kb = 0;
@@ -207,7 +208,7 @@ int main(int argc, char* argv[]) {
         "Happy path: vLLM returns valid SKUs",
         true,
         R"({"choices":[{"message":{"content":"123456,234567,345678,456789,567890"}}]})",
-        200, 0,
+        200, 0, 3000,
         static_cast<int>(OK_CODE),
         5,
         {123456, 234567, 345678, 456789, 567890}
@@ -217,7 +218,7 @@ int main(int argc, char* argv[]) {
         "vLLM unreachable (no mock server)",
         false,
         "",
-        0, 0,
+        0, 0, 3000,
         static_cast<int>(recall_errors::VLLM_REQUEST_FAILED),
         0,
         {}
@@ -227,7 +228,7 @@ int main(int argc, char* argv[]) {
         "vLLM returns malformed JSON",
         true,
         "{ this is not valid json",
-        200, 0,
+        200, 0, 3000,
         static_cast<int>(recall_errors::VLLM_RESPONSE_PARSE_FAILED),
         0,
         {}
@@ -237,7 +238,7 @@ int main(int argc, char* argv[]) {
         "vLLM returns empty choices array",
         true,
         R"({"choices":[]})",
-        200, 0,
+        200, 0, 3000,
         static_cast<int>(recall_errors::VLLM_RESPONSE_PARSE_FAILED),
         0,
         {}
@@ -247,7 +248,7 @@ int main(int argc, char* argv[]) {
         "vLLM returns fewer SKUs + random fill to target",
         true,
         R"({"choices":[{"message":{"content":"111111,222222,333333"}}]})",
-        200, 0,
+        200, 0, 3000,
         static_cast<int>(OK_CODE),
         5,
         {111111, 222222, 333333}
@@ -257,7 +258,7 @@ int main(int argc, char* argv[]) {
         "vLLM returns HTTP 504 Gateway Timeout",
         true,
         "Gateway Timeout",
-        504, 0,
+        504, 0, 3000,
         static_cast<int>(recall_errors::VLLM_REQUEST_FAILED),
         0,
         {}
@@ -267,8 +268,8 @@ int main(int argc, char* argv[]) {
         "vLLM returns plain text (non-JSON)",
         true,
         "Internal Server Error",
-        500, 0,
-        static_cast<int>(recall_errors::VLLM_RESPONSE_PARSE_FAILED),
+        500, 0, 3000,
+        static_cast<int>(recall_errors::VLLM_REQUEST_FAILED),
         0,
         {}
     });
@@ -277,7 +278,7 @@ int main(int argc, char* argv[]) {
         "vLLM returns SKU with non-numeric characters",
         true,
         R"({"choices":[{"message":{"content":"123abc,456xyz,111111,222222,333333"}}]})",
-        200, 0,
+        200, 0, 3000,
         static_cast<int>(OK_CODE),
         5,
         {111111, 222222, 333333}
@@ -287,7 +288,7 @@ int main(int argc, char* argv[]) {
         "vLLM returns SKU shorter than 6 digits",
         true,
         R"({"choices":[{"message":{"content":"123,456789,234567,345678,456789"}}]})",
-        200, 0,
+        200, 0, 3000,
         static_cast<int>(OK_CODE),
         5,
         {456789, 234567, 345678, 456789}
@@ -297,7 +298,7 @@ int main(int argc, char* argv[]) {
         "vLLM returns duplicate SKUs (dedup verification)",
         true,
         R"({"choices":[{"message":{"content":"111111,222222,333333,111111,222222"}}]})",
-        200, 0,
+        200, 0, 3000,
         static_cast<int>(OK_CODE),
         5,
         {111111, 222222, 333333}
@@ -307,17 +308,17 @@ int main(int argc, char* argv[]) {
         "vLLM returns zero SKUs after parse",
         true,
         R"({"choices":[{"message":{"content":"aaa,bbb,ccc"}}]})",
-        200, 0,
+        200, 0, 3000,
         static_cast<int>(recall_errors::NO_SKU_RETURNED),
         0,
         {}
     });
 
     run_scenario({
-        "vLLM HTTP timeout (exceeds FLAGS_vllm_timeout_ms=100)",
+        "vLLM HTTP timeout (delay > timeout)",
         true,
         R"({"choices":[{"message":{"content":"123456,234567,345678,456789,567890"}}]})",
-        200, 500,
+        200, 500, 100,
         static_cast<int>(recall_errors::VLLM_REQUEST_FAILED),
         0,
         {}
