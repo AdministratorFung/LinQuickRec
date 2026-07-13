@@ -117,6 +117,8 @@ struct SetParam {
     CacheType cacheType = CacheType::MEMORY;
 };
 
+enum class KVErrorMode { NONE, INIT_FAILED, CREATE_FAILED, SET_FAILED };
+
 class KVClient {
 public:
     KVClient(const ConnectOptions& opts) {}
@@ -131,6 +133,8 @@ public:
     Status Set(const std::shared_ptr<Buffer>& buffer);
 
     static inline std::unordered_map<std::string, std::string> mock_data_;
+    static inline KVErrorMode kv_error_mode_ = KVErrorMode::NONE;
+    static void SetKVErrorMode(KVErrorMode mode) { kv_error_mode_ = mode; }
 };
 
 } // namespace datasystem

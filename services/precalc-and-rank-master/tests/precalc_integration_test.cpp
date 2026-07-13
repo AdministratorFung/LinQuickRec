@@ -85,9 +85,25 @@ struct Scenario {
     const char* name;
     std::string user_feat;
     std::string trace_id;
+    double size_mb;
+    int ttl_seconds;
+    int payload_size_kb;
+    int precalc_sleep_ms;
     int expect_error_code;
     bool expect_key_nonempty;
+    datasystem::KVErrorMode kv_error_mode;
 };
+
+static void reset_flags() {
+    FLAGS_registry_backend = "discovery_server";
+    FLAGS_discovery_addr = "127.0.0.1:" + std::to_string(DISCOVERY_PORT);
+    FLAGS_etcd_endpoints = "127.0.0.1:2379";
+    FLAGS_kv_worker_service = "kv_worker";
+    FLAGS_precalc_result_size_mb = 0.001;
+    FLAGS_ttl_seconds = 5;
+    FLAGS_payload_size_kb = 1;
+    FLAGS_precalc_sleep_time_ms = 0;
+}
 
 static void run_scenario(const Scenario& s) {
     std::cout << "\n--- " << s.name << " ---" << std::endl;
@@ -100,14 +116,13 @@ static void run_scenario(const Scenario& s) {
     assert(ret == 0);
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-    FLAGS_registry_backend = "discovery_server";
-    FLAGS_discovery_addr = "127.0.0.1:" + std::to_string(DISCOVERY_PORT);
-    FLAGS_etcd_endpoints = "127.0.0.1:2379";
-    FLAGS_kv_worker_service = "kv_worker";
-    FLAGS_precalc_result_size_mb = 0.001;
-    FLAGS_ttl_seconds = 5;
-    FLAGS_payload_size_kb = 1;
-    FLAGS_precalc_sleep_time_ms = 0;
+    reset_flags();
+    FLAGS_precalc_result_size_mb = s.size_mb;
+    FLAGS_ttl_seconds = s.ttl_seconds;
+    FLAGS_payload_size_kb = s.payload_size_kb;
+    FLAGS_precalc_sleep_time_ms = s.precalc_sleep_ms;
+
+    datasystem::KVClient::SetKVErrorMode(s.kv_error_mode);
 
     precalc::PrecalcServiceImpl service;
     brpc::Server server;
@@ -163,16 +178,81 @@ int main(int argc, char* argv[]) {
         "happy path: valid user_feat",
         "mock_user_feature_data_for_testing",
         "trace_12345678abcd",
-        0,
-        true
+        0.001, 5, 1, 0,
+        0, true,
+        datasystem::KVErrorMode::NONE
     });
 
     run_scenario({
         "empty user_feat should fail",
         "",
         "trace_87654321dcba",
-        static_cast<int>(common::error::precalc_errors::EMPTY_USER_FEAT),
-        false
+        0.001, 5, 1, 0,
+        static_cast<int>(common::error::precalc_errors::EMPTY_USER_FEAT), false,
+        datasystem::KVErrorMode::NONE
+    });
+
+    run_scenario({
+        "trace_id less than 16 chars (hash fallback)",
+        "mock_user_feature_data_for_testing",
+        "short_trace",
+        0.001, 5, 1, 0,
+        0, true,
+        datasystem::KVErrorMode::NONE
+    });
+
+    run_scenario({
+        "KVClient.Init() failed",
+        "mock_user_feature_data_for_testing",
+        "trace_init_fail_1234",
+        0.001, 5, 1, 0,
+        static_cast<int>(common::error::precalc_errors::KVCLIENT_INIT_FAILED), false,
+        datasystem::KVErrorMode::INIT_FAILED
+    });
+
+    run_scenario({
+        "KVClient.Create() failed",
+        "mock_user_feature_data_for_testing",
+        "trace_create_fail_123",
+        0.001, 5, 1, 0,
+        static_cast<int>(common::error::precalc_errors::KVCLIENT_CREATE_FAILED), false,
+        datasystem::KVErrorMode::CREATE_FAILED
+    });
+
+    run_scenario({
+        "KVClient.Set() failed",
+        "mock_user_feature_data_for_testing",
+        "trace_set_fail_12345",
+        0.001, 5, 1, 0,
+        static_cast<int>(common::error::precalc_errors::KVCLIENT_SET_FAILED), false,
+        datasystem::KVErrorMode::SET_FAILED
+    });
+
+    run_scenario({
+        "precalc_result_size_mb = 0 (edge case)",
+        "mock_user_feature_data_for_testing",
+        "trace_zero_size_12345",
+        0.0, 5, 1, 0,
+        0, true,
+        datasystem::KVErrorMode::NONE
+    });
+
+    run_scenario({
+        "TTL = 0 (edge case)",
+        "mock_user_feature_data_for_testing",
+        "trace_ttl_zero_123456",
+        0.001, 0, 1, 0,
+        0, true,
+        datasystem::KVErrorMode::NONE
+    });
+
+    run_scenario({
+        "precalc_sleep_time > 0",
+        "mock_user_feature_data_for_testing",
+        "trace_sleep_1234567890",
+        0.001, 5, 1, 10,
+        0, true,
+        datasystem::KVErrorMode::NONE
     });
 
     std::cout << "\n=== All Integration Tests Passed ===" << std::endl;
