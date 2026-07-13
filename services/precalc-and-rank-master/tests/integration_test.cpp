@@ -25,11 +25,11 @@
 DECLARE_string(registry_backend);
 DECLARE_string(discovery_addr);
 DECLARE_string(etcd_endpoints);
-DEFINE_int32(discovery_refresh_interval_ms, 5000, "");
+DECLARE_int32(discovery_refresh_interval_ms);
 DECLARE_string(sub_worker_service_type);
 DECLARE_int32(sub_worker_timeout_ms);
 DECLARE_string(sub_worker_connection_type);
-DEFINE_int32(rank_master_sleep_time_ms, 30, "");
+DECLARE_int32(rank_master_sleep_time_ms);
 
 constexpr int DISCOVERY_PORT = 18100;
 constexpr int RANK_MASTER_PORT = 18004;
