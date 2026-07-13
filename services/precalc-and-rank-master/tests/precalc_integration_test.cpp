@@ -16,6 +16,7 @@
 #include "common/error.h"
 #include "common/logger.h"
 #include "precalc.pb.h"
+#include "discovery.pb.h"
 
 #include "mock_datasystem.h"
 

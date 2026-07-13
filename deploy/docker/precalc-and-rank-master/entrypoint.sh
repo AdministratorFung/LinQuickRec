@@ -3,7 +3,11 @@ set -e
 
 if [ "$1" = "test" ]; then
     shift
-    exec /app/build/bin/rank_master_integration_test "$@"
+    echo "=== Running rank_master integration test ==="
+    /app/build/bin/rank_master_integration_test "$@"
+    echo ""
+    echo "=== Running precalc integration test ==="
+    /app/build/bin/precalc_integration_test "$@"
 fi
 
 REGISTRY_BACKEND="${REGISTRY_BACKEND:-discovery_server}"
