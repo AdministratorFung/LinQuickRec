@@ -20,11 +20,6 @@ RUN if [ "$ENABLE_VLLM" = "true" ] && [ -z "$PROXY_IP" ]; then \
     fi
 
 # === 可配置的路径参数 ===
-# vLLM 相关（仅 ENABLE_VLLM=true 时使用）
-ARG VLLM_WHL=share/vllm-0.11.0rc6+cu129-cp311-cp311-linux_aarch64.whl
-ARG START_VLLM_BACK=deploy/docker/recall/start_vllm_back.sh
-ARG START_VLLM=deploy/docker/recall/start_vllm.sh
-ARG TORCH_WHL=share/torch-2.8.0a0+gitba56102-cp311-cp311-linux_aarch64.whl
 # 服务代码
 ARG PROTO_DIR=proto/
 ARG COMMON_DIR=common/
@@ -34,33 +29,30 @@ ARG DISCOVERY_DIR=services/discovery/
 
 WORKDIR /app
 
-# 条件安装 vLLM、torch、triton、transformers，以及拷贝模型和启动脚本。
-# 使用 --mount=type=bind 访问构建上下文，ENABLE_VLLM=false 时此步骤为空操作，
+COPY deploy/docker/recall/start_vllm_back.sh /app/
+COPY deploy/docker/recall/start_vllm.sh /app/
+
+# 条件安装 vLLM、torch、triton、transformers。
+# share/ 目录通过 bind mount 挂入，ENABLE_VLLM=false 时此步骤为空操作，
 # 不产生任何镜像层内容，避免将大文件写入镜像。
-# 每个文件单独 mount，避免 source=. 导致整个 repo 变动就缓存失效。
-RUN --mount=type=bind,source=${TORCH_WHL},target=/tmp/torch.whl \
-    --mount=type=bind,source=${VLLM_WHL},target=/tmp/vllm.whl \
-    --mount=type=bind,source=${START_VLLM_BACK},target=/tmp/start_vllm_back.sh \
-    --mount=type=bind,source=${START_VLLM},target=/tmp/start_vllm.sh \
+RUN --mount=type=bind,source=share,target=/tmp/vllm_artifacts \
     if [ "$ENABLE_VLLM" = "true" ]; then \
         export http_proxy=http://${PROXY_IP}:${PROXY_PORT} && \
         export https_proxy="${http_proxy}" && \
-        pip3 install /tmp/torch.whl && \
-        pip3 install /tmp/vllm.whl && \
+        pip3 install /tmp/vllm_artifacts/torch-*.whl && \
+        pip3 install /tmp/vllm_artifacts/vllm-*.whl && \
         pip3 install --force-reinstall \
             "fastapi==0.115.14" \
             "starlette==0.46.2" \
             "prometheus-fastapi-instrumentator==7.1.0" && \
-        pip3 install /tmp/torch.whl && \
+        pip3 install /tmp/vllm_artifacts/torch-*.whl && \
         pip3 install pytorch-triton==3.3.0+gitab727c40 \
             --index-url https://download.pytorch.org/whl/nightly/cu129 \
             --trusted-host download.pytorch.org \
             --trusted-host download-r2.pytorch.org && \
         pip uninstall -y transformers && pip install "transformers>=4.51.1,<5" && \
         mkdir -p /app/models && \
-        cp /tmp/start_vllm_back.sh /app/start_vllm_back.sh && \
         chmod +x /app/start_vllm_back.sh && \
-        cp /tmp/start_vllm.sh /app/start_vllm.sh && \
         chmod +x /app/start_vllm.sh; \
     fi
 
