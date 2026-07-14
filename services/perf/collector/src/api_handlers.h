@@ -31,6 +31,8 @@ private:
     void HandleTrace(brpc::Controller* cntl);
     void HandleSeries(brpc::Controller* cntl);
     void HandleOutliers(brpc::Controller* cntl);
+    void HandleStages(brpc::Controller* cntl);
+    void HandleTraces(brpc::Controller* cntl);
     void HandleNotFound(brpc::Controller* cntl);
 
     SqliteStore* sqlite_store_;

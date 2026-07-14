@@ -44,10 +44,17 @@ class StatsEngine {
 public:
     static StatsEngine& Instance();
 
+    struct StageKey {
+        std::string service;
+        std::string stage;
+        uint64_t count;
+    };
+
     void Push(const std::string& service, const std::string& stage,
               double duration_ms);
     const WelfordRunningStats* Get(const std::string& service,
                                     const std::string& stage) const;
+    std::vector<StageKey> GetAllKeys() const;
     void ResetRecent();
 
 private:

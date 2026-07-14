@@ -27,6 +27,16 @@ public:
     // Query spans by trace_id, ordered by ts_us
     std::vector<common::perf::Span> QueryTrace(const std::string& trace_id);
 
+    struct TraceSummary {
+        std::string trace_id;
+        uint64_t ts_us;
+        int span_count;
+        float total_duration_ms;
+    };
+
+    // Aggregate trace summaries, ordered by earliest ts_us DESC
+    std::vector<TraceSummary> QueryTraces(int limit, int offset);
+
 private:
     void PrepareStatements();
     void FinalizeStatements();

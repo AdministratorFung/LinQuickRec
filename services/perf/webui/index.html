@@ -363,6 +363,64 @@
             margin-top: 16px;
         }
 
+        /* Tree view */
+        .tree-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .tree-node {
+            user-select: none;
+            line-height: 1.8;
+        }
+        .tree-arrow {
+            display: inline-block;
+            width: 16px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 12px;
+            transition: transform 0.15s;
+            text-align: center;
+        }
+        .tree-arrow.expanded { transform: rotate(90deg); }
+        .tree-node-name {
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: background 0.1s;
+        }
+        .tree-node-name:hover { background: var(--tab-hover-bg); }
+        .tree-node-name.selected { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+        .tree-dur {
+            margin-left: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .tree-dur.no-data { color: var(--text-muted); font-style: italic; }
+        .tree-children.hidden { display: none; }
+
+        /* Series hint */
+        .series-hint {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            margin-bottom: 12px;
+        }
+        .series-hint.hint-active { color: var(--primary); font-weight: 500; }
+
+        /* Stage info */
+        .stage-info {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 12px;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .page { padding: 12px; }
@@ -389,29 +447,15 @@
 
     <div class="page">
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('dashboard', this)">Dashboard</button>
+            <button class="tab active" onclick="switchTab('perf', this)">Perf</button>
+            <button class="tab" onclick="switchTab('test', this)">Test</button>
             <button class="tab" onclick="switchTab('series', this)">Series</button>
             <button class="tab" onclick="switchTab('trace', this)">Trace</button>
-            <button class="tab" onclick="switchTab('loadtest', this)">Load Test</button>
         </div>
 
-        <!-- Dashboard -->
-        <div id="dashboard-panel" class="panel active">
-            <div class="control-bar">
-                <label>Stage:</label>
-                <select id="stageSelect" class="form-select" onchange="onStageChange()">
-                    <option value="proxy|proxy_e2e">proxy_e2e</option>
-                    <option value="proxy|recall_rpc">recall_rpc</option>
-                    <option value="proxy|feature_rpc">feature_rpc</option>
-                    <option value="proxy|precalc_rpc">precalc_rpc</option>
-                    <option value="proxy|rank_rpc">rank_rpc</option>
-                    <option value="recall|recall_total">recall_total</option>
-                    <option value="precalc|precalc_total">precalc_total</option>
-                    <option value="rank_master|rank_master_total">rank_master_total</option>
-                    <option value="rank_sub|rank_sub_total">rank_sub_total</option>
-                </select>
-                <button class="btn btn-primary" onclick="refresh()">Refresh</button>
-            </div>
+        <!-- Perf -->
+        <div id="perf-panel" class="panel active">
+            <div class="stage-info" id="perf-stage-info">proxy / proxy_e2e</div>
             <div class="grid">
                 <div class="stat-card" style="border-left-color:#206bc4" id="card-count">
                     <div class="stat-body"><div class="stat-label">Count</div><div class="stat-value">-</div><div class="stat-unit">spans</div></div>
@@ -436,33 +480,11 @@
                 <h3>Latency Distribution</h3>
                 <canvas id="chart"></canvas>
             </div>
+            <div id="perf-tree" style="margin-top:24px"></div>
         </div>
 
-        <!-- Series -->
-        <div id="series-panel" class="panel">
-            <div class="control-bar">
-                <button class="btn btn-primary" onclick="startSeries()">+ New Series</button>
-                <button class="btn btn-ghost" onclick="stopSeries()">Stop Active</button>
-                <button class="btn btn-ghost" onclick="loadSeries()">Refresh</button>
-            </div>
-            <div id="series-list"></div>
-            <div id="series-detail" style="display:none">
-                <h3 id="series-detail-title"></h3>
-                <div id="series-stats" class="grid"></div>
-            </div>
-        </div>
-
-        <!-- Trace -->
-        <div id="trace-panel" class="panel">
-            <div class="control-bar">
-                <input type="text" id="traceIdInput" class="form-input" placeholder="Paste trace_id here" style="width:320px">
-                <button class="btn btn-primary" onclick="searchTrace()">Search</button>
-            </div>
-            <div id="trace-result"></div>
-        </div>
-
-        <!-- Load Test -->
-        <div id="loadtest-panel" class="panel">
+        <!-- Test -->
+        <div id="test-panel" class="panel">
             <div class="control-bar">
                 <label>User ID:</label>
                 <input type="number" id="lt-user-id" class="form-input" value="1000" style="width:100px">
@@ -490,9 +512,9 @@
                 </select>
             </div>
             <div class="control-bar">
-                <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer" title="Automatically create a Perf Series before sending (see results in Perf tab)">
                     <input type="checkbox" id="lt-use-series" checked>
-                    Auto Perf Series
+                    Automatically create a Perf Series for this test run
                 </label>
                 <button class="btn btn-primary" id="lt-send-btn" onclick="runLoadTest()">Send</button>
             </div>
@@ -502,11 +524,47 @@
             <div class="progress-text" id="lt-progress-text" style="display:none"></div>
             <div id="lt-results"></div>
         </div>
+
+        <!-- Series -->
+        <div id="series-panel" class="panel">
+            <div class="control-bar">
+                <button class="btn btn-primary" id="new-series-btn" onclick="startSeries()">+ New Series</button>
+                <button class="btn btn-ghost" onclick="stopSeries()">Stop Active</button>
+                <button class="btn btn-ghost" onclick="loadSeries()">Refresh</button>
+            </div>
+            <div id="series-hint" class="series-hint"></div>
+            <div id="series-list"></div>
+            <div id="series-detail" style="display:none">
+                <h3 id="series-detail-title"></h3>
+                <div id="series-stats" class="grid"></div>
+            </div>
+        </div>
+
+        <!-- Trace -->
+        <div id="trace-panel" class="panel">
+            <div class="control-bar">
+                <input type="text" id="traceIdInput" class="form-input" placeholder="Trace ID" style="width:320px">
+                <button class="btn btn-primary" onclick="searchTrace()">Search</button>
+                <button class="btn btn-ghost" onclick="showTraceTable()" style="margin-left:8px">Back to List</button>
+            </div>
+            <div id="trace-table">
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead><tr><th>Trace ID</th><th>Time</th><th>Spans</th><th class="text-end">Duration</th></tr></thead>
+                        <tbody id="trace-list"></tbody>
+                    </table>
+                </div>
+                <div style="text-align:center;margin-top:12px">
+                    <button class="btn btn-ghost" id="trace-load-more" onclick="loadTraceList(true)" style="display:none">Load More</button>
+                </div>
+            </div>
+            <div id="trace-result" style="display:none"></div>
+        </div>
     </div>
 
     <script src="/js/theme.js"></script>
     <script src="/js/api.js"></script>
-    <script src="/js/dashboard.js"></script>
+    <script src="/js/perf.js"></script>
     <script src="/js/series.js"></script>
     <script src="/js/trace.js"></script>
     <script src="/js/loadtest.js"></script>
@@ -518,6 +576,7 @@
             if (el) el.classList.add('active');
             document.getElementById(name + '-panel').classList.add('active');
             if (name === 'series') loadSeries();
+            if (name === 'trace') showTraceTable();
         }
     </script>
 </body>

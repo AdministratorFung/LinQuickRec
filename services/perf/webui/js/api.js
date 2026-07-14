@@ -97,3 +97,39 @@ async function fetchOutliers(service, stage) {
         return null;
     }
 }
+
+async function fetchStages() {
+    const url = `${API_BASE}/api/v1/stages`;
+    console.log('[api] fetchStages:', url);
+    try {
+        const resp = await fetch(url);
+        if (!resp.ok) {
+            console.warn('[api] fetchStages failed: HTTP', resp.status);
+            return [];
+        }
+        const data = await resp.json();
+        console.log('[api] fetchStages ok:', data.length, 'stages');
+        return data;
+    } catch (e) {
+        console.error('[api] fetchStages error:', e.message);
+        return [];
+    }
+}
+
+async function fetchTraces(limit, offset) {
+    const url = `${API_BASE}/api/v1/traces?limit=${limit}&offset=${offset}`;
+    console.log('[api] fetchTraces:', url);
+    try {
+        const resp = await fetch(url);
+        if (!resp.ok) {
+            console.warn('[api] fetchTraces failed: HTTP', resp.status);
+            return [];
+        }
+        const data = await resp.json();
+        console.log('[api] fetchTraces ok:', data.length, 'traces');
+        return data;
+    } catch (e) {
+        console.error('[api] fetchTraces error:', e.message);
+        return [];
+    }
+}

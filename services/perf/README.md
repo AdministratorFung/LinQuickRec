@@ -24,6 +24,8 @@ Perf collector 自身暴露可供拉取数据的 HTTP 端口，可通过 Prometh
 | `POST` | `/api/v1/series/stop` | 停止当前活跃系列 |
 | `GET` | `/api/v1/series` | 列出所有系列（id / name / span_count / status） |
 | `GET` | `/api/v1/outliers?service=<name>&stage=<name>` | 离群值检测（z-score） |
+| `GET` | `/api/v1/stages` | 返回所有有数据的 (service, stage, count) |
+| `GET` | `/api/v1/traces?limit=20&offset=0` | trace 列表聚合查询 |
 | `GET` | `/debug/perf` | 拉取原始 span 数据（供 collector puller 调用） |
 
 ```bash
@@ -45,25 +47,27 @@ Perf 的前端和后端已拆分为两个独立 Pod：
 
 浏览器访问 `http://<任一节点IP>:32000`，nginx 将 `/api/*` 请求转发到 collector。
 
-#### Dashboard
-- 下拉选择监控的 stage（proxy_e2e、recall_total 等）
-- 6 个实时指标卡片：Count / Average / P50 / P99 / Min / Max
-- 纯 Canvas 绘制的柱状图（无需 CDN 依赖）
-- 每 3 秒自动刷新
-- 右上角 🌙 按钮切换深色/浅色主题，偏好持久化到 localStorage
+#### Perf
+- 固定展示 `proxy_e2e` 端到端时延的 6 个指标卡片 + 柱状图
+- 底部调用树：展开/折叠 view 各层 service/stage 的时延数据
+- 点击任意节点切换卡片和图的数据源
+- 每 3 秒自动刷新当前选中节点
+
+#### Test
+- Single / Sequential / Concurrent 三种压测模式
+- 可配置 user_id（系列递增/随机）、payload（B/KB/MB）
+- 可选自动 Perf Series：发送前自动 start、完成后自动 stop，方便分析
 
 #### Series（请求系列）
-- **+ New Series**：开始记录一个请求系列
+- **+ New Series**：创建新系列（有 active 时禁用，必须先手动 stop）
 - **Stop Active**：停止当前活跃系列
 - 表格列出所有系列（ID / Name / Status / Span Count）
-- 点击系列行查看详情（status / span_count）
 
 #### Trace（链路追踪）
-- 输入 trace_id → Search
-- 瀑布图展示该请求跨所有服务的 Span 耗时分布
-- 按服务类型着色（proxy=蓝、recall=绿、precalc=橙 等）
-- 行尾 status 用彩色 Badge 标记（OK=绿、error=红）
-- 底部 10ⁿ ms 参考条 + span 总数 / 总耗时摘要
+- 默认展示所有 trace 的聚合列表（trace_id / time / span count / duration）
+- Load More 分页加载
+- 搜索框按 trace_id 精确搜索
+- 点击任意 trace → 瀑布图展示调用链详情
 
 ## 目录结构
 
@@ -88,7 +92,8 @@ services/perf/
 │   └── js/
 │       ├── api.js                     # API fetch wrappers
 │       ├── dashboard.js               # 6 metric cards + canvas chart
-│       ├── loadtest.js                # Load test: single/sequential/concurrent
+│       ├── perf.js                    # Perf tab: tree view + 6 stat cards + chart
+│       ├── loadtest.js                # Test tab: single/sequential/concurrent
 │       ├── series.js                  # Series lifecycle management
 │       ├── theme.js                   # Dark/light theme toggle
 │       └── trace.js                   # Waterfall tree with color-coded spans

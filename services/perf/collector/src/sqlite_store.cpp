@@ -130,6 +130,35 @@ std::vector<common::perf::Span> SqliteStore::QueryTrace(const std::string& trace
     return results;
 }
 
+std::vector<SqliteStore::TraceSummary> SqliteStore::QueryTraces(int limit, int offset) {
+    std::vector<TraceSummary> results;
+    if (!db_) return results;
+
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    const char* sql =
+        "SELECT trace_id, MIN(ts_us), COUNT(*), SUM(duration_ms) "
+        "FROM spans GROUP BY trace_id "
+        "ORDER BY MIN(ts_us) DESC LIMIT ? OFFSET ?";
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        return results;
+    }
+    sqlite3_bind_int(stmt, 1, limit);
+    sqlite3_bind_int(stmt, 2, offset);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        TraceSummary ts;
+        ts.trace_id = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        ts.ts_us = static_cast<uint64_t>(sqlite3_column_int64(stmt, 1));
+        ts.span_count = sqlite3_column_int(stmt, 2);
+        ts.total_duration_ms = static_cast<float>(sqlite3_column_double(stmt, 3));
+        results.push_back(ts);
+    }
+    sqlite3_finalize(stmt);
+    return results;
+}
+
 void SqliteStore::Cleanup(int64_t retention_seconds) {
     if (retention_seconds <= 0) return;  // unlimited retention
 

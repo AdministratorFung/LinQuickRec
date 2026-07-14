@@ -77,6 +77,10 @@ void ApiHandlerService::Handle(
         HandleSeries(cntl);
     } else if (uri.find("/api/v1/outliers") != std::string::npos) {
         HandleOutliers(cntl);
+    } else if (uri.find("/api/v1/stages") != std::string::npos) {
+        HandleStages(cntl);
+    } else if (uri.find("/api/v1/traces") != std::string::npos) {
+        HandleTraces(cntl);
     } else {
         HandleNotFound(cntl);
     }
@@ -208,6 +212,48 @@ void ApiHandlerService::HandleOutliers(brpc::Controller* cntl) {
          << R"(,"stddev":)" << st->StdDev()
          << R"(,"outliers":[])";
     body << "}";
+    JsonOk(cntl, body.str());
+}
+
+void ApiHandlerService::HandleStages(brpc::Controller* cntl) {
+    auto keys = StatsEngine::Instance().GetAllKeys();
+    std::ostringstream body;
+    body << "[";
+    for (size_t i = 0; i < keys.size(); ++i) {
+        if (i > 0) body << ",";
+        body << R"({"service":")" << keys[i].service
+             << R"(","stage":")" << keys[i].stage
+             << R"(","count":)" << keys[i].count << "}";
+    }
+    body << "]";
+    JsonOk(cntl, body.str());
+}
+
+void ApiHandlerService::HandleTraces(brpc::Controller* cntl) {
+    std::string uri = cntl->http_request().uri().path();
+    std::string qs = cntl->http_request().uri().query();
+    if (!qs.empty()) uri += "?" + qs;
+    int limit = 20;
+    int offset = 0;
+    std::string l = ExtractParam(uri, "limit");
+    std::string o = ExtractParam(uri, "offset");
+    if (!l.empty()) limit = std::stoi(l);
+    if (!o.empty()) offset = std::stoi(o);
+    if (limit < 1) limit = 1;
+    if (limit > 100) limit = 100;
+
+    auto traces = sqlite_store_->QueryTraces(limit, offset);
+    std::ostringstream body;
+    body << "[";
+    for (size_t i = 0; i < traces.size(); ++i) {
+        if (i > 0) body << ",";
+        body << R"({"trace_id":")" << traces[i].trace_id
+             << R"(","ts_us":)" << traces[i].ts_us
+             << R"(,"span_count":)" << traces[i].span_count
+             << R"(,"total_duration_ms":)" << traces[i].total_duration_ms
+             << "}";
+    }
+    body << "]";
     JsonOk(cntl, body.str());
 }
 

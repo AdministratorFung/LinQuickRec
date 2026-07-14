@@ -69,4 +69,19 @@ void StatsEngine::ResetRecent() {
     }
 }
 
+std::vector<StatsEngine::StageKey> StatsEngine::GetAllKeys() const {
+    std::vector<StageKey> keys;
+    for (const auto& kv : stage_stats_) {
+        const auto& key = kv.first;
+        size_t sep = key.find('|');
+        if (sep == std::string::npos) continue;
+        keys.push_back({
+            key.substr(0, sep),
+            key.substr(sep + 1),
+            kv.second.all_time.Count()
+        });
+    }
+    return keys;
+}
+
 } // namespace perf

@@ -3,6 +3,22 @@ async function loadSeries() {
     const list = await fetchSeriesList();
     console.log('[series] loaded:', list.length, 'series');
     const container = document.getElementById('series-list');
+    const btn = document.getElementById('new-series-btn');
+    const hint = document.getElementById('series-hint');
+
+    // Active mutual exclusion: can only create new when no active exists
+    const hasActive = list.some(s => s.status === 'active');
+    if (btn) {
+        btn.disabled = hasActive;
+        btn.title = hasActive ? 'Stop the active series first' : '';
+    }
+    if (hint) {
+        hint.textContent = hasActive
+            ? 'A series is currently active. Stop it before creating a new one.'
+            : 'Create a new series to start recording spans.';
+        hint.className = 'series-hint' + (hasActive ? ' hint-active' : '');
+    }
+
     if (!list.length) {
         container.innerHTML = '<div class="empty-state">No series yet. Click <strong>+ New Series</strong> to start.</div>';
         return;
