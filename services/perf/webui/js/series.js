@@ -1,5 +1,7 @@
 async function loadSeries() {
+    console.log('[series] loading...');
     const list = await fetchSeriesList();
+    console.log('[series] loaded:', list.length, 'series');
     const container = document.getElementById('series-list');
     if (!list.length) {
         container.innerHTML = '<div class="empty-state">No series yet. Click <strong>+ New Series</strong> to start.</div>';
@@ -23,6 +25,7 @@ async function loadSeries() {
 async function startSeries() {
     const name = prompt('Series name:', 'baseline-' + new Date().toISOString().slice(0, 19));
     if (!name) return;
+    console.log('[series] starting:', name);
     const result = await startSeriesReq(name);
     if (result.error) {
         showToast('Failed to start series: ' + result.error, 'error');
@@ -33,6 +36,7 @@ async function startSeries() {
 }
 
 async function stopSeries() {
+    console.log('[series] stopping active series');
     const result = await stopSeriesReq();
     if (result.error) {
         showToast('Failed to stop series', 'error');

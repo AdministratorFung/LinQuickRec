@@ -88,6 +88,7 @@ async function runLoadTest() {
     const payload = generatePayload(payloadSize, payloadUnit);
     if (payload === null) { loadTestRunning = false; return; }
 
+    console.log('[loadtest] starting:', mode, count || 1, 'requests, payload:', payloadSize, payloadUnit);
     let uid = userId;
     const results = [];
     resultsContainer.innerHTML = '';
@@ -146,6 +147,7 @@ async function runLoadTest() {
     loadTestRunning = false;
 
     const stats = calcStats(results);
+    console.log('[loadtest] done:', results.length, 'requests, avg:', stats.avg.toFixed(2), 'ms');
     resultsContainer.innerHTML = renderResults(results, stats);
 }
 

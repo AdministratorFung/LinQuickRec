@@ -20,6 +20,7 @@ function statusBadge(status) {
 
 async function searchTrace() {
     const traceId = document.getElementById('traceIdInput').value.trim();
+    console.log('[trace] searching:', traceId);
     if (!traceId) return;
 
     const container = document.getElementById('trace-result');
@@ -28,6 +29,7 @@ async function searchTrace() {
     const result = await fetchTrace(traceId);
 
     if (!result || !result.tree) {
+        console.warn('[trace] not found:', traceId);
         container.innerHTML = '<div class="empty-state">Trace not found.</div>';
         return;
     }
@@ -83,6 +85,7 @@ async function searchTrace() {
 
     // Summary
     const totalMs = totalRange.toFixed(1);
+    console.log('[trace] found:', allSpans.length, 'spans,', totalMs, 'ms total');
     html += `<div class="trace-summary">${allSpans.length} spans &middot; ${totalMs} ms total &middot; reference bar = ${refMs} ms</div>`;
 
     // Reference bar

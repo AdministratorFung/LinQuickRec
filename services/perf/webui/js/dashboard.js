@@ -130,12 +130,15 @@ function setLoading(state) {
 }
 
 async function refresh() {
-    const sel = document.getElementById('stageSelect').value;
-    const [service, stage] = sel.split('|');
+    const sel = document.getElementById('stageSelect');
+    if (!sel) { console.error('[dashboard] stageSelect element not found'); return; }
+    const [service, stage] = sel.value.split('|');
+    console.log('[dashboard] refresh:', service, stage);
     setLoading(true);
 
     const stats = await fetchStats(service, stage);
     if (!stats || stats.error) {
+        console.warn('[dashboard] no data for', service, stage, ':', stats ? stats.error : 'null response');
         for (const id of ['card-count', 'card-avg', 'card-p50', 'card-p99', 'card-min', 'card-max']) {
             const el = document.getElementById(id);
             if (!el) continue;
@@ -145,11 +148,12 @@ async function refresh() {
         return;
     }
 
+    console.log('[dashboard] rendering cards + chart, count=', stats.count);
     updateCards(stats);
     try {
         drawChart(stats);
     } catch (e) {
-        console.error('drawChart failed:', e);
+        console.error('[dashboard] drawChart error:', e);
     }
 }
 
