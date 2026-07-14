@@ -72,7 +72,7 @@ services:
   perf-webui:
     build:
       context: ../..
-      dockerfile: services/perf/webui/Dockerfile
+      dockerfile: deploy/docker/perf-webui/Dockerfile
     image: linquickrec/perf-webui:latest
     ports:
       - "32000:32000"
