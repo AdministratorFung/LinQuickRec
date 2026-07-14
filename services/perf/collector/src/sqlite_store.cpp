@@ -66,7 +66,10 @@ void SqliteStore::PrepareStatements() {
     const char* sql =
         "INSERT INTO spans (ts_us, service, stage, metric, trace_id, "
         "duration_ms, status) VALUES (?,?,?,?,?,?,?)";
-    sqlite3_prepare_v2(db_, sql, -1, &stmt_insert_, nullptr);
+    int rc = sqlite3_prepare_v2(db_, sql, -1, &stmt_insert_, nullptr);
+    if (rc != SQLITE_OK) {
+        LOG_ERROR << "SQLite: prepare insert stmt failed: " << sqlite3_errmsg(db_);
+    }
 }
 
 void SqliteStore::FinalizeStatements() {
@@ -79,8 +82,15 @@ void SqliteStore::FinalizeStatements() {
 void SqliteStore::Flush(std::vector<common::perf::Span>& batch) {
     if (batch.empty() || !stmt_insert_) return;
 
+    LOG_INFO << "SQLite: flushing " << batch.size() << " spans";
     std::lock_guard<std::mutex> lock(mutex_);
-    sqlite3_exec(db_, "BEGIN TRANSACTION", nullptr, nullptr, nullptr);
+    char* err = nullptr;
+    int rc = sqlite3_exec(db_, "BEGIN TRANSACTION", nullptr, nullptr, &err);
+    if (rc != SQLITE_OK) {
+        LOG_ERROR << "SQLite: BEGIN TRANSACTION failed: " << (err ? err : "unknown");
+        if (err) sqlite3_free(err);
+        return;
+    }
 
     for (auto& s : batch) {
         sqlite3_bind_int64(stmt_insert_, 1, static_cast<int64_t>(s.ts_us));

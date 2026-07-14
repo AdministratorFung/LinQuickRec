@@ -48,6 +48,8 @@ int main(int argc, char* argv[]) {
                           brpc::SERVER_OWNS_SERVICE,
                           "/debug/perf => Dump") != 0) {
         LOG_ERROR << "Failed to add PerfService";
+    } else {
+        LOG_INFO << "PerfService added (/debug/perf => Dump)";
     }
 
     perf::SqliteStore sqlite;
@@ -62,6 +64,12 @@ int main(int argc, char* argv[]) {
         LOG_ERROR << "Failed to add ApiHandlerService";
         return -1;
     }
+    LOG_INFO << "ApiHandlerService added (/api/* => Handle)";
+
+    LOG_INFO << "Config: backend=" << FLAGS_registry_backend
+             << " addr=" << backend_addr
+             << " db=" << FLAGS_sqlite_db_path
+             << " retention=" << FLAGS_retention_days << "d";
 
     brpc::ServerOptions opts;
     opts.has_builtin_services = false;

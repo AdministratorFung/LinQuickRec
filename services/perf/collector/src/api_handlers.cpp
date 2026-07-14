@@ -67,6 +67,11 @@ void ApiHandlerService::Handle(
     std::string qs = cntl->http_request().uri().query();
     if (!qs.empty()) uri += "?" + qs;
 
+    // Log non-health requests for traceability
+    if (uri.find("/api/v1/health") == std::string::npos) {
+        LOG_INFO << "API: " << uri;
+    }
+
     if (uri.find("/api/v1/health") != std::string::npos) {
         HandleHealth(cntl);
     } else if (uri.find("/api/v1/stats/current") != std::string::npos) {
@@ -100,12 +105,14 @@ void ApiHandlerService::HandleStatsCurrent(brpc::Controller* cntl) {
     std::string stage = ExtractParam(uri, "stage");
 
     if (service.empty() || stage.empty()) {
+        LOG_WARN << "API: stats/current missing service or stage param";
         JsonError(cntl, 400, "missing service or stage param");
         return;
     }
 
     auto* st = StatsEngine::Instance().Get(service, stage);
     if (!st) {
+        LOG_WARN << "API: no data for " << service << "|" << stage;
         JsonError(cntl, 404, "no data for " + service + "|" + stage);
         return;
     }
@@ -168,6 +175,7 @@ void ApiHandlerService::HandleSeries(brpc::Controller* cntl) {
         int64_t now_us = std::chrono::duration_cast<std::chrono::microseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count();
         int64_t id = SeriesManager::Instance().Start(name, now_us);
+        LOG_INFO << "Series started: id=" << id << " name=" << name;
         std::ostringstream body;
         body << R"({"id":)" << id << R"(,"name":")" << name << R"(","status":"active"})";
         JsonOk(cntl, body.str());
@@ -175,6 +183,7 @@ void ApiHandlerService::HandleSeries(brpc::Controller* cntl) {
         int64_t now_us = std::chrono::duration_cast<std::chrono::microseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count();
         SeriesManager::Instance().Stop(now_us);
+        LOG_INFO << "Series stopped";
         JsonOk(cntl, R"({"status":"stopped"})");
     } else {
         // List all series
@@ -258,6 +267,7 @@ void ApiHandlerService::HandleTraces(brpc::Controller* cntl) {
 }
 
 void ApiHandlerService::HandleNotFound(brpc::Controller* cntl) {
+    LOG_WARN << "API 404: " << cntl->http_request().uri().path();
     JsonError(cntl, 404, "not found");
 }
 

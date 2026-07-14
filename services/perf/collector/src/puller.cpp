@@ -52,6 +52,7 @@ bool PullService(const std::string& host, int port,
 
     std::string addr = host + ":" + std::to_string(port);
     if (channel.Init(addr.c_str(), &opts) != 0) {
+        LOG_WARN << "Puller: channel init failed for " << addr;
         return false;
     }
 
@@ -61,7 +62,13 @@ bool PullService(const std::string& host, int port,
 
     channel.CallMethod(nullptr, &cntl, nullptr, nullptr, nullptr);
 
-    if (cntl.Failed() || cntl.http_response().status_code() != 200) {
+    if (cntl.Failed()) {
+        LOG_WARN << "Puller: RPC failed for " << addr << ": " << cntl.ErrorText();
+        return false;
+    }
+    if (cntl.http_response().status_code() != 200) {
+        LOG_WARN << "Puller: HTTP " << cntl.http_response().status_code()
+                 << " from " << addr;
         return false;
     }
 
@@ -101,12 +108,15 @@ void StartPuller(
             int port;
             std::string instance_id;
             if (!discovery->GetInstance(service_name, host, port, instance_id)) {
+                LOG_DEBUG << "Puller: " << service_name << " not found in discovery";
                 continue;
             }
 
             std::vector<common::perf::Span> spans;
             uint64_t dropped = 0;
             if (PullService(host, port, spans, dropped)) {
+                LOG_INFO << "Puller: pulled " << spans.size() << " spans from "
+                         << service_name << " at " << host << ":" << port;
                 if (dropped > 0) {
                     LOG_WARN << "Ring buffer overflow on " << service_name
                              << ": " << dropped << " spans dropped";
