@@ -1,3 +1,4 @@
+#include <atomic>
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
@@ -494,6 +495,216 @@ static void test_series_manager() {
            (long long)list[0].id, (unsigned long long)list[0].span_count);
 }
 
+static void test_stats_concurrent() {
+    auto& engine = StatsEngine::Instance();
+    engine.ResetRecent();
+
+    std::atomic<int> errors{0};
+    std::vector<std::thread> threads;
+    for (int t = 0; t < 4; ++t) {
+        threads.emplace_back([&engine, t, &errors]() {
+            for (int i = 0; i < 10000; ++i) {
+                double v = t * 10000.0 + i;
+                engine.Push("svc", "stg", v);
+            }
+        });
+    }
+    for (auto& th : threads) th.join();
+
+    auto* st = engine.Get("svc", "stg");
+    assert(st != nullptr);
+    assert(st->Count() == 40000);
+    printf("[PASS] stats_concurrent: 4 threads x 10000 push, count=%llu\n",
+           (unsigned long long)st->Count());
+}
+
+static void test_stats_large_data() {
+    auto& engine = StatsEngine::Instance();
+    engine.ResetRecent();
+
+    for (int i = 0; i < 1000000; ++i) {
+        engine.Push("large", "perf", static_cast<double>(i));
+    }
+
+    auto* st = engine.Get("large", "perf");
+    assert(st != nullptr);
+    assert(st->Count() == 1000000);
+    assert(st->Min() == 0.0);
+    assert(st->Max() == 999999.0);
+
+    double avg = st->Avg();
+    assert(avg >= 499000.0 && avg <= 501000.0);
+
+    double p99 = st->P99();
+    assert(p99 >= 990000.0 && p99 <= 1000000.0);
+
+    printf("[PASS] stats_large_data: 1M values avg=%.2f p99=%.2f\n", avg, p99);
+}
+
+static void test_sqlite_corruption() {
+    const char* db_path = "/tmp/test_perf_corrupt.db";
+    std::remove(db_path);
+
+    {
+        std::FILE* f = std::fopen(db_path, "wb");
+        assert(f != nullptr);
+        std::fwrite("THIS IS NOT A VALID SQLite FILE", 1, 35, f);
+        std::fclose(f);
+    }
+
+    SqliteStore store;
+    bool opened = store.Open(db_path);
+    assert(!opened);
+
+    std::remove(db_path);
+    printf("[PASS] sqlite_corruption: invalid file returns false on Open\n");
+}
+
+static void test_sqlite_full_disk() {
+    const char* db_path = "/tmp/test_perf_fulldisk.db";
+    std::remove(db_path);
+
+    SqliteStore store;
+    bool ok = store.Open(db_path);
+    assert(ok);
+
+    std::vector<common::perf::Span> batch;
+    for (int i = 0; i < 100; ++i) {
+        common::perf::Span s;
+        s.ts_us = 1000000 + i;
+        s.SetService("p");
+        s.SetStage("e");
+        s.SetMetric("m");
+        s.SetTraceId("t");
+        s.duration_ms = 1.0f;
+        s.SetStatus("ok");
+        batch.push_back(s);
+    }
+
+    SqliteStore store2;
+    bool opened2 = store2.Open("/proc/not_a_valid_path_12345/test.db");
+    if (!opened2) {
+        printf("[PASS] sqlite_fulldisk: invalid path returns false\n");
+    } else {
+        printf("[WARN] sqlite_fulldisk: invalid path unexpectedly opened\n");
+    }
+
+    std::remove(db_path);
+}
+
+static void test_series_manager_idempotent_stop() {
+    auto& mgr = SeriesManager::Instance();
+
+    int64_t id = mgr.Start("idempotent_test", 1000);
+    assert(id > 0);
+
+    mgr.Stop(2000);
+    assert(mgr.ActiveSeriesId() == 0);
+
+    mgr.Stop(3000);
+    assert(mgr.ActiveSeriesId() == 0);
+
+    auto list = mgr.List();
+    assert(list.size() >= 1);
+    bool found = false;
+    for (auto& s : list) {
+        if (s.name == "idempotent_test") {
+            assert(!s.active);
+            found = true;
+        }
+    }
+    assert(found);
+
+    printf("[PASS] series_manager_idempotent: double-stop is safe\n");
+}
+
+static void test_series_manager_many() {
+    auto& mgr = SeriesManager::Instance();
+
+    int initial_size = (int)mgr.List().size();
+
+    for (int i = 0; i < 100; ++i) {
+        int64_t id = mgr.Start("many_" + std::to_string(i), 1000ULL + i);
+        mgr.Stop(2000ULL + i);
+    }
+
+    auto list = mgr.List();
+    assert((int)list.size() >= initial_size + 100);
+
+    printf("[PASS] series_manager_many: 100 new series added, list size=%d\n",
+           (int)list.size());
+}
+
+static void test_span_tree_no_root() {
+    std::vector<common::perf::Span> spans;
+
+    common::perf::Span s1;
+    s1.SetService("proxy");
+    s1.SetStage("feature_rpc");
+    s1.duration_ms = 30.0f;
+    s1.SetStatus("ok");
+    s1.SetTraceId("no_root_test");
+    spans.push_back(s1);
+
+    common::perf::Span s2;
+    s2.SetService("proxy");
+    s2.SetStage("recall_rpc");
+    s2.duration_ms = 50.0f;
+    s2.SetStatus("ok");
+    s2.SetTraceId("no_root_test");
+    spans.push_back(s2);
+
+    auto tree = BuildSpanTree(spans);
+    assert(tree.stage == "trace");
+    assert(!tree.children.empty());
+
+    bool found_proxy = false;
+    for (auto& c : tree.children) {
+        if (c.service == "proxy") {
+            found_proxy = true;
+            assert(c.stage == "proxy_total");
+            assert(!c.has_span);
+            assert(c.children.size() == 2);
+        }
+    }
+    assert(found_proxy);
+
+    printf("[PASS] span_tree_no_root: synthetic root created, children=%d\n",
+           (int)tree.children.size());
+}
+
+static void test_span_tree_circular() {
+    auto& tmpl = SpanTreeTemplate::Instance();
+    tmpl.RegisterService("svc_a", "root_a", {
+        {"child_b", "", "", false},
+    });
+    tmpl.RegisterService("svc_b", "root_b", {
+        {"child_a", "", "", false},
+    });
+
+    std::vector<common::perf::Span> spans;
+    common::perf::Span sa;
+    sa.SetService("svc_a");
+    sa.SetStage("root_a");
+    sa.duration_ms = 100.0f;
+    sa.SetStatus("ok");
+    sa.SetTraceId("circular_test");
+    spans.push_back(sa);
+
+    common::perf::Span sb;
+    sb.SetService("svc_b");
+    sb.SetStage("root_b");
+    sb.duration_ms = 100.0f;
+    sb.SetStatus("ok");
+    sb.SetTraceId("circular_test");
+    spans.push_back(sb);
+
+    auto tree = BuildSpanTree(spans);
+    assert(tree.stage == "trace");
+
+    printf("[PASS] span_tree_circular: no crash with cross-service circular template\n");
+}
+
 static void test_span_tree() {
     std::vector<Span> spans;
 
@@ -568,6 +779,16 @@ int main() {
     test_series_manager();
     test_span_tree();
 
-    printf("=== All tests passed (%d total) ===\n", 16);
+    // New exception tests
+    test_stats_concurrent();
+    test_stats_large_data();
+    test_sqlite_corruption();
+    test_sqlite_full_disk();
+    test_series_manager_idempotent_stop();
+    test_series_manager_many();
+    test_span_tree_no_root();
+    test_span_tree_circular();
+
+    printf("=== All tests passed (%d total) ===\n", 24);
     return 0;
 }

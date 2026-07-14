@@ -20,6 +20,8 @@ bool SqliteStore::Open(const std::string& db_path) {
         nullptr);
     if (rc != SQLITE_OK) {
         LOG_ERROR << "Failed to open SQLite: " << sqlite3_errmsg(db_);
+        sqlite3_close(db_);
+        db_ = nullptr;
         return false;
     }
 
@@ -53,6 +55,8 @@ bool SqliteStore::Open(const std::string& db_path) {
         if (rc != SQLITE_OK) {
             LOG_ERROR << "SQLite error: " << (err ? err : "unknown");
             if (err) sqlite3_free(err);
+            sqlite3_close(db_);
+            db_ = nullptr;
             return false;
         }
     }
