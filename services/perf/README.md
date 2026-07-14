@@ -86,10 +86,7 @@ services/perf/
 │       ├── series_manager.cpp        # Series lifecycle API
 │       └── api_handlers.cpp          # REST API handlers
 ├── webui/
-│   ├── Dockerfile                     # nginx:alpine based image
 │   ├── index.html                     # Dashboard + Series + Trace (Tabler-style SPA)
-│   ├── nginx/
-│   │   └── default.conf               # Reverse proxy /api/* → collector
 │   └── js/
 │       ├── api.js                     # API fetch wrappers
 │       ├── dashboard.js               # 6 metric cards + canvas chart
@@ -219,7 +216,7 @@ docker build -t linquickrec/perf-collector:latest \
 
 # webui
 docker build -t linquickrec/perf-webui:latest \
-  -f services/perf/webui/Dockerfile .
+  -f deploy/docker/perf-webui/Dockerfile .
 
 # 或通过 docker-compose
 docker compose -f deploy/docker/docker-compose.yml build perf-collector perf-webui

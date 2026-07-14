@@ -20,6 +20,11 @@ deploy/docker/
 │   ├── Dockerfile              # 元戎 Datasystem Worker 镜像
 │   ├── entrypoint.sh           # 启动 datasystem + discovery_client
 │   └── start_datasystem.sh     # datasystem 启动脚本
+├── perf-collector/
+│   └── entrypoint.sh           # 启动 perf-collector
+├── perf-webui/
+│   ├── Dockerfile              # nginx:alpine WebUI 静态服务
+│   └── default.conf            # 反向代理 /api/* → collector
 ├── precalc/
 │   ├── Dockerfile              # Precalc 服务镜像
 │   └── entrypoint.sh           # 启动 Precalc + discovery_client
