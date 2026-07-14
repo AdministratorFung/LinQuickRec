@@ -147,34 +147,10 @@ phase "Phase 3: Pod Readiness Check"
 
 while true; do
     check_timeout
-    pods_json=$(kubectl get pods -n "$NAMESPACE" -o json 2>/dev/null) || true
 
-    if [[ -z "$pods_json" ]]; then
-        die "Cannot parse pod data"
-    fi
-
-    total=$(echo "$pods_json" | python3 -c "
-import json,sys
-pods=json.load(sys.stdin)['items']
-print(len(pods))
-" 2>/dev/null) || total=0
-
-    ready=$(echo "$pods_json" | python3 -c "
-import json,sys
-pods=json.load(sys.stdin)['items']
-r=0
-for p in pods:
-    status = p.get('status', {})
-    phase = status.get('phase', '')
-    if phase == 'Succeeded':
-        r += 1
-        continue
-    conds = {c['type']: c.get('status','') for c in status.get('conditions', [])}
-    containers = status.get('containerStatuses', [])
-    all_ready = all(c.get('ready', False) for c in containers) if containers else conds.get('Ready') == 'True'
-    if phase == 'Running' and all_ready:
-        r += 1
-" 2>/dev/null) || ready=0
+    total=$(kubectl get pods -n "$NAMESPACE" --no-headers 2>/dev/null | wc -l)
+    ready=$(kubectl get pods -n "$NAMESPACE" --no-headers 2>/dev/null | \
+        awk '{split($2,r,"/"); if (($3=="Running" && r[1]==r[2]) || $3=="Completed") print}' | wc -l)
 
     info "Ready pods: ${ready}/${total}  ($(elapsed)s / ${TIMEOUT}s)"
 
@@ -184,37 +160,11 @@ for p in pods:
     fi
 
     # Check for error states
-    if echo "$pods_json" | python3 -c "
-import json,sys
-pods=json.load(sys.stdin)['items']
-for p in pods:
-    status = p.get('status', {})
-    phase = status.get('phase', '')
-    if phase in ('Failed',):
-        print(p['metadata']['name'])
-        sys.exit(0)
-    for cs in status.get('containerStatuses', []):
-        w = cs.get('state', {}).get('waiting', {})
-        if w.get('reason') in ('CrashLoopBackOff', 'ImagePullBackOff', 'ErrImagePull', 'Error'):
-            print(p['metadata']['name'])
-            sys.exit(0)
-sys.exit(1)
-" 2>/dev/null; then
-        bad_pod=$(echo "$pods_json" | python3 -c "
-import json,sys
-pods=json.load(sys.stdin)['items']
-for p in pods:
-    status = p.get('status', {})
-    if status.get('phase') in ('Failed',):
-        print(p['metadata']['name'])
-        sys.exit(0)
-    for cs in status.get('containerStatuses', []):
-        w = cs.get('state', {}).get('waiting', {})
-        if w.get('reason') in ('CrashLoopBackOff', 'ImagePullBackOff', 'ErrImagePull', 'Error'):
-            print(p['metadata']['name'])
-            sys.exit(0)
-sys.exit(1)
-" 2>/dev/null)
+    bad_pod=$(kubectl get pods -n "$NAMESPACE" --no-headers 2>/dev/null | \
+        grep -E "CrashLoopBackOff|ImagePullBackOff|ErrImagePull|Error|OOMKilled" | \
+        awk '{print $1}' | head -1)
+
+    if [ -n "$bad_pod" ]; then
         fail "Pod ${bad_pod} is in error state"
         error_diagnose "$bad_pod"
         die "Pod has errors"
