@@ -75,8 +75,6 @@ services/perf/
 ├── TODO.md
 ├── collector/
 │   ├── CMakeLists.txt
-│   ├── Dockerfile
-│   ├── entrypoint.sh
 │   └── src/
 │       ├── main.cpp                  # BRPC server + puller startup
 │       ├── puller.cpp                # Periodic BRPC puller via discovery
@@ -212,7 +210,7 @@ Perf 拆分为两个独立镜像：collector（数据采集 + API）和 webui（
 ```bash
 # collector
 docker build -t linquickrec/perf-collector:latest \
-  -f services/perf/collector/Dockerfile .
+  -f deploy/docker/perf-collector/Dockerfile .
 
 # webui
 docker build -t linquickrec/perf-webui:latest \
