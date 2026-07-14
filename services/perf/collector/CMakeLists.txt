@@ -79,6 +79,7 @@ add_executable(perf_collector
     src/api_handlers.cpp
     src/series_manager.cpp
     src/span_tree.cpp
+    src/init_status.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/discovery.pb.cc
     ${PERF_PROTO_SRC}
     ${API_PROTO_SRC}
@@ -114,6 +115,7 @@ add_executable(perf_integration_test
     src/series_manager.cpp
     src/span_tree.cpp
     src/api_handlers.cpp
+    src/init_status.cpp
     ${PERF_PROTO_SRC}
     ${API_PROTO_SRC}
 )

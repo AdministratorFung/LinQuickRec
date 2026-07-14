@@ -7,7 +7,7 @@
 namespace perf {
 
 struct InitStatus {
-    std::atomic<bool> ready{false};
+    std::atomic<bool> ready{true};   // default true: tests and fresh installs are ready
     std::atomic<int64_t> progress{0};
     std::atomic<int64_t> total{0};
 };

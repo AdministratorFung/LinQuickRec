@@ -27,8 +27,6 @@ void StartPuller(std::shared_ptr<common::ServiceDiscovery> discovery,
                  int retention_days);
 } // namespace perf
 
-perf::InitStatus perf::g_init_status;
-
 int main(int argc, char* argv[]) {
     gflags::ParseCommandLineFlags(&argc, &argv, true);
 
@@ -89,19 +87,21 @@ int main(int argc, char* argv[]) {
     LOG_INFO << "Perf-collector listening on port " << FLAGS_server_port;
 
     // Init series manager from SQLite before starting puller
-    SeriesManager::Instance().Init(&sqlite);
+    perf::SeriesManager::Instance().Init(&sqlite);
 
     // Async rebuild StatsEngine from historical spans
+    perf::g_init_status.ready.store(false);
+
     std::thread rebuild_thread([&sqlite]() {
         auto spans = sqlite.LoadAllSpans();
-        g_init_status.total.store(static_cast<int64_t>(spans.size()));
+        perf::g_init_status.total.store(static_cast<int64_t>(spans.size()));
         LOG_INFO << "Rebuild: loading " << spans.size() << " historical spans";
         for (size_t i = 0; i < spans.size(); ++i) {
-            StatsEngine::Instance().Push(spans[i].service, spans[i].stage,
+            perf::StatsEngine::Instance().Push(spans[i].service, spans[i].stage,
                                          spans[i].duration_ms);
-            g_init_status.progress.store(static_cast<int64_t>(i + 1));
+            perf::g_init_status.progress.store(static_cast<int64_t>(i + 1));
         }
-        g_init_status.ready.store(true);
+        perf::g_init_status.ready.store(true);
         LOG_INFO << "Rebuild: complete (" << spans.size() << " spans processed)";
     });
     rebuild_thread.detach();
