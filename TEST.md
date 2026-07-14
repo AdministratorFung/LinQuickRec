@@ -235,22 +235,19 @@
 
 | 组件 | 测试内容 |
 |------|---------|
-| StatsEngine | 100个值(1-100)统计: Count/Min/Max/Avg/P50/P99 |
-| SqliteStore | 批量写入Span、查询指定trace、Cleanup(0) |
-| SeriesManager | 创建series、递增span_count、停止series |
-| SpanTree | 跨服务8个span建树、验证父子关系 |
+| PerfRingRegistry | Push/TakeAll单条、溢出覆盖(200条→dropped≥100) |
+| PerfService | /debug/perf返回spans JSON |
+| ApiHandler | /api/v1/health(200)、/stats/current(200/400/404)、/no_such_endpoint(404) |
+| OutlierDetector | z-score阈值、stddev=0/threshold=0边界 |
+| SqliteStore | 空Flush不crash、无效路径Open失败、Cleanup保留新数据、损坏文件Open失败 |
+| StatsEngine | 100值统计(Count/Min/Max/Avg/P50/P99)、4线程并发Push、1M数据P99精度 |
+| SeriesManager | 创建/停止series、stop幂等性、100个series累积 |
+| SpanTree | 跨服务8span建树、缺少根span生成synthetic root、循环template不crash |
 
-**已有测试覆盖：** 统计计算、持久化存储、时间线管理、Span树结构。
+**已有测试覆盖：** 统计计算、持久化存储、时间线管理、Span树结构、并发push、空/损坏输入容错。**全部24个场景已Docker验证通过。**
 
 **待补充的异常测试：**
-- StatsEngine: 大量数据（100万+）的P99计算性能和精度
-- StatsEngine: 并发push（多线程同时写入）
-- SqliteStore: 数据库文件损坏的容错
-- SqliteStore: 磁盘空间不足的写入失败
-- SeriesManager: series数量超过内存限制
-- SeriesManager: stop后再次stop的幂等性
-- SpanTree: 缺少根span的异常输入
-- SpanTree: 循环依赖的span关系（span A是span B的父亲，span B也是span A的父亲）
+- SqliteStore: 磁盘空间不足的真实写入失败（当前用无效路径模拟）
 
 ---
 
@@ -265,4 +262,4 @@
 | RankSub | 18 (单元11+集成7) | 2 |
 | Proxy | 11 | 4 |
 | Discovery | 9 (跨3个测试文件) | 6+ |
-| PerfCollector | 4 | 7+ |
+| PerfCollector | 24 | 1 |
