@@ -96,7 +96,7 @@ parse_args() {
             -r|--registry)
                 if [[ $# -lt 2 ]]; then die "Missing value for --registry"; fi
                 REGISTRY="${2%/}"; shift 2 ;;
-            etcd|feature|proxy|precalc|recall|rank-sub|perf)
+            etcd|feature|proxy|precalc|recall|rank-sub|perf|webui)
                 if [[ -n "$SERVICE" ]]; then die "Only one service allowed, got '${SERVICE}' and '$1'"; fi
                 SERVICE="$1"; shift ;;
             *) die "Unknown option: $1" ;;
