@@ -148,26 +148,38 @@ phase "Phase 3: Pod Readiness Check"
 while true; do
     check_timeout
 
-    total=$(kubectl get pods -n "$NAMESPACE" --no-headers 2>/dev/null | wc -l)
-    ready=$(kubectl get pods -n "$NAMESPACE" --no-headers 2>/dev/null | \
-        awk '{split($2,r,"/"); if (($3=="Running" && r[1]==r[2]) || $3=="Completed") print}' | wc -l)
+    total=0
+    ready=0
+    bad_pod=""
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        status=$(echo "$line" | awk '{print $3}')
+        rdy=$(echo "$line" | awk '{split($2,a,"/"); print a[1]}')
+        des=$(echo "$line" | awk '{split($2,a,"/"); print a[2]}')
+
+        ((total++))
+        if [[ "$status" == "Running" && "$rdy" == "$des" ]]; then
+            ((ready++))
+        elif [[ "$status" == "Completed" ]]; then
+            ((ready++))
+        fi
+
+        if echo "$line" | grep -qE "CrashLoopBackOff|ImagePullBackOff|ErrImagePull"; then
+            bad_pod=$(echo "$line" | awk '{print $1}')
+        fi
+    done < <(kubectl get pods -n "$NAMESPACE" --no-headers 2>/dev/null || true)
 
     info "Ready pods: ${ready}/${total}  ($(elapsed)s / ${TIMEOUT}s)"
-
-    if [ "$ready" -ge "$total" ] && [ "$total" -gt 0 ]; then
-        ok "All ${total} pods ready"
-        break
-    fi
-
-    # Check for error states
-    bad_pod=$(kubectl get pods -n "$NAMESPACE" --no-headers 2>/dev/null | \
-        grep -E "CrashLoopBackOff|ImagePullBackOff|ErrImagePull|Error|OOMKilled" | \
-        awk '{print $1}' | head -1)
 
     if [ -n "$bad_pod" ]; then
         fail "Pod ${bad_pod} is in error state"
         error_diagnose "$bad_pod"
         die "Pod has errors"
+    fi
+
+    if [ "$ready" -ge "$total" ] && [ "$total" -gt 0 ]; then
+        ok "All ${total} pods ready"
+        break
     fi
 
     sleep 3
