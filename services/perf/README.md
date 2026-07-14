@@ -88,6 +88,7 @@ services/perf/
 │   └── js/
 │       ├── api.js                     # API fetch wrappers
 │       ├── dashboard.js               # 6 metric cards + canvas chart
+│       ├── loadtest.js                # Load test: single/sequential/concurrent
 │       ├── series.js                  # Series lifecycle management
 │       ├── theme.js                   # Dark/light theme toggle
 │       └── trace.js                   # Waterfall tree with color-coded spans
