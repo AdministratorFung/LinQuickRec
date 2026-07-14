@@ -90,4 +90,10 @@ std::vector<StatsEngine::StageKey> StatsEngine::GetAllKeys() const {
     return keys;
 }
 
+void StatsEngine::RebuildFromSpans(const std::vector<common::perf::Span>& spans) {
+    for (const auto& s : spans) {
+        Push(s.service, s.stage, s.duration_ms);
+    }
+}
+
 } // namespace perf

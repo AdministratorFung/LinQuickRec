@@ -8,6 +8,7 @@
 #include <sstream>
 
 #include "common/logger.h"
+#include "init_status.h"
 #include "series_manager.h"
 #include "span_tree.h"
 #include "stats_engine.h"
@@ -94,10 +95,25 @@ void ApiHandlerService::Handle(
 }
 
 void ApiHandlerService::HandleHealth(brpc::Controller* cntl) {
-    JsonOk(cntl, R"({"status":"ok"})");
+    if (g_init_status.ready.load(std::memory_order_acquire)) {
+        JsonOk(cntl, R"({"status":"ok"})");
+    } else {
+        std::ostringstream body;
+        body << R"({"status":"initializing","progress":)"
+             << g_init_status.progress.load(std::memory_order_relaxed)
+             << R"(,"total":)"
+             << g_init_status.total.load(std::memory_order_relaxed)
+             << "}";
+        JsonOk(cntl, body.str());
+    }
 }
 
 void ApiHandlerService::HandleStatsCurrent(brpc::Controller* cntl) {
+    if (!g_init_status.ready.load(std::memory_order_acquire)) {
+        JsonError(cntl, 503, "initializing");
+        return;
+    }
+
     std::string uri = cntl->http_request().uri().path();
     std::string qs = cntl->http_request().uri().query();
     if (!qs.empty()) uri += "?" + qs;
@@ -225,6 +241,10 @@ void ApiHandlerService::HandleOutliers(brpc::Controller* cntl) {
 }
 
 void ApiHandlerService::HandleStages(brpc::Controller* cntl) {
+    if (!g_init_status.ready.load(std::memory_order_acquire)) {
+        JsonError(cntl, 503, "initializing");
+        return;
+    }
     auto keys = StatsEngine::Instance().GetAllKeys();
     std::ostringstream body;
     body << "[";

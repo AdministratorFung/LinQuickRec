@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+#include "common/perf_registry.h"
+
 namespace perf {
 
 class WelfordRunningStats {
@@ -55,6 +57,7 @@ public:
     const WelfordRunningStats* Get(const std::string& service,
                                     const std::string& stage) const;
     std::vector<StageKey> GetAllKeys() const;
+    void RebuildFromSpans(const std::vector<common::perf::Span>& spans);
     void ResetRecent();
 
 private:

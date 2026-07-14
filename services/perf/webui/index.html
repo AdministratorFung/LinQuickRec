@@ -421,6 +421,47 @@
             margin-bottom: 12px;
         }
 
+        /* Init overlay */
+        .init-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .init-box {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            box-shadow: var(--shadow);
+            border-radius: 12px;
+            padding: 40px 56px;
+            text-align: center;
+        }
+        .init-box h2 { margin-bottom: 8px; font-size: 18px; color: var(--text); }
+        .init-box p { color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; }
+        .init-bar-wrap {
+            width: 320px;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+        .init-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--primary);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        .init-count {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .page { padding: 12px; }
@@ -579,5 +620,16 @@
             if (name === 'trace') showTraceTable();
         }
     </script>
+
+    <div class="init-overlay" id="init-overlay">
+        <div class="init-box">
+            <h2>Initializing Perf Collector</h2>
+            <p>Rebuilding statistics from historical data...</p>
+            <div class="init-bar-wrap">
+                <div class="init-bar-fill" id="init-bar-fill"></div>
+            </div>
+            <div class="init-count" id="init-text">0 / 0</div>
+        </div>
+    </div>
 </body>
 </html>

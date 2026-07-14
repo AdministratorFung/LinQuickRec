@@ -213,7 +213,7 @@ async function refreshPerf() {
     try { drawChart(stats); } catch (e) { console.error('[perf] drawChart error:', e); }
 }
 
-async function initPerf() {
+async function doInitPerf() {
     // Load stage data
     stageData = await fetchStages();
     console.log('[perf] init: loaded', stageData.length, 'stages');
@@ -226,6 +226,36 @@ async function initPerf() {
 
     // First refresh for proxy_e2e
     refreshPerf();
+}
+
+async function initPerf() {
+    try {
+        const resp = await fetch('/api/v1/health');
+        const h = await resp.json();
+        if (h.status === 'initializing') {
+            const overlay = document.getElementById('init-overlay');
+            const bar = document.getElementById('init-bar-fill');
+            const text = document.getElementById('init-text');
+            if (overlay) overlay.style.display = 'flex';
+            const interval = setInterval(async () => {
+                try {
+                    const r = await fetch('/api/v1/health');
+                    const s = await r.json();
+                    if (s.status === 'ok') {
+                        clearInterval(interval);
+                        if (overlay) overlay.style.display = 'none';
+                        doInitPerf();
+                    } else {
+                        const pct = s.total > 0 ? Math.round(s.progress / s.total * 100) : 0;
+                        if (bar) bar.style.width = pct + '%';
+                        if (text) text.textContent = s.progress + ' / ' + s.total;
+                    }
+                } catch (e) {}
+            }, 2000);
+            return;
+        }
+    } catch (e) {}
+    doInitPerf();
 }
 
 initPerf();
