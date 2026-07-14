@@ -155,3 +155,11 @@ function onStageChange() {
 
 refresh();
 setInterval(refresh, 3000);
+
+document.documentElement.addEventListener('themechange', () => {
+    const sel = document.getElementById('stageSelect').value;
+    const [service, stage] = sel.split('|');
+    fetchStats(service, stage).then(stats => {
+        if (stats && !stats.error) drawChart(stats);
+    });
+});
