@@ -146,7 +146,11 @@ async function refresh() {
     }
 
     updateCards(stats);
-    drawChart(stats);
+    try {
+        drawChart(stats);
+    } catch (e) {
+        console.error('drawChart failed:', e);
+    }
 }
 
 function onStageChange() {
@@ -154,12 +158,14 @@ function onStageChange() {
 }
 
 refresh();
-setInterval(refresh, 3000);
+setInterval(() => { refresh().catch(() => {}); }, 3000);
 
 document.documentElement.addEventListener('themechange', () => {
     const sel = document.getElementById('stageSelect').value;
     const [service, stage] = sel.split('|');
     fetchStats(service, stage).then(stats => {
-        if (stats && !stats.error) drawChart(stats);
+        if (stats && !stats.error) {
+            try { drawChart(stats); } catch (e) { console.error(e); }
+        }
     });
 });

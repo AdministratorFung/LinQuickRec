@@ -150,7 +150,7 @@ async function runLoadTest() {
 }
 
 // Init: wire up mode <-> count field
-document.addEventListener('DOMContentLoaded', function () {
+(function () {
     const modeSelect = document.getElementById('lt-mode');
     const countGroup = document.getElementById('lt-count-group');
     if (modeSelect && countGroup) {
@@ -158,4 +158,4 @@ document.addEventListener('DOMContentLoaded', function () {
             countGroup.style.display = this.value === 'single' ? 'none' : '';
         });
     }
-});
+})();
