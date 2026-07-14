@@ -130,13 +130,14 @@ function drawChart(stats) {
 }
 
 function updateCards(stats) {
+    const hasData = (stats.count || 0) > 0;
     const cards = [
-        { id: 'card-count', value: stats.count || 0, unit: 'spans', color: '#206bc4', label: 'Count' },
-        { id: 'card-avg', value: (stats.avg || 0).toFixed(1), unit: 'ms', color: '#4299e1', label: 'Average' },
-        { id: 'card-p50', value: (stats.p50 || 0).toFixed(1), unit: 'ms', color: '#48bb78', label: 'P50' },
-        { id: 'card-p99', value: (stats.p99 || 0).toFixed(1), unit: 'ms', color: '#ed8936', label: 'P99' },
-        { id: 'card-min', value: (stats.min || 0).toFixed(1), unit: 'ms', color: '#9f7aea', label: 'Min' },
-        { id: 'card-max', value: (stats.max || 0).toFixed(1), unit: 'ms', color: '#f56565', label: 'Max' },
+        { id: 'card-count', value: stats.count || 0, unit: 'spans', label: 'Count' },
+        { id: 'card-avg', value: hasData ? (stats.avg || 0).toFixed(1) : 'N/A', unit: hasData ? 'ms' : '', label: 'Average' },
+        { id: 'card-p50', value: hasData ? (stats.p50 || 0).toFixed(1) : 'N/A', unit: hasData ? 'ms' : '', label: 'P50' },
+        { id: 'card-p99', value: hasData ? (stats.p99 || 0).toFixed(1) : 'N/A', unit: hasData ? 'ms' : '', label: 'P99' },
+        { id: 'card-min', value: hasData ? (stats.min || 0).toFixed(1) : 'N/A', unit: hasData ? 'ms' : '', label: 'Min' },
+        { id: 'card-max', value: hasData ? (stats.max || 0).toFixed(1) : 'N/A', unit: hasData ? 'ms' : '', label: 'Max' },
     ];
     for (const c of cards) {
         const el = document.getElementById(c.id);

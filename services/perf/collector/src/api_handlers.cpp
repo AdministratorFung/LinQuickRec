@@ -129,7 +129,7 @@ void ApiHandlerService::HandleStatsCurrent(brpc::Controller* cntl) {
     auto* st = StatsEngine::Instance().Get(service, stage);
     if (!st) {
         LOG_WARN << "API: no data for " << service << "|" << stage;
-        JsonError(cntl, 404, "no data for " + service + "|" + stage);
+        JsonOk(cntl, R"({"avg":0,"min":0,"max":0,"p50":0,"p99":0,"stddev":0,"count":0})");
         return;
     }
 
