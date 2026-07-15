@@ -9,6 +9,8 @@
 
 namespace perf {
 
+class SqliteStore;
+
 struct Series {
     int64_t id = 0;
     std::string name;
@@ -21,6 +23,9 @@ struct Series {
 class SeriesManager {
 public:
     static SeriesManager& Instance();
+
+    // Init from SQLite on startup. Must be called before other methods.
+    void Init(SqliteStore* sqlite);
 
     // Start a new series. Returns the series id.
     int64_t Start(const std::string& name, int64_t ts_us);
@@ -42,11 +47,10 @@ public:
 private:
     SeriesManager() = default;
 
-    static int64_t NextId();
-
     mutable std::mutex mutex_;
     std::vector<Series> series_;
     std::atomic<uint64_t> active_id_{0};
+    SqliteStore* sqlite_ = nullptr;
 };
 
 class OutlierDetector {

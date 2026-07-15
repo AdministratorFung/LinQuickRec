@@ -27,8 +27,8 @@ _svc proxy    deployment  proxy-service                         1
 _svc precalc  deployment  precalc-and-rank-master-service       3
 _svc recall   deployment  recall-service                        2
 _svc rank-sub deployment  rank-sub-service                      3
-_svc perf     deployment  perf-collector-service                1
-_svc webui    deployment  perf-webui                            1
+_svc perf-collector deployment  perf-collector-service                1
+_svc perf-webui    deployment  perf-webui                            1
 unset -f _svc
 
 usage() {
@@ -41,7 +41,7 @@ Actions:
   restart      Rollout restart all / single service (preserves image/environment)
   delete       Delete all resources / a single service
 
-Service names: etcd feature proxy precalc recall rank-sub perf webui
+Service names: etcd feature proxy precalc recall rank-sub perf-collector perf-webui
 
 Options:
   --recall-mode vllm|novllm              Recall mode (default: novllm, --all only)
@@ -57,7 +57,7 @@ Examples:
   $(basename "$0") stop feature                   # scale feature-service to 0
   $(basename "$0") start feature                  # scale feature-service to 1
   $(basename "$0") start recall --replicas 3      # scale recall-service to 3
-  $(basename "$0") restart perf                   # rollout restart perf-collector
+  $(basename "$0") restart perf-collector           # rollout restart perf-collector-service
   $(basename "$0") delete proxy                   # delete proxy-service
   $(basename "$0") delete                         # delete everything
 EOF
@@ -96,7 +96,7 @@ parse_args() {
             -r|--registry)
                 if [[ $# -lt 2 ]]; then die "Missing value for --registry"; fi
                 REGISTRY="${2%/}"; shift 2 ;;
-            etcd|feature|proxy|precalc|recall|rank-sub|perf)
+            etcd|feature|proxy|precalc|recall|rank-sub|perf-collector|perf-webui)
                 if [[ -n "$SERVICE" ]]; then die "Only one service allowed, got '${SERVICE}' and '$1'"; fi
                 SERVICE="$1"; shift ;;
             *) die "Unknown option: $1" ;;
@@ -240,8 +240,8 @@ main() {
 if [[ -n "$SERVICE" ]]; then
     # perf-collector-service is now collector only (ClusterIP). WebUI is perf-webui.
     # When starting perf, also ensure webui is running.
-    if [[ "$SERVICE" == "perf" && "$ACTION" == "start" ]]; then
-        local r="${REPLICAS:-${SVC_REPLICAS[webui]}}"
+    if [[ "$SERVICE" == "perf-collector" && "$ACTION" == "start" ]]; then
+        local r="${REPLICAS:-${SVC_REPLICAS[perf-webui]}}"
         echo kubectl scale deployment perf-webui --replicas="$r" -n "${NAMESPACE}"
         kubectl scale deployment perf-webui --replicas="$r" -n "${NAMESPACE}"
     fi

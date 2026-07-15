@@ -1,5 +1,7 @@
 #include "stats_engine.h"
 
+#include "common/logger.h"
+
 namespace perf {
 
 void WelfordRunningStats::Push(double value) {
@@ -49,7 +51,11 @@ StatsEngine& StatsEngine::Instance() {
 void StatsEngine::Push(const std::string& service, const std::string& stage,
                        double duration_ms) {
     auto key = service + "|" + stage;
+    bool is_new = stage_stats_.find(key) == stage_stats_.end();
     auto& st = stage_stats_[key];
+    if (is_new) {
+        LOG_INFO << "StatsEngine: new stage " << key;
+    }
     st.all_time.Push(duration_ms);
     st.all_time.Sample(duration_ms);
     st.recent.Push(duration_ms);
@@ -66,6 +72,27 @@ const WelfordRunningStats* StatsEngine::Get(
 void StatsEngine::ResetRecent() {
     for (auto& [_, s] : stage_stats_) {
         s.recent = WelfordRunningStats{};
+    }
+}
+
+std::vector<StatsEngine::StageKey> StatsEngine::GetAllKeys() const {
+    std::vector<StageKey> keys;
+    for (const auto& kv : stage_stats_) {
+        const auto& key = kv.first;
+        size_t sep = key.find('|');
+        if (sep == std::string::npos) continue;
+        keys.push_back({
+            key.substr(0, sep),
+            key.substr(sep + 1),
+            kv.second.all_time.Count()
+        });
+    }
+    return keys;
+}
+
+void StatsEngine::RebuildFromSpans(const std::vector<common::perf::Span>& spans) {
+    for (const auto& s : spans) {
+        Push(s.service, s.stage, s.duration_ms);
     }
 }
 

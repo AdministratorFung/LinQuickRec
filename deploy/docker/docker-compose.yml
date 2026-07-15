@@ -63,7 +63,7 @@ services:
   perf-collector:
     build:
       context: ../..
-      dockerfile: services/perf/collector/Dockerfile
+      dockerfile: deploy/docker/perf-collector/Dockerfile
       args:
         PROXY_IP: "${PROXY_IP:-}"
         PROXY_PORT: "${PROXY_PORT:-3128}"

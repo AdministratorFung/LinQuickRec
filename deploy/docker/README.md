@@ -21,6 +21,7 @@ deploy/docker/
 │   ├── entrypoint.sh           # 启动 datasystem + discovery_client
 │   └── start_datasystem.sh     # datasystem 启动脚本
 ├── perf-collector/
+│   ├── Dockerfile              # Perf-collector 服务镜像
 │   └── entrypoint.sh           # 启动 perf-collector
 ├── perf-webui/
 │   ├── Dockerfile              # nginx:alpine WebUI 静态服务
