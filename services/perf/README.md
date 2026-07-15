@@ -26,6 +26,7 @@ Perf collector 自身暴露可供拉取数据的 HTTP 端口，可通过 Prometh
 | `GET` | `/api/v1/outliers?service=<name>&stage=<name>` | 离群值检测（z-score） |
 | `GET` | `/api/v1/stages` | 返回所有有数据的 (service, stage, count) |
 | `GET` | `/api/v1/traces?limit=20&offset=0` | trace 列表聚合查询 |
+| `GET` | `/api/v1/download?format=csv&limit=10000` | 下载数据：csv/jsonl/json/log 格式，可选 trace_id/series_id 过滤 |
 | `GET` | `/debug/perf` | 拉取原始 span 数据（供 collector puller 调用） |
 
 ```bash
@@ -68,6 +69,11 @@ Perf 的前端和后端已拆分为两个独立 Pod：
 - Load More 分页加载
 - 搜索框按 trace_id 精确搜索
 - 点击任意 trace → 瀑布图展示调用链详情
+
+#### Downloads（数据导出）
+- 按 All/Trace ID/Series ID 过滤
+- 支持 CSV / JSON Lines / Pretty JSON / Log Text 四种格式
+- 可设导出条数上限（默认 10000）
 
 ## 目录结构
 

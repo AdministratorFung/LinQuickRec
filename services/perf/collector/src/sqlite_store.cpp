@@ -149,6 +149,41 @@ std::vector<common::perf::Span> SqliteStore::QueryTrace(const std::string& trace
     return results;
 }
 
+std::vector<common::perf::Span> SqliteStore::QuerySpans(
+    const std::string& trace_id, int64_t series_id, int limit) {
+    std::vector<common::perf::Span> results;
+    if (!db_) return results;
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    std::string sql = "SELECT ts_us, service, stage, metric, trace_id, "
+                      "duration_ms, status, series_id FROM spans WHERE 1=1";
+    if (!trace_id.empty()) sql += " AND trace_id = ?";
+    if (series_id > 0) sql += " AND series_id = ?";
+    sql += " ORDER BY ts_us LIMIT ?";
+
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db_, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) return results;
+
+    int idx = 1;
+    if (!trace_id.empty()) sqlite3_bind_text(stmt, idx++, trace_id.c_str(), -1, SQLITE_TRANSIENT);
+    if (series_id > 0) sqlite3_bind_int64(stmt, idx++, series_id);
+    sqlite3_bind_int(stmt, idx++, limit);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        common::perf::Span s;
+        s.ts_us = static_cast<uint64_t>(sqlite3_column_int64(stmt, 0));
+        s.SetService(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
+        s.SetStage(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2)));
+        s.SetMetric(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3)));
+        s.SetTraceId(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4)));
+        s.duration_ms = static_cast<float>(sqlite3_column_double(stmt, 5));
+        s.SetStatus(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 6)));
+        results.push_back(s);
+    }
+    sqlite3_finalize(stmt);
+    return results;
+}
+
 std::vector<SqliteStore::TraceSummary> SqliteStore::QueryTraces(int limit, int offset) {
     std::vector<TraceSummary> results;
     if (!db_) return results;

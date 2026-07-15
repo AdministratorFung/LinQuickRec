@@ -514,6 +514,7 @@
             <button class="tab" onclick="switchTab('test', this)">Test</button>
             <button class="tab" onclick="switchTab('series', this)">Series</button>
             <button class="tab" onclick="switchTab('trace', this)">Trace</button>
+            <button class="tab" onclick="switchTab('download', this)">Downloads</button>
         </div>
 
         <!-- Perf -->
@@ -538,8 +539,36 @@
                     </div>
                     <div class="stat-card" style="border-left-color:#f56565" id="card-max">
                         <div class="stat-body"><div class="stat-label">Max</div><div class="stat-value">-</div><div class="stat-unit">ms</div></div>
-                    </div>
-                </div>
+        </div>
+
+        <!-- Downloads -->
+        <div id="download-panel" class="panel">
+            <div class="control-bar">
+                <label>Filter:</label>
+                <select id="dl-filter" class="form-select" onchange="onDownloadFilterChange()">
+                    <option value="all">All entries</option>
+                    <option value="trace">By Trace ID</option>
+                    <option value="series">By Series ID</option>
+                </select>
+                <span id="dl-trace-input" style="display:none">
+                    <input type="text" id="dl-trace-id" class="form-input" placeholder="Trace ID">
+                </span>
+                <span id="dl-series-input" style="display:none">
+                    <input type="number" id="dl-series-id" class="form-input" placeholder="Series ID" style="width:100px">
+                </span>
+                <label>Format:</label>
+                <select id="dl-format" class="form-select">
+                    <option value="csv">CSV</option>
+                    <option value="jsonl">JSON Lines</option>
+                    <option value="json">Pretty JSON</option>
+                    <option value="log">Log Text</option>
+                </select>
+                <label>Limit:</label>
+                <input type="number" id="dl-limit" class="form-input" value="10000" style="width:80px" min="1" max="100000">
+                <button class="btn btn-primary" onclick="downloadPerf()">Download</button>
+            </div>
+        </div>
+    </div>
                 <div class="chart-container">
                     <h3>Latency Distribution</h3>
                     <canvas id="chart"></canvas>
@@ -640,6 +669,7 @@
     <script src="/js/series.js"></script>
     <script src="/js/trace.js"></script>
     <script src="/js/loadtest.js"></script>
+    <script src="/js/download.js"></script>
 
     <script>
         function switchTab(name, el) {
@@ -649,6 +679,7 @@
             document.getElementById(name + '-panel').classList.add('active');
             if (name === 'series') loadSeries();
             if (name === 'trace') showTraceTable();
+            if (name === 'download') onDownloadFilterChange();
         }
     </script>
 

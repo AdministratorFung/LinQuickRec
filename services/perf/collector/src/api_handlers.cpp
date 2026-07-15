@@ -87,6 +87,8 @@ void ApiHandlerService::Handle(
         HandleStages(cntl);
     } else if (uri.find("/api/v1/traces") != std::string::npos) {
         HandleTraces(cntl);
+    } else if (uri.find("/api/v1/download") != std::string::npos) {
+        HandleDownload(cntl);
     } else {
         HandleNotFound(cntl);
     }
@@ -284,6 +286,91 @@ void ApiHandlerService::HandleTraces(brpc::Controller* cntl) {
     }
     body << "]";
     JsonOk(cntl, body.str());
+}
+
+void ApiHandlerService::HandleDownload(brpc::Controller* cntl) {
+    std::string uri = cntl->http_request().uri().path();
+    std::string qs = cntl->http_request().uri().query();
+    if (!qs.empty()) uri += "?" + qs;
+    std::string format = ExtractParam(uri, "format");
+    std::string trace_id = ExtractParam(uri, "trace_id");
+    std::string s_id = ExtractParam(uri, "series_id");
+    std::string s_limit = ExtractParam(uri, "limit");
+
+    int64_t series_id = s_id.empty() ? 0 : std::stoll(s_id);
+    int limit = s_limit.empty() ? 10000 : std::stoi(s_limit);
+    if (limit < 1) limit = 1;
+    if (limit > 100000) limit = 100000;
+
+    auto spans = sqlite_store_->QuerySpans(trace_id, series_id, limit);
+
+    std::string ext = format == "csv" ? ".csv" : format == "jsonl" ? ".jsonl" :
+                      format == "json" ? ".json" : ".log";
+    cntl->http_response().SetHeader("Content-Disposition",
+        "attachment; filename=\"perf-export-" +
+        std::to_string(std::chrono::system_clock::now().time_since_epoch().count()) +
+        ext + "\"");
+
+    if (format == "csv") {
+        cntl->http_response().set_content_type("text/csv");
+        cntl->response_attachment().append(
+            "ts_us,service,stage,metric,trace_id,duration_ms,status,series_id\n");
+        for (auto& s : spans) {
+            cntl->response_attachment().append(
+                std::to_string(s.ts_us) + "," + s.service + "," + s.stage + "," +
+                s.metric + "," + s.trace_id + "," + std::to_string(s.duration_ms) +
+                "," + s.status + "," + std::to_string(0) + "\n");
+        }
+    } else if (format == "jsonl") {
+        cntl->http_response().set_content_type("application/x-ndjson");
+        for (auto& s : spans) {
+            std::ostringstream line;
+            line << R"({"ts_us":)" << s.ts_us
+                 << R"(,"service":")" << s.service
+                 << R"(","stage":")" << s.stage
+                 << R"(","metric":")" << s.metric
+                 << R"(","trace_id":")" << s.trace_id
+                 << R"(","duration_ms":)" << s.duration_ms
+                 << R"(,"status":")" << s.status << "\""
+                 << R"(,"series_id":0)"
+                 << "}\n";
+            cntl->response_attachment().append(line.str());
+        }
+    } else if (format == "json") {
+        cntl->http_response().set_content_type("application/json");
+        cntl->response_attachment().append("[\n");
+        for (size_t i = 0; i < spans.size(); ++i) {
+            auto& s = spans[i];
+            std::ostringstream line;
+            line << "  {"
+                 << "\"ts_us\": " << s.ts_us
+                 << ", \"service\": \"" << s.service
+                 << "\", \"stage\": \"" << s.stage
+                 << "\", \"metric\": \"" << s.metric
+                 << "\", \"trace_id\": \"" << s.trace_id
+                 << "\", \"duration_ms\": " << s.duration_ms
+                 << ", \"status\": \"" << s.status << "\""
+                 << ", \"series_id\": 0"
+                 << "}";
+            if (i < spans.size() - 1) line << ",";
+            line << "\n";
+            cntl->response_attachment().append(line.str());
+        }
+        cntl->response_attachment().append("]\n");
+    } else {
+        // Log text format
+        cntl->http_response().set_content_type("text/plain");
+        for (auto& s : spans) {
+            std::ostringstream line;
+            line << "service=" << s.service
+                 << " stage=" << s.stage
+                 << " metric=" << s.metric
+                 << " trace_id=" << s.trace_id
+                 << " duration_ms=" << s.duration_ms
+                 << " status=" << s.status << "\n";
+            cntl->response_attachment().append(line.str());
+        }
+    }
 }
 
 void ApiHandlerService::HandleNotFound(brpc::Controller* cntl) {
