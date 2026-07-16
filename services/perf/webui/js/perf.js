@@ -1,8 +1,9 @@
-// Perf tab — tree view with live stats cards
-let perfChart = null;
-let selectedService = 'proxy';
-let selectedStage = 'proxy_e2e';
-let stageData = [];  // [{service, stage, count}, ...]
+// Perf tab — fixed proxy_e2e header + call tree with proportion bars + detail panel
+let topChart = null;
+let detailChart = null;
+let selectedSvc = null;
+let selectedStg = null;
+let treeStats = {}; // "service|stage" → {avg, p50, p99, min, max, count, stddev}
 
 const CALL_TREE = [
     { service: 'proxy', stage: 'proxy_e2e',
@@ -36,9 +37,11 @@ const CALL_TREE = [
     }
 ];
 
-function nodeData(service, stage) {
-    return stageData.find(d => d.service === service && d.stage === stage);
-}
+const BAR_COLORS = ['#206bc4', '#4299e1', '#63b3ed', '#48bb78', '#68d391', '#ed8936',
+    '#f6ad55', '#9f7aea', '#b794f4', '#f56565', '#fc8181', '#94a3b8'];
+
+function treeKey(svc, stg) { return svc + '|' + stg; }
+function treeStat(svc, stg) { return treeStats[treeKey(svc, stg)]; }
 
 function getChartColors() {
     const dark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -51,12 +54,12 @@ function getChartColors() {
     };
 }
 
-function drawChart(stats) {
-    const canvas = document.getElementById('chart');
+function drawBarChart(canvasId, chartRef, stats, height) {
+    const canvas = document.getElementById(canvasId);
     if (!canvas) return;
+    canvas.height = height || 220;
     const ctx = canvas.getContext('2d');
-    perfChart = ctx;
-
+    if (chartRef) chartRef.value = ctx;
     const colors = getChartColors();
     const w = canvas.offsetWidth;
     const h = canvas.offsetHeight;
@@ -64,7 +67,6 @@ function drawChart(stats) {
     canvas.width = w * dpr;
     canvas.height = h * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
     ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, w, h);
 
@@ -77,14 +79,14 @@ function drawChart(stats) {
         { label: 'StdDev', v: stats.stddev || 0 },
     ];
     const maxVal = Math.max(...values.map(v => v.v), 1);
-    const pad = { top: 24, right: 16, bottom: 32, left: 52 };
+    const pad = { top: 24, right: 16, bottom: 28, left: 44 };
     const chartW = w - pad.left - pad.right;
     const chartH = h - pad.top - pad.bottom;
-    const barGap = 12;
+    const barGap = 8;
     const barW = (chartW - barGap * (values.length + 1)) / values.length;
 
     ctx.fillStyle = colors.text;
-    ctx.font = '11px Inter, -apple-system, sans-serif';
+    ctx.font = '10px Inter, -apple-system, sans-serif';
     ctx.textAlign = 'right';
     for (let i = 0; i <= 4; i++) {
         const y = pad.top + (chartH / 4) * (4 - i);
@@ -97,47 +99,32 @@ function drawChart(stats) {
         ctx.stroke();
         ctx.fillText(Number(val).toFixed(1), pad.left - 6, y + 4);
     }
-
     for (let i = 0; i < values.length; i++) {
         const x = pad.left + barGap + i * (barW + barGap);
         const barH = values[i].v > 0 ? Math.max((values[i].v / maxVal) * chartH, 2) : 0;
         const y = pad.top + chartH - barH;
-
-        ctx.fillStyle = colors.bars[i];
-        ctx.beginPath();
-        ctx.rect(x, y, barW, barH);
-        ctx.fill();
-
         ctx.globalAlpha = 0.12;
         ctx.fillStyle = colors.bars[i];
-        ctx.beginPath();
-        ctx.rect(x, pad.top, barW, chartH - barH);
-        ctx.fill();
+        ctx.fillRect(x, pad.top, barW, chartH);
         ctx.globalAlpha = 1;
-
+        ctx.fillStyle = colors.bars[i];
+        ctx.fillRect(x, y, barW, barH);
         ctx.fillStyle = colors.text;
         ctx.font = '10px Inter, -apple-system, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(values[i].label, x + barW / 2, h - 4);
     }
-
-    ctx.save();
-    ctx.translate(10, pad.top + chartH / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.textAlign = 'center';
-    ctx.fillText('ms', 0, 0);
-    ctx.restore();
 }
 
-function updateCards(stats) {
+function updateTopCards(stats) {
     const hasData = (stats.count || 0) > 0;
     const cards = [
-        { id: 'card-count', value: stats.count || 0, unit: 'spans', label: 'Count' },
-        { id: 'card-avg', value: hasData ? (stats.avg || 0).toFixed(1) : 'N/A', unit: hasData ? 'ms' : '', label: 'Average' },
-        { id: 'card-p50', value: hasData ? (stats.p50 || 0).toFixed(1) : 'N/A', unit: hasData ? 'ms' : '', label: 'P50' },
-        { id: 'card-p99', value: hasData ? (stats.p99 || 0).toFixed(1) : 'N/A', unit: hasData ? 'ms' : '', label: 'P99' },
-        { id: 'card-min', value: hasData ? (stats.min || 0).toFixed(1) : 'N/A', unit: hasData ? 'ms' : '', label: 'Min' },
-        { id: 'card-max', value: hasData ? (stats.max || 0).toFixed(1) : 'N/A', unit: hasData ? 'ms' : '', label: 'Max' },
+        { id: 'card-count', value: stats.count || 0, unit: 'spans' },
+        { id: 'card-avg', value: hasData ? (stats.avg || 0).toFixed(1) : 'N/A', unit: hasData ? 'ms' : '' },
+        { id: 'card-p50', value: hasData ? (stats.p50 || 0).toFixed(1) : 'N/A', unit: hasData ? 'ms' : '' },
+        { id: 'card-p99', value: hasData ? (stats.p99 || 0).toFixed(1) : 'N/A', unit: hasData ? 'ms' : '' },
+        { id: 'card-min', value: hasData ? (stats.min || 0).toFixed(1) : 'N/A', unit: hasData ? 'ms' : '' },
+        { id: 'card-max', value: hasData ? (stats.max || 0).toFixed(1) : 'N/A', unit: hasData ? 'ms' : '' },
     ];
     for (const c of cards) {
         const el = document.getElementById(c.id);
@@ -145,62 +132,27 @@ function updateCards(stats) {
         el.querySelector('.stat-value').textContent = c.value;
         el.querySelector('.stat-unit').textContent = c.unit;
     }
-    const infoEl = document.getElementById('perf-stage-info');
-    if (infoEl) {
-        const d = nodeData(selectedService, selectedStage);
-        infoEl.textContent = d && d.count ? selectedService + ' / ' + selectedStage : selectedService + ' / ' + selectedStage + ' (no data)';
+}
+
+function updateDetailCards(stats) {
+    const hasData = (stats.count || 0) > 0;
+    const info = [
+        { label: 'Avg', value: hasData ? (stats.avg || 0).toFixed(1) + ' ms' : 'N/A' },
+        { label: 'P50', value: hasData ? (stats.p50 || 0).toFixed(1) + ' ms' : 'N/A' },
+        { label: 'P99', value: hasData ? (stats.p99 || 0).toFixed(1) + ' ms' : 'N/A' },
+        { label: 'Count', value: stats.count || 0 },
+        { label: 'Min', value: hasData ? (stats.min || 0).toFixed(1) + ' ms' : 'N/A' },
+        { label: 'Max', value: hasData ? (stats.max || 0).toFixed(1) + ' ms' : 'N/A' },
+    ];
+    let html = '';
+    for (const i of info) {
+        html += '<div class="detail-stat"><span class="detail-stat-label">' + i.label + '</span><span class="detail-stat-value">' + i.value + '</span></div>';
     }
+    document.getElementById('detail-metrics').innerHTML = html;
 }
 
-function highlightTree() {
-    document.querySelectorAll('.tree-node-name').forEach(el => {
-        const svc = el.dataset.service;
-        const stg = el.dataset.stage;
-        el.classList.toggle('selected', svc === selectedService && stg === selectedStage);
-    });
-}
-
-function buildTree(nodes, container, depth) {
-    for (const n of nodes) {
-        const d = nodeData(n.service, n.stage);
-        const hasData = d && d.count > 0;
-        const hasChildren = n.children && n.children.length > 0;
-        const dur = hasData ? (d.avg ? d.avg.toFixed(1) + ' ms (' + d.count + ')' : '—') : '—';
-
-        const div = document.createElement('div');
-        div.className = 'tree-node';
-        div.style.paddingLeft = (depth * 24) + 'px';
-
-        let html = '<span class="tree-arrow' + (depth === 0 ? ' expanded' : '') + '" onclick="toggleTree(this)">▶</span>';
-        html += '<span class="tree-node-name' + (depth === 0 ? ' selected' : '') + '" data-service="' + n.service + '" data-stage="' + n.stage + '" onclick="selectNode(\'' + n.service + '\', \'' + n.stage + '\')">' + n.stage + '</span>';
-        html += '<span class="tree-dur ' + (hasData ? '' : 'no-data') + '">' + dur + '</span>';
-        div.innerHTML = html;
-
-        if (hasChildren) {
-            const childContainer = document.createElement('div');
-            childContainer.className = 'tree-children' + (depth === 0 ? '' : ' hidden');
-            buildTree(n.children, childContainer, depth + 1);
-            div.appendChild(childContainer);
-        }
-        container.appendChild(div);
-    }
-}
-
-function toggleTree(arrow) {
-    arrow.classList.toggle('expanded');
-    const children = arrow.parentElement.querySelector('.tree-children');
-    if (children) children.classList.toggle('hidden');
-}
-
-function selectNode(service, stage) {
-    selectedService = service;
-    selectedStage = stage;
-    highlightTree();
-    refreshPerf();
-}
-
-async function refreshPerf() {
-    const stats = await fetchStats(selectedService, selectedStage);
+async function refreshTop() {
+    const stats = await fetchStats('proxy', 'proxy_e2e');
     if (!stats || stats.error) {
         for (const id of ['card-count', 'card-avg', 'card-p50', 'card-p99', 'card-min', 'card-max']) {
             const el = document.getElementById(id);
@@ -210,62 +162,114 @@ async function refreshPerf() {
         }
         return;
     }
-    updateCards(stats);
-    try { drawChart(stats); } catch (e) { console.error('[perf] drawChart error:', e); }
+    updateTopCards(stats);
+    try { drawBarChart('chart', { value: topChart }, stats, 240); } catch (e) { console.error(e); }
 }
 
-async function doInitPerf() {
-    // Load stage data
-    stageData = await fetchStages();
-    console.log('[perf] init: loaded', stageData.length, 'stages');
+async function refreshDetail() {
+    if (!selectedSvc || !selectedStg) return;
+    const stats = await fetchStats(selectedSvc, selectedStg);
+    if (!stats || stats.error) return;
+    updateDetailCards(stats);
+    try { drawBarChart('detail-chart', { value: detailChart }, stats, 160); } catch (e) { console.error(e); }
 
-    // Build tree
+    // Re-fetch all tree stats to update proportion bars
+    await fetchAllTreeStats();
+    renderTree();
+}
+
+async function fetchAllTreeStats() {
+    function collect(nodes, list) {
+        for (const n of nodes) {
+            list.push({ service: n.service, stage: n.stage });
+            if (n.children) collect(n.children, list);
+        }
+    }
+    const all = [];
+    collect(CALL_TREE, all);
+    for (const n of all) {
+        const stats = await fetchStats(n.service, n.stage);
+        if (stats && !stats.error) treeStats[treeKey(n.service, n.stage)] = stats;
+    }
+}
+
+function selectDetailNode(svc, stg) {
+    selectedSvc = svc;
+    selectedStg = stg;
+    document.getElementById('perf-detail').style.display = 'block';
+    document.getElementById('detail-stage-name').textContent = svc + ' / ' + stg;
+    highlightTree();
+    refreshDetail();
+}
+
+function highlightTree() {
+    document.querySelectorAll('.tree-node-name').forEach(el => {
+        el.classList.toggle('selected', el.dataset.service === selectedSvc && el.dataset.stage === selectedStg);
+    });
+}
+
+function renderTree() {
     const container = document.getElementById('perf-tree');
     if (!container) return;
-    container.innerHTML = '<div class="tree-label">Call Tree</div>';
-    buildTree(CALL_TREE, container, 0);
+    const rootStat = treeStat('proxy', 'proxy_e2e');
+    const rootAvg = rootStat && rootStat.count > 0 ? rootStat.avg : 0;
 
-    // First refresh for proxy_e2e
-    refreshPerf();
+    let barIdx = 0;
+    function buildHTML(nodes, depth, parentAvg) {
+        let html = '';
+        for (const n of nodes) {
+            const stat = treeStat(n.service, n.stage);
+            const hasData = stat && stat.count > 0;
+            const count = stat ? stat.count : 0;
+            const avg = hasData ? stat.avg : 0;
+            const pct = parentAvg > 0 && avg > 0 ? Math.min(Math.round(avg / parentAvg * 100), 100) : 0;
+            const color = BAR_COLORS[barIdx % BAR_COLORS.length];
+            barIdx++;
+            const hasChildren = n.children && n.children.length > 0;
+
+            html += '<div class="tree-node" style="padding-left:' + (depth * 22) + 'px">';
+            html += '<span class="tree-arrow' + (depth === 0 ? ' expanded' : '') + '" onclick="toggleTree(this)">▶</span>';
+            html += '<span class="tree-node-name' + (depth === 0 ? ' selected' : '') + '" data-service="' + n.service + '" data-stage="' + n.stage + '" onclick="selectDetailNode(\'' + n.service + '\',\'' + n.stage + '\')">' + n.stage + '</span>';
+            if (hasData) {
+                html += '<span class="tree-bar-wrap"><span class="tree-bar-fill" style="width:' + pct + '%;background:' + color + '"></span></span>';
+                html += '<span class="tree-pct">' + pct + '%</span>';
+                html += '<span class="tree-val">' + avg.toFixed(1) + ' ms (' + count + ')</span>';
+            } else {
+                html += '<span class="tree-val no-data">—</span>';
+            }
+            html += '</div>';
+
+            if (hasChildren) {
+                html += '<div class="tree-children' + (depth === 0 ? '' : ' hidden') + '">';
+                html += buildHTML(n.children, depth + 1, hasData ? avg : parentAvg);
+                html += '</div>';
+            }
+        }
+        return html;
+    }
+    container.innerHTML = '<div class="tree-label">Call Tree</div>' + buildHTML(CALL_TREE, 0, rootAvg);
+}
+
+function toggleTree(arrow) {
+    arrow.classList.toggle('expanded');
+    const children = arrow.parentElement.querySelector('.tree-children');
+    if (children) children.classList.toggle('hidden');
 }
 
 async function initPerf() {
-    try {
-        const resp = await fetch('/api/v1/health');
-        const h = await resp.json();
-        if (h.status === 'initializing') {
-            const overlay = document.getElementById('init-overlay');
-            const bar = document.getElementById('init-bar-fill');
-            const text = document.getElementById('init-text');
-            if (overlay) overlay.style.display = 'flex';
-            const interval = setInterval(async () => {
-                try {
-                    const r = await fetch('/api/v1/health');
-                    const s = await r.json();
-                    if (s.status === 'ok') {
-                        clearInterval(interval);
-                        if (overlay) overlay.style.display = 'none';
-                        doInitPerf();
-                    } else {
-                        const pct = s.total > 0 ? Math.round(s.progress / s.total * 100) : 0;
-                        if (bar) bar.style.width = pct + '%';
-                        if (text) text.textContent = s.progress + ' / ' + s.total;
-                    }
-                } catch (e) {}
-            }, 2000);
-            return;
-        }
-    } catch (e) {}
-    doInitPerf();
+    refreshTop();
+    await fetchAllTreeStats();
+    renderTree();
 }
 
 initPerf();
-setInterval(refreshPerf, 3000);
+setInterval(refreshTop, 3000);
 
-document.documentElement.addEventListener('themechange', () => {
-    fetchStats(selectedService, selectedStage).then(stats => {
-        if (stats && !stats.error) {
-            try { drawChart(stats); } catch (e) { console.error(e); }
-        }
-    });
+document.documentElement.addEventListener('themechange', async () => {
+    const stats = await fetchStats('proxy', 'proxy_e2e');
+    if (stats && !stats.error) try { drawBarChart('chart', { value: topChart }, stats, 240); } catch (e) {}
+    if (selectedSvc && selectedStg) {
+        const dStats = await fetchStats(selectedSvc, selectedStg);
+        if (dStats && !dStats.error) try { drawBarChart('detail-chart', { value: detailChart }, dStats, 160); } catch (e) {}
+    }
 });

@@ -216,6 +216,8 @@
             padding: 16px;
             box-shadow: var(--shadow);
             border: 1px solid var(--card-border);
+            max-width: 800px;
+            margin: 0 auto;
         }
         .chart-container h3 { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
         #chart { width: 100%; height: 240px; display: block; border-radius: 4px; }
@@ -396,13 +398,33 @@
         }
         .tree-node-name:hover { background: var(--tab-hover-bg); }
         .tree-node-name.selected { background: var(--primary-light); color: var(--primary); font-weight: 600; }
-        .tree-dur {
-            margin-left: 8px;
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-        .tree-dur.no-data { color: var(--text-muted); font-style: italic; }
         .tree-children.hidden { display: none; }
+
+        /* Tree proportion bars */
+        .tree-bar-wrap { display: inline-block; width: 80px; height: 8px; background: var(--border); border-radius: 2px; margin: 0 6px; vertical-align: middle; }
+        .tree-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; min-width: 2px; }
+        .tree-pct { font-size: 11px; color: var(--text-secondary); display: inline-block; min-width: 32px; text-align: right; }
+        .tree-val { font-size: 12px; color: var(--text-secondary); margin-left: 4px; }
+        .tree-val.no-data { color: var(--text-muted); font-style: italic; }
+
+        /* Perf layout: top (fixed) + bottom (tree | detail) */
+        .perf-top { margin-bottom: 24px; }
+        .perf-bottom { display: flex; gap: 24px; }
+        .perf-tree-col { flex: 1 1 52%; min-width: 0; }
+        .perf-detail-col { flex: 1 1 48%; min-width: 280px; border-left: 1px solid var(--border); padding-left: 24px; }
+
+        /* Detail panel */
+        .detail-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 12px; }
+        .detail-stat { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+        .detail-stat-label { color: var(--text-secondary); }
+        .detail-stat-value { color: var(--text); font-weight: 500; }
+        .mini-chart { width: 100%; height: 160px; margin-top: 16px; display: block; border-radius: 4px; }
+
+        /* Responsive: stack vertically on narrow screens */
+        @media (max-width: 768px) {
+            .perf-bottom { flex-direction: column; }
+            .perf-detail-col { border-left: none; border-top: 1px solid var(--border); padding-left: 0; padding-top: 16px; margin-top: 16px; min-width: 0; }
+        }
 
         /* Series hint */
         .series-hint {
@@ -492,36 +514,74 @@
             <button class="tab" onclick="switchTab('test', this)">Test</button>
             <button class="tab" onclick="switchTab('series', this)">Series</button>
             <button class="tab" onclick="switchTab('trace', this)">Trace</button>
+            <button class="tab" onclick="switchTab('download', this)">Downloads</button>
         </div>
 
         <!-- Perf -->
         <div id="perf-panel" class="panel active">
-            <div class="stage-info" id="perf-stage-info">proxy / proxy_e2e</div>
-            <div class="grid">
-                <div class="stat-card" style="border-left-color:#206bc4" id="card-count">
-                    <div class="stat-body"><div class="stat-label">Count</div><div class="stat-value">-</div><div class="stat-unit">spans</div></div>
-                </div>
-                <div class="stat-card" style="border-left-color:#4299e1" id="card-avg">
-                    <div class="stat-body"><div class="stat-label">Average</div><div class="stat-value">-</div><div class="stat-unit">ms</div></div>
-                </div>
-                <div class="stat-card" style="border-left-color:#48bb78" id="card-p50">
-                    <div class="stat-body"><div class="stat-label">P50</div><div class="stat-value">-</div><div class="stat-unit">ms</div></div>
-                </div>
-                <div class="stat-card" style="border-left-color:#ed8936" id="card-p99">
-                    <div class="stat-body"><div class="stat-label">P99</div><div class="stat-value">-</div><div class="stat-unit">ms</div></div>
-                </div>
-                <div class="stat-card" style="border-left-color:#9f7aea" id="card-min">
-                    <div class="stat-body"><div class="stat-label">Min</div><div class="stat-value">-</div><div class="stat-unit">ms</div></div>
-                </div>
-                <div class="stat-card" style="border-left-color:#f56565" id="card-max">
-                    <div class="stat-body"><div class="stat-label">Max</div><div class="stat-value">-</div><div class="stat-unit">ms</div></div>
+            <div class="perf-top">
+                <div class="stage-info">proxy / proxy_e2e</div>
+                <div class="grid">
+                    <div class="stat-card" style="border-left-color:#206bc4" id="card-count">
+                        <div class="stat-body"><div class="stat-label">Count</div><div class="stat-value">-</div><div class="stat-unit">spans</div></div>
+                    </div>
+                    <div class="stat-card" style="border-left-color:#4299e1" id="card-avg">
+                        <div class="stat-body"><div class="stat-label">Average</div><div class="stat-value">-</div><div class="stat-unit">ms</div></div>
+                    </div>
+                    <div class="stat-card" style="border-left-color:#48bb78" id="card-p50">
+                        <div class="stat-body"><div class="stat-label">P50</div><div class="stat-value">-</div><div class="stat-unit">ms</div></div>
+                    </div>
+                    <div class="stat-card" style="border-left-color:#ed8936" id="card-p99">
+                        <div class="stat-body"><div class="stat-label">P99</div><div class="stat-value">-</div><div class="stat-unit">ms</div></div>
+                    </div>
+                    <div class="stat-card" style="border-left-color:#9f7aea" id="card-min">
+                        <div class="stat-body"><div class="stat-label">Min</div><div class="stat-value">-</div><div class="stat-unit">ms</div></div>
+                    </div>
+                    <div class="stat-card" style="border-left-color:#f56565" id="card-max">
+                        <div class="stat-body"><div class="stat-label">Max</div><div class="stat-value">-</div><div class="stat-unit">ms</div></div>
+        </div>
+
+        <!-- Downloads -->
+        <div id="download-panel" class="panel">
+            <div class="control-bar">
+                <label>Filter:</label>
+                <select id="dl-filter" class="form-select" onchange="onDownloadFilterChange()">
+                    <option value="all">All entries</option>
+                    <option value="trace">By Trace ID</option>
+                    <option value="series">By Series ID</option>
+                </select>
+                <span id="dl-trace-input" style="display:none">
+                    <input type="text" id="dl-trace-id" class="form-input" placeholder="Trace ID">
+                </span>
+                <span id="dl-series-input" style="display:none">
+                    <input type="number" id="dl-series-id" class="form-input" placeholder="Series ID" style="width:100px">
+                </span>
+                <label>Format:</label>
+                <select id="dl-format" class="form-select">
+                    <option value="csv">CSV</option>
+                    <option value="jsonl">JSON Lines</option>
+                    <option value="json">Pretty JSON</option>
+                    <option value="log">Log Text</option>
+                </select>
+                <label>Limit:</label>
+                <input type="number" id="dl-limit" class="form-input" value="10000" style="width:80px" min="1" max="100000">
+                <button class="btn btn-primary" onclick="downloadPerf()">Download</button>
+            </div>
+        </div>
+    </div>
+                <div class="chart-container">
+                    <h3>Latency Distribution</h3>
+                    <canvas id="chart"></canvas>
                 </div>
             </div>
-            <div class="chart-container">
-                <h3>Latency Distribution</h3>
-                <canvas id="chart"></canvas>
+            <div class="perf-bottom">
+                <div class="perf-tree-col" id="perf-tree"></div>
+                <div class="perf-detail-col" id="perf-detail" style="display:none">
+                    <h3 class="detail-title" id="detail-stage-name"></h3>
+                    <div id="detail-metrics"></div>
+                    <canvas id="detail-chart" class="mini-chart"></canvas>
+                </div>
             </div>
-            <div id="perf-tree" style="margin-top:24px"></div>
         </div>
 
         <!-- Test -->
@@ -609,6 +669,7 @@
     <script src="/js/series.js"></script>
     <script src="/js/trace.js"></script>
     <script src="/js/loadtest.js"></script>
+    <script src="/js/download.js"></script>
 
     <script>
         function switchTab(name, el) {
@@ -618,6 +679,7 @@
             document.getElementById(name + '-panel').classList.add('active');
             if (name === 'series') loadSeries();
             if (name === 'trace') showTraceTable();
+            if (name === 'download') onDownloadFilterChange();
         }
     </script>
 

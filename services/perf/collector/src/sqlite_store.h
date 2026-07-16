@@ -27,6 +27,10 @@ public:
     // Query spans by trace_id, ordered by ts_us
     std::vector<common::perf::Span> QueryTrace(const std::string& trace_id);
 
+    // Download: query spans with optional filters, ordered by ts_us
+    std::vector<common::perf::Span> QuerySpans(
+        const std::string& trace_id, int64_t series_id, int limit);
+
     struct TraceSummary {
         std::string trace_id;
         uint64_t ts_us;
