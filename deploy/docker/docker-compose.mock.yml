@@ -1,0 +1,29 @@
+# Mock compose for WebUI testing without C++ collector.
+#
+# Usage:
+#   docker compose -f deploy/docker/docker-compose.mock.yml build
+#   docker compose -f deploy/docker/docker-compose.mock.yml up -d
+#   open http://<host>:32000
+#
+# The mock container gets network aliases perf-collector-service and proxy-service
+# so the existing nginx config (default.conf) works unchanged.
+
+services:
+  perf-collector-mock:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/perf-collector-mock/Dockerfile
+    networks:
+      default:
+        aliases:
+          - perf-collector-service
+          - proxy-service
+
+  perf-webui:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/perf-webui/Dockerfile
+    ports:
+      - "32000:32000"
+    depends_on:
+      - perf-collector-mock
