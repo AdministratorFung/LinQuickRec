@@ -38,4 +38,4 @@ Thumbs.db
 CLAUDE.md
 
 share/*.tar.gz
-share/*.whl
+share/*.whl__pycache__/
