@@ -37,11 +37,14 @@ const CALL_TREE = [
     }
 ];
 
-const BAR_COLORS = ['#206bc4', '#4299e1', '#63b3ed', '#48bb78', '#68d391', '#ed8936',
-    '#f6ad55', '#9f7aea', '#b794f4', '#f56565', '#fc8181', '#94a3b8'];
-
 function treeKey(svc, stg) { return svc + '|' + stg; }
 function treeStat(svc, stg) { return treeStats[treeKey(svc, stg)]; }
+
+function pctColor(pct) {
+    const t = Math.min(Math.max(pct, 0), 100) / 100;
+    const hue = 210 * (1 - t);
+    return 'hsl(' + Math.round(hue) + ', 65%, 50%)';
+}
 
 function getChartColors() {
     const dark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -176,6 +179,7 @@ async function refreshDetail() {
     // Re-fetch all tree stats to update proportion bars
     await fetchAllTreeStats();
     renderTree();
+    highlightTree();
 }
 
 async function fetchAllTreeStats() {
@@ -214,7 +218,6 @@ function renderTree() {
     const rootStat = treeStat('proxy', 'proxy_e2e');
     const rootAvg = rootStat && rootStat.count > 0 ? rootStat.avg : 0;
 
-    let barIdx = 0;
     function buildHTML(nodes, depth, parentAvg) {
         let html = '';
         for (const n of nodes) {
@@ -222,16 +225,17 @@ function renderTree() {
             const hasData = stat && stat.count > 0;
             const count = stat ? stat.count : 0;
             const avg = hasData ? stat.avg : 0;
-            const pct = parentAvg > 0 && avg > 0 ? Math.min(Math.round(avg / parentAvg * 100), 100) : 0;
-            const color = BAR_COLORS[barIdx % BAR_COLORS.length];
-            barIdx++;
+            const pct = parentAvg > 0 && avg > 0 ? Math.round(avg / parentAvg * 100) : 0;
+            const color = pctColor(pct);
             const hasChildren = n.children && n.children.length > 0;
+            const isSelected = selectedSvc && n.service === selectedSvc && n.stage === selectedStg;
+            const isDefault = !selectedSvc && depth === 0;
 
             html += '<div class="tree-node" style="padding-left:' + (depth * 22) + 'px">';
-            html += '<span class="tree-arrow' + (depth === 0 ? ' expanded' : '') + '" onclick="toggleTree(this)">▶</span>';
-            html += '<span class="tree-node-name' + (depth === 0 ? ' selected' : '') + '" data-service="' + n.service + '" data-stage="' + n.stage + '" onclick="selectDetailNode(\'' + n.service + '\',\'' + n.stage + '\')">' + n.stage + '</span>';
+            html += '<span class="tree-arrow' + (hasChildren ? (depth < 2 ? ' expanded' : '') : ' leaf') + '"' + (hasChildren ? ' onclick="toggleTree(this)"' : '') + '>' + (hasChildren ? '▶' : '') + '</span>';
+            html += '<span class="tree-node-name' + ((isSelected || isDefault) ? ' selected' : '') + '" data-service="' + n.service + '" data-stage="' + n.stage + '" onclick="selectDetailNode(\'' + n.service + '\',\'' + n.stage + '\')">' + n.stage + '</span>';
             if (hasData) {
-                html += '<span class="tree-bar-wrap"><span class="tree-bar-fill" style="width:' + pct + '%;background:' + color + '"></span></span>';
+                html += '<span class="tree-bar-wrap"><span class="tree-bar-fill" style="width:' + Math.min(pct, 100) + '%;background:' + color + '"></span></span>';
                 html += '<span class="tree-pct">' + pct + '%</span>';
                 html += '<span class="tree-val">' + avg.toFixed(1) + ' ms (' + count + ')</span>';
             } else {
@@ -240,7 +244,7 @@ function renderTree() {
             html += '</div>';
 
             if (hasChildren) {
-                html += '<div class="tree-children' + (depth === 0 ? '' : ' hidden') + '">';
+                html += '<div class="tree-children' + (depth < 2 ? '' : ' hidden') + '">';
                 html += buildHTML(n.children, depth + 1, hasData ? avg : parentAvg);
                 html += '</div>';
             }

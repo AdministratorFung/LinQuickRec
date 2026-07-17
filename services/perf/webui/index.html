@@ -390,6 +390,7 @@
             text-align: center;
         }
         .tree-arrow.expanded { transform: rotate(90deg); }
+        .tree-arrow.leaf { cursor: default; }
         .tree-node-name {
             cursor: pointer;
             padding: 2px 6px;
@@ -402,7 +403,7 @@
 
         /* Tree proportion bars */
         .tree-bar-wrap { display: inline-block; width: 80px; height: 8px; background: var(--border); border-radius: 2px; margin: 0 6px; vertical-align: middle; }
-        .tree-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; min-width: 2px; }
+        .tree-bar-fill { display: block; height: 100%; border-radius: 2px; transition: width 0.4s ease; min-width: 2px; }
         .tree-pct { font-size: 11px; color: var(--text-secondary); display: inline-block; min-width: 32px; text-align: right; }
         .tree-val { font-size: 12px; color: var(--text-secondary); margin-left: 4px; }
         .tree-val.no-data { color: var(--text-muted); font-style: italic; }
@@ -663,13 +664,13 @@
         </div>
     </div>
 
-    <script src="/js/theme.js"></script>
-    <script src="/js/api.js"></script>
-    <script src="/js/perf.js"></script>
-    <script src="/js/series.js"></script>
-    <script src="/js/trace.js"></script>
-    <script src="/js/loadtest.js"></script>
-    <script src="/js/download.js"></script>
+    <script src="/js/theme.js?v=2"></script>
+    <script src="/js/api.js?v=2"></script>
+    <script src="/js/perf.js?v=2"></script>
+    <script src="/js/series.js?v=2"></script>
+    <script src="/js/trace.js?v=2"></script>
+    <script src="/js/loadtest.js?v=2"></script>
+    <script src="/js/download.js?v=2"></script>
 
     <script>
         function switchTab(name, el) {
