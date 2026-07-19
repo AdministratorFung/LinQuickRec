@@ -622,7 +622,10 @@
             <div id="series-hint" class="series-hint"></div>
             <div id="series-list"></div>
             <div id="series-detail" style="display:none">
-                <button class="btn btn-ghost" onclick="backToSeriesList()" style="margin-bottom:8px">← Back to List</button>
+                <div style="margin-bottom:8px">
+                    <button class="btn btn-ghost" onclick="backToSeriesList()">Back to List</button>
+                    <button class="btn btn-ghost" id="series-activate-btn" style="display:none;margin-left:8px">Reactivate</button>
+                </div>
                 <h3 id="series-detail-title"></h3>
                 <div id="series-stats"></div>
             </div>
@@ -649,14 +652,14 @@
         </div>
     </div>
 
-    <script src="/js/theme.js?v=12"></script>
-    <script src="/js/api.js?v=12"></script>
-    <script src="/js/components.js?v=12"></script>
-    <script src="/js/perf.js?v=12"></script>
-    <script src="/js/series.js?v=12"></script>
-    <script src="/js/trace.js?v=12"></script>
-    <script src="/js/loadtest.js?v=12"></script>
-    <script src="/js/download.js?v=12"></script>
+    <script src="/js/theme.js?v=13"></script>
+    <script src="/js/api.js?v=13"></script>
+    <script src="/js/components.js?v=13"></script>
+    <script src="/js/perf.js?v=13"></script>
+    <script src="/js/series.js?v=13"></script>
+    <script src="/js/trace.js?v=13"></script>
+    <script src="/js/loadtest.js?v=13"></script>
+    <script src="/js/download.js?v=13"></script>
 
     <script>
         function switchTab(name, el) {

@@ -31,17 +31,17 @@ async function loadTraceList(append) {
     }
     document.getElementById('trace-load-more').style.display = list.length >= TRACE_PAGE ? '' : 'none';
 
-    for (const t of list) {
+    list.forEach(function(t, i) {
         const row = document.createElement('tr');
         row.className = 'clickable';
-        row.innerHTML = '<td class="text-secondary">#' + (traceOffset + 1) + '</td>' +
+        row.innerHTML = '<td class="text-secondary">#' + (traceOffset + i + 1) + '</td>' +
             '<td class="fw-medium">' + t.trace_id + '</td>' +
             '<td class="text-secondary">' + new Date(t.ts_us / 1000).toISOString().slice(0,19).replace('T',' ') + '</td>' +
             '<td>' + t.span_count + '</td>' +
             '<td class="text-end fw-medium">' + t.total_duration_ms.toFixed(1) + ' ms</td>';
         row.onclick = function () { showTraceDetail(t.trace_id); };
         container.appendChild(row);
-    }
+    });
     traceOffset += list.length;
 }
 

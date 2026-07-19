@@ -75,11 +75,14 @@ async function viewSeries(id, name) {
     if (!info) return;
 
     const hasActive = list.some(s => s.status === 'active');
-    var titleHtml = 'Series: ' + name;
+    document.getElementById('series-detail-title').textContent = 'Series: ' + name;
+    var reactivateBtn = document.getElementById('series-activate-btn');
     if (info.status === 'stopped' && !hasActive) {
-        titleHtml += ' <button class="btn btn-ghost" onclick="activateSeries(' + id + ')" style="font-size:12px;padding:2px 10px;margin-left:8px">Activate</button>';
+        reactivateBtn.style.display = '';
+        reactivateBtn.setAttribute('onclick', 'activateSeries(' + id + ')');
+    } else {
+        reactivateBtn.style.display = 'none';
     }
-    document.getElementById('series-detail-title').innerHTML = titleHtml;
 
     var container = document.getElementById('series-stats');
     var stats = await fetchSeriesStats(id);
