@@ -91,7 +91,6 @@ async function searchTrace() {
     var traceId = document.getElementById('traceIdInput').value.trim();
     console.log('[trace] searching:', traceId);
     if (!traceId) return;
-    document.getElementById('trace-pagination').innerHTML = '';
     showTraceDetail(traceId);
 }
 
@@ -119,7 +118,7 @@ async function showTraceDetail(traceId) {
     var totalRange = ((allSpans[allSpans.length - 1].ts_us || 0) - minTs) / 1000;
     var refMs = Math.pow(10, Math.floor(Math.log10(maxDuration || 1)));
 
-    var html = '<div style="background:var(--card-bg);border-radius:8px;padding:16px;box-shadow:var(--shadow);border:1px solid var(--card-border);margin-bottom:12px">';
+    var html = '<div style="background:var(--card-bg);border-radius:8px;padding:24px;box-shadow:var(--shadow);border:1px solid var(--card-border);margin-bottom:12px">';
     html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">';
     html += '<button class="btn btn-primary" onclick="showTraceTable()">Back to List</button>';
     html += '<span style="font-size:14px;font-weight:600;color:var(--text)">Trace ID: ' + traceId + '</span>';
@@ -156,6 +155,7 @@ async function showTraceDetail(traceId) {
 function showTraceTable() {
     document.getElementById('trace-result').style.display = 'none';
     document.getElementById('trace-table').style.display = 'block';
+    if (traceAll.length) renderTraceTable();
 }
 
 loadTraceList();

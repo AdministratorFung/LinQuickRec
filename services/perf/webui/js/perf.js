@@ -90,7 +90,7 @@ function renderTree() {
             const isDefault = !selectedSvc && depth === 0;
 
             html += '<div class="tree-node" style="padding-left:' + (depth * 22) + 'px">';
-            html += '<span class="tree-arrow' + (hasChildren ? (depth < 2 ? ' expanded' : '') : ' leaf') + '"' + (hasChildren ? ' onclick="toggleTree(this)"' : '') + '>' + (hasChildren ? '▶' : '') + '</span>';
+            html += '<span class="tree-arrow' + (hasChildren ? (depth < 1 ? ' expanded' : '') : ' leaf') + '"' + (hasChildren ? ' onclick="toggleTree(this)"' : '') + '>' + (hasChildren ? '▶' : '') + '</span>';
             html += '<span class="tree-node-name' + ((isSelected || isDefault) ? ' selected' : '') + '" data-service="' + n.service + '" data-stage="' + n.stage + '" onclick="selectDetailNode(\'' + n.service + '\',\'' + n.stage + '\')">' + n.stage + '</span>';
 
             html += '<span class="tree-bar-wrap"><span class="tree-bar-fill" style="width:' + (hasData ? Math.min(pct, 100) : 0) + '%;background:' + (hasData ? color : 'transparent') + '"></span></span>';
@@ -100,7 +100,7 @@ function renderTree() {
             html += '</div>';
 
             if (hasChildren) {
-                html += '<div class="tree-children' + (depth < 2 ? '' : ' hidden') + '">';
+                html += '<div class="tree-children' + (depth < 1 ? '' : ' hidden') + '">';
                 html += buildHTML(n.children, depth + 1, hasData ? avg : parentAvg);
                 html += '</div>';
             }

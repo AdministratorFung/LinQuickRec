@@ -645,7 +645,7 @@
         <!-- Trace -->
         <div id="trace-panel" class="panel">
             <div class="control-bar">
-                <input type="text" id="traceIdInput" class="form-input" placeholder="Trace ID" style="width:320px">
+                <input type="text" id="traceIdInput" class="form-input" placeholder="Trace ID" style="width:320px" onkeydown="if(event.key==='Enter') searchTrace()">
                 <button class="btn btn-primary" onclick="searchTrace()">Search</button>
             </div>
             <div id="trace-table">
