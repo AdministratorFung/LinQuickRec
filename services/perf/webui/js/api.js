@@ -133,3 +133,21 @@ async function fetchTraces(limit, offset) {
         return [];
     }
 }
+
+async function fetchTreeStructure() {
+    const url = `${API_BASE}/api/v1/tree`;
+    console.log('[api] fetchTreeStructure:', url);
+    try {
+        const resp = await fetch(url);
+        if (!resp.ok) {
+            console.warn('[api] fetchTreeStructure failed: HTTP', resp.status);
+            return null;
+        }
+        const data = await resp.json();
+        console.log('[api] fetchTreeStructure ok');
+        return data;
+    } catch (e) {
+        console.error('[api] fetchTreeStructure error:', e.message);
+        return null;
+    }
+}

@@ -35,6 +35,30 @@ STAGES = [
     {"service": "proxy", "stage": "recall_precalc_parallel_wait", "count": 1523},
 ]
 
+CALL_TREE = [
+    {"service": "proxy", "stage": "proxy_e2e", "children": [
+        {"service": "proxy", "stage": "feature_rpc", "children": [
+            {"service": "feature", "stage": "feature_total", "children": [
+                {"service": "feature", "stage": "generate_user_logs"}
+            ]}
+        ]},
+        {"service": "proxy", "stage": "recall_rpc", "children": [
+            {"service": "recall", "stage": "recall_total", "children": [
+                {"service": "recall", "stage": "vllm_rpc"}
+            ]}
+        ]},
+        {"service": "proxy", "stage": "precalc_rpc", "children": [
+            {"service": "precalc", "stage": "precalc_total"}
+        ]},
+        {"service": "proxy", "stage": "rank_rpc", "children": [
+            {"service": "rank_master", "stage": "rank_master_total", "children": [
+                {"service": "rank_sub", "stage": "rank_sub_total"}
+            ]}
+        ]},
+        {"service": "proxy", "stage": "recall_precalc_parallel_wait"}
+    ]}
+]
+
 BASE_STATS = {
     "proxy|proxy_e2e":                     {"avg": 52.3, "stddev": 18.5, "min": 12.1, "max": 156.7, "count": 1523},
     "proxy|feature_rpc":                    {"avg": 28.5, "stddev":  8.2, "min":  5.0, "max":  65.0, "count": 1523},
@@ -274,6 +298,9 @@ class MockHandler(BaseHTTPRequestHandler):
 
         elif path == "/api/v1/stages":
             self._send_json(200, STAGES)
+
+        elif path == "/api/v1/tree":
+            self._send_json(200, CALL_TREE)
 
         elif path == "/api/v1/traces":
             limit = min(max(int(qs.get("limit", ["20"])[0]), 1), 100)
