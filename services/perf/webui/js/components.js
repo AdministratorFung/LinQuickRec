@@ -125,7 +125,7 @@ function buildMetricsHTML(stats, opts) {
 
     // Line 3: chart
     if (opts.chartId) {
-        html += '<div class="chart-container" style="margin-bottom:16px;max-width:800px"><h3>' + (opts.title || 'Latency Distribution') + '</h3><canvas id="' + opts.chartId + '" style="width:100%;height:' + (opts.chartHeight || 240) + 'px"></canvas></div>';
+        html += '<div class="chart-container" style="margin-top:16px;margin-bottom:16px;max-width:800px"><h3>' + (opts.title || 'Latency Distribution') + '</h3><canvas id="' + opts.chartId + '" style="width:100%;height:' + (opts.chartHeight || 240) + 'px"></canvas></div>';
     }
 
     return html;
