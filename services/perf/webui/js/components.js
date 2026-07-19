@@ -104,7 +104,7 @@ function buildMetricsHTML(stats, opts) {
     var html = '';
 
     // Line 1: count, success, fail (left-aligned)
-    html += '<div class="stats-summary stats-summary-first">';
+    html += '<div class="stats-summary">';
     if (opts.showStatus && stats.status) {
         var badgeClass = stats.status === 'active' ? 'badge badge-green' : 'badge badge-gray';
         html += '<div class="stat-card" style="border-left-color:#206bc4"><div class="stat-body"><div class="stat-label">Status</div><div class="stat-value"><span class="' + badgeClass + '">' + stats.status + '</span></div></div></div>';
