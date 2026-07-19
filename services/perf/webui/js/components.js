@@ -103,17 +103,15 @@ function statCard(label, value, unit, color, metric) {
 function buildMetricsHTML(stats, opts) {
     var html = '';
 
-    // Line 1: count, success, fail
-    html += '<div class="stats-summary">';
+    // Line 1: count, success, fail (left-aligned)
+    html += '<div class="stats-summary stats-summary-first">';
     if (opts.showStatus && stats.status) {
         var badgeClass = stats.status === 'active' ? 'badge badge-green' : 'badge badge-gray';
         html += '<div class="stat-card" style="border-left-color:#206bc4"><div class="stat-body"><div class="stat-label">Status</div><div class="stat-value"><span class="' + badgeClass + '">' + stats.status + '</span></div></div></div>';
     }
     html += statCard(opts.countLabel || 'Count', stats.count, 'spans', '#206bc4', 'count');
-    if (opts.showSuccessFail && stats.success !== undefined) {
-        html += statCard('Success', stats.success, '', '#48bb78', 'success');
-        html += statCard('Fail', stats.fail, '', '#f56565', 'fail');
-    }
+    html += statCard('Success', stats.success !== undefined ? stats.success : 'N/A', '', '#48bb78', 'success');
+    html += statCard('Fail', stats.fail !== undefined ? stats.fail : 'N/A', '', '#f56565', 'fail');
     html += '</div>';
 
     // Line 2: avg, p50, p99, min, max
@@ -158,10 +156,8 @@ function updateMetricsGraph(containerId, stats, opts) {
         container.innerHTML = buildMetricsHTML(stats, opts);
     } else {
         setMetric(container, 'count', stats.count);
-        if (opts.showSuccessFail) {
-            if (stats.success !== undefined) setMetric(container, 'success', stats.success);
-            if (stats.fail !== undefined) setMetric(container, 'fail', stats.fail);
-        }
+        setMetric(container, 'success', stats.success !== undefined ? stats.success : 'N/A');
+        setMetric(container, 'fail', stats.fail !== undefined ? stats.fail : 'N/A');
         setMetric(container, 'avg', stats.avg.toFixed(1));
         setMetric(container, 'p50', stats.p50.toFixed(1));
         setMetric(container, 'p99', stats.p99.toFixed(1));
