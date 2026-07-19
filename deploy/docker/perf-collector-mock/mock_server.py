@@ -311,6 +311,17 @@ class MockHandler(BaseHTTPRequestHandler):
             trace_id = path[len("/api/v1/trace/"):]
             self._send_json(200, {"trace_id": trace_id, "tree": build_trace_tree(trace_id)})
 
+        elif path.startswith("/api/v1/series/") and path.endswith("/stats"):
+            sid_str = path[len("/api/v1/series/"):-len("/stats")]
+            try:
+                int(sid_str)
+            except ValueError:
+                self._send_json(400, {"error": "invalid series id"})
+                return
+            st = get_stats("proxy", "proxy_e2e")
+            st["count"] = random.randint(50, 500)
+            self._send_json(200, st)
+
         elif path == "/api/v1/series":
             self._send_json(200, {"series": series_state.list_all()})
 

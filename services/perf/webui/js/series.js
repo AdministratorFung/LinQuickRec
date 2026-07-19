@@ -3,15 +3,10 @@ async function loadSeries() {
     const list = await fetchSeriesList();
     console.log('[series] loaded:', list.length, 'series');
     const container = document.getElementById('series-list');
-    const btn = document.getElementById('new-series-btn');
     const hint = document.getElementById('series-hint');
 
     // Active mutual exclusion: can only create new when no active exists
     const hasActive = list.some(s => s.status === 'active');
-    if (btn) {
-        btn.disabled = hasActive;
-        btn.title = hasActive ? 'Stop the active series first' : '';
-    }
     if (hint) {
         hint.textContent = hasActive
             ? 'A series is currently active. Stop it before creating a new one.'
@@ -39,6 +34,11 @@ async function loadSeries() {
 }
 
 async function startSeries() {
+    const list = await fetchSeriesList();
+    if (list.some(s => s.status === 'active')) {
+        showToast('A series is currently active. Stop it before creating a new one.', 'error');
+        return;
+    }
     const name = prompt('Series name:', 'baseline-' + new Date().toISOString().slice(0, 19));
     if (!name) return;
     console.log('[series] starting:', name);
@@ -69,22 +69,48 @@ async function viewSeries(id, name) {
     const list = await fetchSeriesList();
     const info = list.find(s => s.id == id);
     const container = document.getElementById('series-stats');
-    if (info) {
-        const badgeClass = info.status === 'active' ? 'badge badge-green' : 'badge badge-gray';
-        container.innerHTML = `
-            <div class="stat-card" style="border-left-color:#206bc4">
-                <div class="stat-body">
-                    <div class="stat-label">Status</div>
-                    <div class="stat-value"><span class="${badgeClass}">${info.status}</span></div>
-                </div>
+    if (!info) return;
+    const badgeClass = info.status === 'active' ? 'badge badge-green' : 'badge badge-gray';
+
+    var html = `
+        <div class="stat-card" style="border-left-color:#206bc4">
+            <div class="stat-body">
+                <div class="stat-label">Status</div>
+                <div class="stat-value"><span class="${badgeClass}">${info.status}</span></div>
             </div>
-            <div class="stat-card" style="border-left-color:#4299e1">
-                <div class="stat-body">
-                    <div class="stat-label">Span Count</div>
-                    <div class="stat-value">${info.span_count || 0}</div>
-                    <div class="stat-unit">spans</div>
-                </div>
-            </div>`;
+        </div>
+        <div class="stat-card" style="border-left-color:#4299e1">
+            <div class="stat-body">
+                <div class="stat-label">Span Count</div>
+                <div class="stat-value">${info.span_count || 0}</div>
+                <div class="stat-unit">spans</div>
+            </div>
+        </div>`;
+
+    const stats = await fetchSeriesStats(id);
+    if (stats) {
+        html += `
+        <div class="stat-card" style="border-left-color:#48bb78">
+            <div class="stat-body"><div class="stat-label">Avg</div><div class="stat-value">${stats.avg.toFixed(1)}</div><div class="stat-unit">ms</div></div>
+        </div>
+        <div class="stat-card" style="border-left-color:#9f7aea">
+            <div class="stat-body"><div class="stat-label">P50</div><div class="stat-value">${stats.p50.toFixed(1)}</div><div class="stat-unit">ms</div></div>
+        </div>
+        <div class="stat-card" style="border-left-color:#ed8936">
+            <div class="stat-body"><div class="stat-label">P99</div><div class="stat-value">${stats.p99.toFixed(1)}</div><div class="stat-unit">ms</div></div>
+        </div>
+        <div class="stat-card" style="border-left-color:#48bb78">
+            <div class="stat-body"><div class="stat-label">Min</div><div class="stat-value">${stats.min.toFixed(1)}</div><div class="stat-unit">ms</div></div>
+        </div>
+        <div class="stat-card" style="border-left-color:#f56565">
+            <div class="stat-body"><div class="stat-label">Max</div><div class="stat-value">${stats.max.toFixed(1)}</div><div class="stat-unit">ms</div></div>
+        </div>`;
+    }
+
+    container.innerHTML = html;
+
+    if (stats) {
+        setTimeout(function () { drawBarChart('series-chart', {}, stats, 160); }, 50);
     }
 }
 

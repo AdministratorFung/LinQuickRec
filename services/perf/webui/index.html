@@ -588,8 +588,18 @@
         <!-- Test -->
         <div id="test-panel" class="panel">
             <div class="control-bar">
-                <label>User ID:</label>
-                <input type="number" id="lt-user-id" class="form-input" value="1000" style="width:100px">
+                <label>Mode:</label>
+                <select id="lt-mode" class="form-select">
+                    <option value="single" selected>Single</option>
+                    <option value="sequential">Sequential</option>
+                    <option value="concurrent">Concurrent</option>
+                </select>
+                <span id="lt-count-group">
+                    <label>Count:</label>
+                    <input type="number" id="lt-count" class="form-input" value="100" style="width:80px" min="1">
+                </span>
+            </div>
+            <div class="control-bar">
                 <label>Payload:</label>
                 <input type="number" id="lt-payload-size" class="form-input" value="0" style="width:80px" min="0">
                 <select id="lt-payload-unit" class="form-select">
@@ -597,27 +607,24 @@
                     <option value="KB" selected>KB</option>
                     <option value="MB">MB</option>
                 </select>
-                <label>Mode:</label>
-                <select id="lt-mode" class="form-select">
-                    <option value="single">Single</option>
-                    <option value="sequential">Sequential</option>
-                    <option value="concurrent" selected>Concurrent</option>
-                </select>
-                <span id="lt-count-group">
-                    <label>Count:</label>
-                    <input type="number" id="lt-count" class="form-input" value="100" style="width:80px" min="1">
-                </span>
-                <label>ID Mode:</label>
+                <label>User ID:</label>
                 <select id="lt-id-mode" class="form-select">
-                    <option value="series" selected>Series (incr)</option>
-                    <option value="random">Random</option>
+                    <option value="random" selected>Random</option>
+                    <option value="input">Input</option>
                 </select>
+                <span id="lt-user-id-group">
+                    <input type="number" id="lt-user-id" class="form-input" value="1000" style="width:160px" placeholder="e.g. 1000">
+                </span>
             </div>
             <div class="control-bar">
                 <label style="display:flex;align-items:center;gap:6px;cursor:pointer" title="Automatically create a Perf Series before sending (see results in Perf tab)">
                     <input type="checkbox" id="lt-use-series" checked>
-                    Automatically create a Perf Series for this test run
+                    Create Perf Series
                 </label>
+                <span id="lt-series-name-group">
+                    <label>Name:</label>
+                    <input type="text" id="lt-series-name" class="form-input" style="width:240px" placeholder="auto-generated if empty">
+                </span>
                 <button class="btn btn-primary" id="lt-send-btn" onclick="runLoadTest()">Send</button>
             </div>
             <div class="progress-container" style="display:none" id="lt-progress-bar">
@@ -639,6 +646,10 @@
             <div id="series-detail" style="display:none">
                 <h3 id="series-detail-title"></h3>
                 <div id="series-stats" class="grid"></div>
+                <div class="chart-container" style="margin-top:12px;max-width:400px">
+                    <h3>Latency Distribution</h3>
+                    <canvas id="series-chart"></canvas>
+                </div>
             </div>
         </div>
 
@@ -664,13 +675,13 @@
         </div>
     </div>
 
-    <script src="/js/theme.js?v=3"></script>
-    <script src="/js/api.js?v=3"></script>
-    <script src="/js/perf.js?v=3"></script>
-    <script src="/js/series.js?v=3"></script>
-    <script src="/js/trace.js?v=3"></script>
-    <script src="/js/loadtest.js?v=3"></script>
-    <script src="/js/download.js?v=3"></script>
+    <script src="/js/theme.js?v=4"></script>
+    <script src="/js/api.js?v=4"></script>
+    <script src="/js/perf.js?v=4"></script>
+    <script src="/js/series.js?v=4"></script>
+    <script src="/js/trace.js?v=4"></script>
+    <script src="/js/loadtest.js?v=4"></script>
+    <script src="/js/download.js?v=4"></script>
 
     <script>
         function switchTab(name, el) {

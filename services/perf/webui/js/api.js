@@ -151,3 +151,21 @@ async function fetchTreeStructure() {
         return null;
     }
 }
+
+async function fetchSeriesStats(seriesId) {
+    const url = `${API_BASE}/api/v1/series/${seriesId}/stats`;
+    console.log('[api] fetchSeriesStats:', url);
+    try {
+        const resp = await fetch(url);
+        if (!resp.ok) {
+            console.warn('[api] fetchSeriesStats failed: HTTP', resp.status);
+            return null;
+        }
+        const data = await resp.json();
+        console.log('[api] fetchSeriesStats ok');
+        return data;
+    } catch (e) {
+        console.error('[api] fetchSeriesStats error:', e.message);
+        return null;
+    }
+}
