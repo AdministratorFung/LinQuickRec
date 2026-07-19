@@ -259,8 +259,8 @@ function renderTree() {
 
 function toggleTree(arrow) {
     arrow.classList.toggle('expanded');
-    const children = arrow.parentElement.querySelector('.tree-children');
-    if (children) children.classList.toggle('hidden');
+    const sibling = arrow.parentElement.nextElementSibling;
+    if (sibling && sibling.classList.contains('tree-children')) sibling.classList.toggle('hidden');
 }
 
 async function initPerf() {
