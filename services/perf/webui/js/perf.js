@@ -41,9 +41,12 @@ function treeKey(svc, stg) { return svc + '|' + stg; }
 function treeStat(svc, stg) { return treeStats[treeKey(svc, stg)]; }
 
 function pctColor(pct) {
+    // Blue (#206bc4) → Red (#f56565) gradient by percentage
     const t = Math.min(Math.max(pct, 0), 100) / 100;
-    const hue = 210 * (1 - t);
-    return 'hsl(' + Math.round(hue) + ', 65%, 50%)';
+    const r = Math.round(32 + (245 - 32) * t);
+    const g = Math.round(107 + (101 - 107) * t);
+    const b = Math.round(196 + (101 - 196) * t);
+    return 'rgb(' + r + ',' + g + ',' + b + ')';
 }
 
 function getChartColors() {

@@ -48,7 +48,7 @@ BASE_STATS = {
     "proxy|rank_rpc":                       {"avg": 22.0, "stddev":  6.5, "min":  4.0, "max":  55.0, "count": 1523},
     "rank_master|rank_master_total":        {"avg": 20.0, "stddev":  6.0, "min":  3.0, "max":  50.0, "count": 1523},
     "rank_sub|rank_sub_total":              {"avg": 15.0, "stddev":  4.5, "min":  2.0, "max":  38.0, "count": 1523},
-    "proxy|recall_precalc_parallel_wait":   {"avg": 50.0, "stddev": 16.0, "min": 10.0, "max": 130.0, "count": 1523},
+    "proxy|recall_precalc_parallel_wait":   {"avg": 45.0, "stddev": 14.0, "min": 8.0, "max": 110.0, "count": 1523},
 }
 
 DEFAULT_STATS = {"avg": 30.0, "stddev": 10.0, "min": 5.0, "max": 80.0, "count": 1000}
@@ -61,10 +61,30 @@ _now_us = int(time.time() * 1_000_000)
 
 TRACES = [
     {"trace_id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6", "ts_us": _now_us,              "span_count": 13, "total_duration_ms": 80.2},
-    {"trace_id": "b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7", "ts_us": _now_us - 5_000_000,  "span_count": 13, "total_duration_ms": 75.5},
+    {"trace_id": "b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7", "ts_us": _now_us -  5_000_000, "span_count": 13, "total_duration_ms": 75.5},
     {"trace_id": "c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8", "ts_us": _now_us - 10_000_000, "span_count": 13, "total_duration_ms": 92.3},
     {"trace_id": "d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9", "ts_us": _now_us - 15_000_000, "span_count": 13, "total_duration_ms": 68.8},
     {"trace_id": "e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0", "ts_us": _now_us - 20_000_000, "span_count": 13, "total_duration_ms": 105.5},
+    {"trace_id": "f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1", "ts_us": _now_us - 25_000_000, "span_count": 13, "total_duration_ms": 55.1},
+    {"trace_id": "a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2", "ts_us": _now_us - 30_000_000, "span_count": 13, "total_duration_ms": 61.7},
+    {"trace_id": "b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3", "ts_us": _now_us - 35_000_000, "span_count": 13, "total_duration_ms": 98.4},
+    {"trace_id": "c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4", "ts_us": _now_us - 40_000_000, "span_count": 13, "total_duration_ms": 42.9},
+    {"trace_id": "d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5", "ts_us": _now_us - 45_000_000, "span_count": 13, "total_duration_ms": 73.6},
+    {"trace_id": "e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6", "ts_us": _now_us - 50_000_000, "span_count": 13, "total_duration_ms": 88.1},
+    {"trace_id": "f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7", "ts_us": _now_us - 55_000_000, "span_count": 13, "total_duration_ms": 51.3},
+    {"trace_id": "a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8", "ts_us": _now_us - 60_000_000, "span_count": 13, "total_duration_ms": 69.0},
+    {"trace_id": "b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9", "ts_us": _now_us - 65_000_000, "span_count": 13, "total_duration_ms": 112.3},
+    {"trace_id": "c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0", "ts_us": _now_us - 70_000_000, "span_count": 13, "total_duration_ms": 46.8},
+    {"trace_id": "d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1", "ts_us": _now_us - 75_000_000, "span_count": 13, "total_duration_ms": 57.9},
+    {"trace_id": "e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2", "ts_us": _now_us - 80_000_000, "span_count": 13, "total_duration_ms": 84.7},
+    {"trace_id": "f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3", "ts_us": _now_us - 85_000_000, "span_count": 13, "total_duration_ms": 39.2},
+    {"trace_id": "a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4", "ts_us": _now_us - 90_000_000, "span_count": 13, "total_duration_ms": 95.6},
+    {"trace_id": "b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5", "ts_us": _now_us - 95_000_000, "span_count": 13, "total_duration_ms": 63.4},
+    {"trace_id": "c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6", "ts_us": _now_us - 100_000_000, "span_count": 13, "total_duration_ms": 77.2},
+    {"trace_id": "d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7", "ts_us": _now_us - 105_000_000, "span_count": 13, "total_duration_ms": 81.0},
+    {"trace_id": "e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8", "ts_us": _now_us - 110_000_000, "span_count": 13, "total_duration_ms": 48.5},
+    {"trace_id": "f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9", "ts_us": _now_us - 115_000_000, "span_count": 13, "total_duration_ms": 59.8},
+    {"trace_id": "a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0", "ts_us": _now_us - 120_000_000, "span_count": 13, "total_duration_ms": 102.9},
 ]
 
 # ============================================================
@@ -113,12 +133,14 @@ def get_stats(service, stage):
     avg = base["avg"] * (1 + noise)
     stddev = base["stddev"] * (1 + noise * 0.5)
     count = base["count"] + random.randint(-5, 5)
+    max_val = round(base["max"] * (1 + random.uniform(-0.1, 0.1)), 3)
+    p99 = round(avg * random.uniform(2.0, 3.5), 3)
     return {
         "avg": round(avg, 3),
         "min": round(base["min"] * (1 + random.uniform(-0.1, 0.1)), 3),
-        "max": round(base["max"] * (1 + random.uniform(-0.1, 0.1)), 3),
+        "max": max_val,
         "p50": round(avg * random.uniform(0.8, 1.0), 3),
-        "p99": round(avg * random.uniform(2.0, 3.5), 3),
+        "p99": min(p99, max_val),
         "stddev": round(stddev, 3),
         "count": count,
     }
@@ -145,33 +167,27 @@ def build_trace_tree(trace_id):
             n["children"] = children
         return n
 
-    return {
-        "service": "",
-        "stage": "trace",
-        "children": [
-            node("proxy", "proxy_e2e", 80.0, 0, [
-                node("proxy", "feature_rpc", 25.0, 2000, [
-                    node("feature", "feature_total", 22.0, 3000, [
-                        node("feature", "generate_user_logs", 10.0, 4000),
-                    ]),
-                ]),
-                node("proxy", "recall_rpc", 35.0, 25000, [
-                    node("recall", "recall_total", 33.0, 26000, [
-                        node("recall", "vllm_rpc", 28.0, 27000),
-                    ]),
-                ]),
-                node("proxy", "precalc_rpc", 22.0, 30000, [
-                    node("precalc", "precalc_total", 20.0, 31000),
-                ]),
-                node("proxy", "rank_rpc", 18.0, 55000, [
-                    node("rank_master", "rank_master_total", 16.0, 56000, [
-                        node("rank_sub", "rank_sub_total", 12.0, 57000),
-                    ]),
-                ]),
-                node("proxy", "recall_precalc_parallel_wait", 40.0, 79000),
+    return node("proxy", "proxy_e2e", 80.0, 0, [
+        node("proxy", "feature_rpc", 25.0, 2000, [
+            node("feature", "feature_total", 22.0, 3000, [
+                node("feature", "generate_user_logs", 10.0, 4000),
             ]),
-        ],
-    }
+        ]),
+        node("proxy", "recall_rpc", 35.0, 25000, [
+            node("recall", "recall_total", 33.0, 26000, [
+                node("recall", "vllm_rpc", 28.0, 27000),
+            ]),
+        ]),
+        node("proxy", "precalc_rpc", 22.0, 30000, [
+            node("precalc", "precalc_total", 20.0, 31000),
+        ]),
+        node("proxy", "rank_rpc", 18.0, 55000, [
+            node("rank_master", "rank_master_total", 16.0, 56000, [
+                node("rank_sub", "rank_sub_total", 12.0, 57000),
+            ]),
+        ]),
+        node("proxy", "recall_precalc_parallel_wait", 40.0, 79000),
+    ])
 
 
 def get_outliers(service, stage):

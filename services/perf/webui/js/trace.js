@@ -66,7 +66,7 @@ async function showTraceDetail(traceId) {
     }
 
     const allSpans = [];
-    function collect(node) { if (node.has_span || node.virtual) allSpans.push(node); for (const c of (node.children || [])) collect(c); }
+    function collect(node) { if (node.duration_ms !== undefined || node.virtual) allSpans.push(node); for (const c of (node.children || [])) collect(c); }
     collect(result.tree);
     if (!allSpans.length) { container.innerHTML = '<div class="empty-state">No spans in tree.</div>'; return; }
 
@@ -77,7 +77,7 @@ async function showTraceDetail(traceId) {
 
     let html = '<div class="table-wrap"><table class="table"><thead><tr><th>Service</th><th>Stage</th><th class="text-end">Duration</th><th>Waterfall</th><th>Status</th></tr></thead><tbody>';
     function render(node, depth) {
-        if (!node || (!node.has_span && !node.virtual && !(node.children && node.children.length))) return;
+        if (!node || (node.duration_ms === undefined && !node.virtual && !(node.children && node.children.length))) return;
         const indent = depth * 20;
         const offset = node.ts_us ? ((node.ts_us - minTs) / 1000) : 0;
         const dur = node.duration_ms || 0;
