@@ -522,24 +522,15 @@
         <div id="perf-panel" class="panel active">
             <div class="perf-top">
                 <div class="stage-info">proxy / proxy_e2e</div>
-                <div class="grid">
-                    <div class="stat-card" style="border-left-color:#206bc4" id="card-count">
-                        <div class="stat-body"><div class="stat-label">Count</div><div class="stat-value">-</div><div class="stat-unit">spans</div></div>
-                    </div>
-                    <div class="stat-card" style="border-left-color:#4299e1" id="card-avg">
-                        <div class="stat-body"><div class="stat-label">Average</div><div class="stat-value">-</div><div class="stat-unit">ms</div></div>
-                    </div>
-                    <div class="stat-card" style="border-left-color:#48bb78" id="card-p50">
-                        <div class="stat-body"><div class="stat-label">P50</div><div class="stat-value">-</div><div class="stat-unit">ms</div></div>
-                    </div>
-                    <div class="stat-card" style="border-left-color:#ed8936" id="card-p99">
-                        <div class="stat-body"><div class="stat-label">P99</div><div class="stat-value">-</div><div class="stat-unit">ms</div></div>
-                    </div>
-                    <div class="stat-card" style="border-left-color:#9f7aea" id="card-min">
-                        <div class="stat-body"><div class="stat-label">Min</div><div class="stat-value">-</div><div class="stat-unit">ms</div></div>
-                    </div>
-                    <div class="stat-card" style="border-left-color:#f56565" id="card-max">
-                        <div class="stat-body"><div class="stat-label">Max</div><div class="stat-value">-</div><div class="stat-unit">ms</div></div>
+                <div id="perf-top-metrics"></div>
+            </div>
+            <div class="perf-bottom">
+                <div class="perf-tree-col" id="perf-tree"></div>
+                <div class="perf-detail-col" id="perf-detail" style="display:none">
+                    <h3 class="detail-title" id="detail-stage-name"></h3>
+                    <div id="perf-detail-metrics"></div>
+                </div>
+            </div>
         </div>
 
         <!-- Downloads -->
@@ -570,20 +561,7 @@
             </div>
         </div>
     </div>
-                <div class="chart-container">
-                    <h3>Latency Distribution</h3>
-                    <canvas id="chart"></canvas>
-                </div>
-            </div>
-            <div class="perf-bottom">
-                <div class="perf-tree-col" id="perf-tree"></div>
-                <div class="perf-detail-col" id="perf-detail" style="display:none">
-                    <h3 class="detail-title" id="detail-stage-name"></h3>
-                    <div id="detail-metrics"></div>
-                    <canvas id="detail-chart" class="mini-chart"></canvas>
-                </div>
-            </div>
-        </div>
+</div>
 
         <!-- Test -->
         <div id="test-panel" class="panel">
@@ -675,13 +653,14 @@
         </div>
     </div>
 
-    <script src="/js/theme.js?v=4"></script>
-    <script src="/js/api.js?v=4"></script>
-    <script src="/js/perf.js?v=4"></script>
-    <script src="/js/series.js?v=4"></script>
-    <script src="/js/trace.js?v=4"></script>
-    <script src="/js/loadtest.js?v=4"></script>
-    <script src="/js/download.js?v=4"></script>
+    <script src="/js/theme.js?v=5"></script>
+    <script src="/js/api.js?v=5"></script>
+    <script src="/js/components.js?v=5"></script>
+    <script src="/js/perf.js?v=5"></script>
+    <script src="/js/series.js?v=5"></script>
+    <script src="/js/trace.js?v=5"></script>
+    <script src="/js/loadtest.js?v=5"></script>
+    <script src="/js/download.js?v=5"></script>
 
     <script>
         function switchTab(name, el) {

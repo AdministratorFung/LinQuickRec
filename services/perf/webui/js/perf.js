@@ -1,6 +1,4 @@
 // Perf tab — fixed proxy_e2e header + call tree with proportion bars + detail panel
-let topChart = null;
-let detailChart = null;
 let selectedSvc = null;
 let selectedStg = null;
 let treeStats = {}; // "service|stage" → {avg, p50, p99, min, max, count, stddev}
@@ -19,135 +17,20 @@ function pctColor(pct) {
     return 'rgb(' + r + ',' + g + ',' + b + ')';
 }
 
-function getChartColors() {
-    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-    return {
-        bg: dark ? '#1e293b' : '#ffffff',
-        grid: dark ? '#2c3a4f' : '#e6e8ec',
-        text: dark ? '#98a2b3' : '#656d77',
-        axis: dark ? '#64748b' : '#94a3b8',
-        bars: ['#206bc4', '#4299e1', '#48bb78', '#ed8936', '#9f7aea', '#f56565'],
-    };
-}
-
-function drawBarChart(canvasId, chartRef, stats, height) {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return;
-    canvas.height = height || 220;
-    const ctx = canvas.getContext('2d');
-    if (chartRef) chartRef.value = ctx;
-    const colors = getChartColors();
-    const w = canvas.offsetWidth;
-    const h = canvas.offsetHeight;
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = w * dpr;
-    canvas.height = h * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = colors.bg;
-    ctx.fillRect(0, 0, w, h);
-
-    const values = [
-        { label: 'Min', v: stats.min || 0 },
-        { label: 'Avg', v: stats.avg || 0 },
-        { label: 'P50', v: stats.p50 || 0 },
-        { label: 'P99', v: stats.p99 || 0 },
-        { label: 'Max', v: stats.max || 0 },
-        { label: 'StdDev', v: stats.stddev || 0 },
-    ];
-    const maxVal = Math.max(...values.map(v => v.v), 1);
-    const pad = { top: 24, right: 16, bottom: 28, left: 44 };
-    const chartW = w - pad.left - pad.right;
-    const chartH = h - pad.top - pad.bottom;
-    const barGap = 8;
-    const barW = (chartW - barGap * (values.length + 1)) / values.length;
-
-    ctx.fillStyle = colors.text;
-    ctx.font = '10px Inter, -apple-system, sans-serif';
-    ctx.textAlign = 'right';
-    for (let i = 0; i <= 4; i++) {
-        const y = pad.top + (chartH / 4) * (4 - i);
-        const val = (maxVal / 4) * i;
-        ctx.beginPath();
-        ctx.strokeStyle = colors.grid;
-        ctx.lineWidth = 1;
-        ctx.moveTo(pad.left, y);
-        ctx.lineTo(w - pad.right, y);
-        ctx.stroke();
-        ctx.fillText(Number(val).toFixed(1), pad.left - 6, y + 4);
-    }
-    for (let i = 0; i < values.length; i++) {
-        const x = pad.left + barGap + i * (barW + barGap);
-        const barH = values[i].v > 0 ? Math.max((values[i].v / maxVal) * chartH, 2) : 0;
-        const y = pad.top + chartH - barH;
-        ctx.globalAlpha = 0.12;
-        ctx.fillStyle = colors.bars[i];
-        ctx.fillRect(x, pad.top, barW, chartH);
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = colors.bars[i];
-        ctx.fillRect(x, y, barW, barH);
-        ctx.fillStyle = colors.text;
-        ctx.font = '10px Inter, -apple-system, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(values[i].label, x + barW / 2, h - 4);
-    }
-}
-
-function updateTopCards(stats) {
-    const hasData = (stats.count || 0) > 0;
-    const cards = [
-        { id: 'card-count', value: stats.count || 0, unit: 'spans' },
-        { id: 'card-avg', value: hasData ? (stats.avg || 0).toFixed(1) : 'N/A', unit: hasData ? 'ms' : '' },
-        { id: 'card-p50', value: hasData ? (stats.p50 || 0).toFixed(1) : 'N/A', unit: hasData ? 'ms' : '' },
-        { id: 'card-p99', value: hasData ? (stats.p99 || 0).toFixed(1) : 'N/A', unit: hasData ? 'ms' : '' },
-        { id: 'card-min', value: hasData ? (stats.min || 0).toFixed(1) : 'N/A', unit: hasData ? 'ms' : '' },
-        { id: 'card-max', value: hasData ? (stats.max || 0).toFixed(1) : 'N/A', unit: hasData ? 'ms' : '' },
-    ];
-    for (const c of cards) {
-        const el = document.getElementById(c.id);
-        if (!el) continue;
-        el.querySelector('.stat-value').textContent = c.value;
-        el.querySelector('.stat-unit').textContent = c.unit;
-    }
-}
-
-function updateDetailCards(stats) {
-    const hasData = (stats.count || 0) > 0;
-    const info = [
-        { label: 'Avg', value: hasData ? (stats.avg || 0).toFixed(1) + ' ms' : 'N/A' },
-        { label: 'P50', value: hasData ? (stats.p50 || 0).toFixed(1) + ' ms' : 'N/A' },
-        { label: 'P99', value: hasData ? (stats.p99 || 0).toFixed(1) + ' ms' : 'N/A' },
-        { label: 'Count', value: stats.count || 0 },
-        { label: 'Min', value: hasData ? (stats.min || 0).toFixed(1) + ' ms' : 'N/A' },
-        { label: 'Max', value: hasData ? (stats.max || 0).toFixed(1) + ' ms' : 'N/A' },
-    ];
-    let html = '';
-    for (const i of info) {
-        html += '<div class="detail-stat"><span class="detail-stat-label">' + i.label + '</span><span class="detail-stat-value">' + i.value + '</span></div>';
-    }
-    document.getElementById('detail-metrics').innerHTML = html;
-}
-
 async function refreshTop() {
     const stats = await fetchStats('proxy', 'proxy_e2e');
     if (!stats || stats.error) {
-        for (const id of ['card-count', 'card-avg', 'card-p50', 'card-p99', 'card-min', 'card-max']) {
-            const el = document.getElementById(id);
-            if (!el) continue;
-            el.querySelector('.stat-value').textContent = 'N/A';
-            el.querySelector('.stat-unit').textContent = stats ? stats.error : 'no data';
-        }
+        updateMetricsGraph('perf-top-metrics', { count: 0, avg: 0, p50: 0, p99: 0, min: 0, max: 0, stddev: 0 }, { chartId: 'perf-top-chart', chartHeight: 240, title: 'Latency Distribution' });
         return;
     }
-    updateTopCards(stats);
-    try { drawBarChart('chart', { value: topChart }, stats, 240); } catch (e) { console.error(e); }
+    updateMetricsGraph('perf-top-metrics', stats, { chartId: 'perf-top-chart', chartHeight: 240, title: 'Latency Distribution' });
 }
 
 async function refreshDetail() {
     if (!selectedSvc || !selectedStg) return;
     const stats = await fetchStats(selectedSvc, selectedStg);
     if (!stats || stats.error) return;
-    updateDetailCards(stats);
-    try { drawBarChart('detail-chart', { value: detailChart }, stats, 160); } catch (e) { console.error(e); }
+    updateMetricsGraph('perf-detail-metrics', stats, { chartId: 'perf-detail-chart', chartHeight: 160, title: selectedSvc + ' / ' + selectedStg });
     updateTreeValues();
     highlightTree();
 }
@@ -276,10 +159,7 @@ async function refreshData() {
     refreshTop();
     if (selectedSvc && selectedStg) {
         const st = treeStat(selectedSvc, selectedStg);
-        if (st) {
-            updateDetailCards(st);
-            try { drawBarChart('detail-chart', { value: detailChart }, st, 160); } catch (e) { console.error(e); }
-        }
+        if (st) updateMetricsGraph('perf-detail-metrics', st, { chartId: 'perf-detail-chart', chartHeight: 160, title: selectedSvc + ' / ' + selectedStg });
     }
 }
 
@@ -308,9 +188,9 @@ setInterval(refreshData, 1000);
 
 document.documentElement.addEventListener('themechange', async () => {
     const stats = await fetchStats('proxy', 'proxy_e2e');
-    if (stats && !stats.error) try { drawBarChart('chart', { value: topChart }, stats, 240); } catch (e) {}
+    if (stats && !stats.error) try { drawBarChart('perf-top-chart', {}, stats, 240); } catch (e) {}
     if (selectedSvc && selectedStg) {
         const dStats = await fetchStats(selectedSvc, selectedStg);
-        if (dStats && !dStats.error) try { drawBarChart('detail-chart', { value: detailChart }, dStats, 160); } catch (e) {}
+        if (dStats && !dStats.error) try { drawBarChart('perf-detail-chart', {}, dStats, 160); } catch (e) {}
     }
 });

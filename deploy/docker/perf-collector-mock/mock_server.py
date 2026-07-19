@@ -320,6 +320,8 @@ class MockHandler(BaseHTTPRequestHandler):
                 return
             st = get_stats("proxy", "proxy_e2e")
             st["count"] = random.randint(50, 500)
+            st["success"] = random.randint(int(st["count"] * 0.8), st["count"])
+            st["fail"] = st["count"] - st["success"]
             self._send_json(200, st)
 
         elif path == "/api/v1/series":

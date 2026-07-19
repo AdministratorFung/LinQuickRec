@@ -90,31 +90,11 @@ function renderResults(results, stats) {
     ltAllStats = stats;
     ltShownCount = 10;
 
-    var html = '';
-
-    // Metrics — Line 1: TOTAL, SUCCESS, FAIL
-    html += '<div class="stats-summary">';
-    html += '<div class="stat-card" style="border-left-color:#206bc4"><div class="stat-body"><div class="stat-label">TOTAL</div><div class="stat-value">' + stats.total + '</div><div class="stat-unit">requests</div></div></div>';
-    html += '<div class="stat-card" style="border-left-color:#48bb78"><div class="stat-body"><div class="stat-label">SUCCESS</div><div class="stat-value">' + stats.ok + '</div></div></div>';
-    html += '<div class="stat-card" style="border-left-color:#f56565"><div class="stat-body"><div class="stat-label">FAIL</div><div class="stat-value">' + stats.errors + '</div></div></div>';
-    html += '</div>';
-
-    // Metrics — Line 2: Avg, P50, P99, Min, Max
-    html += '<div class="stats-summary">';
-    html += '<div class="stat-card" style="border-left-color:#4299e1"><div class="stat-body"><div class="stat-label">Avg</div><div class="stat-value">' + stats.avg.toFixed(2) + '</div><div class="stat-unit">ms</div></div></div>';
-    html += '<div class="stat-card" style="border-left-color:#9f7aea"><div class="stat-body"><div class="stat-label">P50</div><div class="stat-value">' + stats.p50.toFixed(2) + '</div><div class="stat-unit">ms</div></div></div>';
-    html += '<div class="stat-card" style="border-left-color:#ed8936"><div class="stat-body"><div class="stat-label">P99</div><div class="stat-value">' + stats.p99.toFixed(2) + '</div><div class="stat-unit">ms</div></div></div>';
-    html += '<div class="stat-card" style="border-left-color:#48bb78"><div class="stat-body"><div class="stat-label">Min</div><div class="stat-value">' + stats.min.toFixed(2) + '</div><div class="stat-unit">ms</div></div></div>';
-    html += '<div class="stat-card" style="border-left-color:#f56565"><div class="stat-body"><div class="stat-label">Max</div><div class="stat-value">' + stats.max.toFixed(2) + '</div><div class="stat-unit">ms</div></div></div>';
-    html += '</div>';
-
-    // Chart
-    html += '<div class="chart-container" style="margin-bottom:16px"><h3>Latency Distribution</h3><canvas id="lt-chart"></canvas></div>';
-
-    // Table wrapper
+    var html = '<div id="lt-metrics"></div>';
     html += '<div id="lt-results-table">' + renderResultsTable() + '</div>';
+    document.getElementById('lt-results').innerHTML = html;
 
-    return html;
+    renderMetricsGraph('lt-metrics', { count: stats.total, success: stats.ok, fail: stats.errors, avg: stats.avg, p50: stats.p50, p99: stats.p99, min: stats.min, max: stats.max, stddev: stats.stddev }, { chartId: 'lt-chart', chartHeight: 240, countLabel: 'Total', showSuccessFail: true, title: 'Latency Distribution' });
 }
 
 async function runLoadTest() {
@@ -206,11 +186,7 @@ async function runLoadTest() {
 
     var stats = calcStats(results);
     console.log('[loadtest] done:', results.length, 'requests, avg:', stats.avg.toFixed(2), 'ms');
-    resultsContainer.innerHTML = renderResults(results, stats);
-    var canvas = document.getElementById('lt-chart');
-    if (canvas && canvas.offsetWidth > 0) {
-        setTimeout(function () { drawBarChart('lt-chart', {}, stats, 200); }, 50);
-    }
+    renderResults(results, stats);
 }
 
 (function () {

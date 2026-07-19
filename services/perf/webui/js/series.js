@@ -68,50 +68,26 @@ async function viewSeries(id, name) {
 
     const list = await fetchSeriesList();
     const info = list.find(s => s.id == id);
-    const container = document.getElementById('series-stats');
     if (!info) return;
-    const badgeClass = info.status === 'active' ? 'badge badge-green' : 'badge badge-gray';
 
-    var html = `
-        <div class="stat-card" style="border-left-color:#206bc4">
-            <div class="stat-body">
-                <div class="stat-label">Status</div>
-                <div class="stat-value"><span class="${badgeClass}">${info.status}</span></div>
-            </div>
-        </div>
-        <div class="stat-card" style="border-left-color:#4299e1">
-            <div class="stat-body">
-                <div class="stat-label">Span Count</div>
-                <div class="stat-value">${info.span_count || 0}</div>
-                <div class="stat-unit">spans</div>
-            </div>
-        </div>`;
-
-    const stats = await fetchSeriesStats(id);
+    var container = document.getElementById('series-stats');
+    var stats = await fetchSeriesStats(id);
+    var mgStats = {
+        count: info.span_count || 0,
+        status: info.status,
+        avg: 0, p50: 0, p99: 0, min: 0, max: 0, stddev: 0
+    };
     if (stats) {
-        html += `
-        <div class="stat-card" style="border-left-color:#48bb78">
-            <div class="stat-body"><div class="stat-label">Avg</div><div class="stat-value">${stats.avg.toFixed(1)}</div><div class="stat-unit">ms</div></div>
-        </div>
-        <div class="stat-card" style="border-left-color:#9f7aea">
-            <div class="stat-body"><div class="stat-label">P50</div><div class="stat-value">${stats.p50.toFixed(1)}</div><div class="stat-unit">ms</div></div>
-        </div>
-        <div class="stat-card" style="border-left-color:#ed8936">
-            <div class="stat-body"><div class="stat-label">P99</div><div class="stat-value">${stats.p99.toFixed(1)}</div><div class="stat-unit">ms</div></div>
-        </div>
-        <div class="stat-card" style="border-left-color:#48bb78">
-            <div class="stat-body"><div class="stat-label">Min</div><div class="stat-value">${stats.min.toFixed(1)}</div><div class="stat-unit">ms</div></div>
-        </div>
-        <div class="stat-card" style="border-left-color:#f56565">
-            <div class="stat-body"><div class="stat-label">Max</div><div class="stat-value">${stats.max.toFixed(1)}</div><div class="stat-unit">ms</div></div>
-        </div>`;
+        mgStats.success = stats.success;
+        mgStats.fail = stats.fail;
+        mgStats.avg = stats.avg;
+        mgStats.p50 = stats.p50;
+        mgStats.p99 = stats.p99;
+        mgStats.min = stats.min;
+        mgStats.max = stats.max;
+        mgStats.stddev = stats.stddev;
     }
-
-    container.innerHTML = html;
-
-    if (stats) {
-        setTimeout(function () { drawBarChart('series-chart', {}, stats, 160); }, 50);
-    }
+    renderMetricsGraph('series-stats', mgStats, { chartId: 'series-chart', chartHeight: 200, countLabel: 'Span Count', showStatus: true, showSuccessFail: true, title: 'Latency Distribution' });
 }
 
 function showToast(msg, type) {
