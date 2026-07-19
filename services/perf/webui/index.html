@@ -202,6 +202,7 @@
             border: 1px solid var(--card-border);
             border-left: 3px solid var(--primary);
             transition: box-shadow 0.15s;
+            max-width: 200px;
         }
         .stat-card:hover { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 4px 8px rgba(0, 0, 0, 0.06); }
         .stat-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
@@ -213,7 +214,7 @@
         .chart-container {
             background: var(--card-bg);
             border-radius: 8px;
-            padding: 16px;
+            padding: 24px 16px 16px 16px;
             box-shadow: var(--shadow);
             border: 1px solid var(--card-border);
             max-width: 800px;
@@ -621,11 +622,7 @@
             <div id="series-list"></div>
             <div id="series-detail" style="display:none">
                 <h3 id="series-detail-title"></h3>
-                <div id="series-stats" class="grid"></div>
-                <div class="chart-container" style="margin-top:12px;max-width:400px">
-                    <h3>Latency Distribution</h3>
-                    <canvas id="series-chart"></canvas>
-                </div>
+                <div id="series-stats"></div>
             </div>
         </div>
 
@@ -651,14 +648,14 @@
         </div>
     </div>
 
-    <script src="/js/theme.js?v=5"></script>
-    <script src="/js/api.js?v=5"></script>
-    <script src="/js/components.js?v=5"></script>
-    <script src="/js/perf.js?v=5"></script>
-    <script src="/js/series.js?v=5"></script>
-    <script src="/js/trace.js?v=5"></script>
-    <script src="/js/loadtest.js?v=5"></script>
-    <script src="/js/download.js?v=5"></script>
+    <script src="/js/theme.js?v=6"></script>
+    <script src="/js/api.js?v=6"></script>
+    <script src="/js/components.js?v=6"></script>
+    <script src="/js/perf.js?v=6"></script>
+    <script src="/js/series.js?v=6"></script>
+    <script src="/js/trace.js?v=6"></script>
+    <script src="/js/loadtest.js?v=6"></script>
+    <script src="/js/download.js?v=6"></script>
 
     <script>
         function switchTab(name, el) {
