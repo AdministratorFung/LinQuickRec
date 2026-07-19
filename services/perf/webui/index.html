@@ -620,13 +620,24 @@
                 <button class="btn btn-ghost" onclick="loadSeries()">Refresh</button>
             </div>
             <div id="series-hint" class="series-hint"></div>
-            <div id="series-list"></div>
-            <div id="series-detail" style="display:none">
-                <div style="margin-bottom:8px">
-                    <button class="btn btn-ghost" onclick="backToSeriesList()">Back to List</button>
-                    <button class="btn btn-ghost" id="series-activate-btn" style="display:none;margin-left:8px">Reactivate</button>
+            <div id="series-empty" class="empty-state" style="display:none">No series yet. Click <strong>+ New Series</strong> to start.</div>
+            <div id="series-list">
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead><tr><th>ID</th><th>Name</th><th>Status</th><th>Span Count</th></tr></thead>
+                        <tbody id="series-tbody"></tbody>
+                    </table>
                 </div>
-                <h3 id="series-detail-title"></h3>
+                <div id="series-pagination" style="text-align:center;margin-top:12px"></div>
+            </div>
+            <div id="series-detail" style="display:none">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                    <span>
+                        <button class="btn btn-primary" onclick="backToSeriesList()">Back to List</button>
+                        <button class="btn btn-primary" id="series-activate-btn" style="display:none;margin-left:8px">Reactivate</button>
+                    </span>
+                    <h3 id="series-detail-title" style="margin:0"></h3>
+                </div>
                 <div id="series-stats"></div>
             </div>
         </div>
@@ -644,22 +655,20 @@
                         <tbody id="trace-list"></tbody>
                     </table>
                 </div>
-                <div style="text-align:center;margin-top:12px">
-                    <button class="btn btn-ghost" id="trace-load-more" onclick="loadTraceList(true)" style="display:none">Load More</button>
-                </div>
+                <div id="trace-pagination" style="text-align:center;margin-top:12px"></div>
             </div>
             <div id="trace-result" style="display:none"></div>
         </div>
     </div>
 
-    <script src="/js/theme.js?v=13"></script>
-    <script src="/js/api.js?v=13"></script>
-    <script src="/js/components.js?v=13"></script>
-    <script src="/js/perf.js?v=13"></script>
-    <script src="/js/series.js?v=13"></script>
-    <script src="/js/trace.js?v=13"></script>
-    <script src="/js/loadtest.js?v=13"></script>
-    <script src="/js/download.js?v=13"></script>
+    <script src="/js/theme.js?v=15"></script>
+    <script src="/js/api.js?v=15"></script>
+    <script src="/js/components.js?v=15"></script>
+    <script src="/js/perf.js?v=15"></script>
+    <script src="/js/series.js?v=15"></script>
+    <script src="/js/trace.js?v=15"></script>
+    <script src="/js/loadtest.js?v=15"></script>
+    <script src="/js/download.js?v=15"></script>
 
     <script>
         function switchTab(name, el) {

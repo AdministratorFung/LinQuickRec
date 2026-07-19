@@ -170,3 +170,32 @@ function updateMetricsGraph(containerId, stats, opts) {
         drawBarChart(opts.chartId, {}, chartStats, opts.chartHeight || 240);
     }
 }
+
+// Pagination helpers
+
+function renderPageNav(page, totalPages, goFn) {
+    if (totalPages <= 1) return '';
+    var html = '<div style="display:inline-flex;align-items:center;gap:4px;font-size:12px">';
+    html += '<button class="btn btn-ghost" style="padding:2px 8px" onclick="' + goFn + '(' + Math.max(1, page - 1) + ')" ' + (page <= 1 ? 'disabled' : '') + '>Prev</button>';
+    for (var p = 1; p <= totalPages; p++) {
+        if (p === page) {
+            html += '<span style="padding:2px 8px;background:var(--primary);color:#fff;border-radius:4px;font-weight:600">' + p + '</span>';
+        } else {
+            html += '<button class="btn btn-ghost" style="padding:2px 8px" onclick="' + goFn + '(' + p + ')">' + p + '</button>';
+        }
+    }
+    html += '<button class="btn btn-ghost" style="padding:2px 8px" onclick="' + goFn + '(' + Math.min(totalPages, page + 1) + ')" ' + (page >= totalPages ? 'disabled' : '') + '>Next</button>';
+    html += '</div>';
+    return html;
+}
+
+function renderPageSizeSelector(current, changeFn, options) {
+    var opts = options || [50, 100, 200];
+    var html = ' <span style="font-size:12px;color:var(--text-secondary);margin-left:12px">Per page: <select class="form-select" style="padding:2px 6px;font-size:12px;width:auto" onchange="' + changeFn + '(this.value)">';
+    for (var i = 0; i < opts.length; i++) {
+        var v = opts[i];
+        html += '<option value="' + v + '"' + (v == current ? ' selected' : '') + '>' + v + '</option>';
+    }
+    html += '</select></span>';
+    return html;
+}

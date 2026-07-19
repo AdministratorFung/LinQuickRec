@@ -1,15 +1,68 @@
+var seriesAll = [];
+var seriesMode = 'simple';
+var seriesPage = 1;
+var seriesPageSize = 100;
+var SHOW_INITIAL = 10;
+
+function renderSeriesRow(s) {
+    var badgeClass = s.status === 'active' ? 'badge badge-green' : 'badge badge-gray';
+    return '<tr class="clickable" onclick="viewSeries(' + s.id + ',\'' + s.name + '\')">' +
+        '<td class="text-secondary">#' + s.id + '</td>' +
+        '<td class="fw-medium">' + s.name + '</td>' +
+        '<td><span class="' + badgeClass + '">' + s.status + '</span></td>' +
+        '<td>' + (s.span_count || 0) + '</td>' +
+        '</tr>';
+}
+
+function renderSeriesTable() {
+    var tbody = document.getElementById('series-tbody');
+    var controls = document.getElementById('series-pagination');
+
+    if (seriesAll.length <= SHOW_INITIAL) {
+        tbody.innerHTML = seriesAll.map(renderSeriesRow).join('');
+        controls.innerHTML = '';
+    } else if (seriesMode === 'simple') {
+        tbody.innerHTML = seriesAll.slice(0, SHOW_INITIAL).map(renderSeriesRow).join('');
+        controls.innerHTML = '<button class="btn btn-ghost" onclick="showMoreSeries()">Load More (' + SHOW_INITIAL + ' / ' + seriesAll.length + ')</button>';
+    } else {
+        var start = (seriesPage - 1) * seriesPageSize;
+        var end = Math.min(start + seriesPageSize, seriesAll.length);
+        tbody.innerHTML = seriesAll.slice(start, end).map(renderSeriesRow).join('');
+        var totalPages = Math.ceil(seriesAll.length / seriesPageSize);
+        var html = renderPageNav(seriesPage, totalPages, 'goSeriesPage');
+        html += renderPageSizeSelector(seriesPageSize, 'changeSeriesPageSize');
+        html += '<span style="font-size:12px;color:var(--text-secondary);margin-left:8px">' + (start + 1) + '-' + end + ' of ' + seriesAll.length + '</span>';
+        controls.innerHTML = html;
+    }
+}
+
+function showMoreSeries() {
+    seriesMode = 'paginated';
+    seriesPage = 1;
+    renderSeriesTable();
+}
+
+function goSeriesPage(p) {
+    seriesPage = p;
+    renderSeriesTable();
+}
+
+function changeSeriesPageSize(size) {
+    seriesPageSize = parseInt(size);
+    seriesPage = 1;
+    renderSeriesTable();
+}
+
 async function loadSeries() {
     document.getElementById('series-list').style.display = '';
     document.getElementById('series-hint').style.display = '';
     document.getElementById('series-detail').style.display = 'none';
     console.log('[series] loading...');
-    const list = await fetchSeriesList();
+    var list = await fetchSeriesList();
     console.log('[series] loaded:', list.length, 'series');
-    const container = document.getElementById('series-list');
-    const hint = document.getElementById('series-hint');
+    var hint = document.getElementById('series-hint');
 
-    // Active mutual exclusion: can only create new when no active exists
-    const hasActive = list.some(s => s.status === 'active');
+    var hasActive = list.some(function(s) { return s.status === 'active'; });
     if (hint) {
         hint.textContent = hasActive
             ? 'A series is currently active. Stop it before creating a new one.'
@@ -17,35 +70,32 @@ async function loadSeries() {
         hint.className = 'series-hint' + (hasActive ? ' hint-active' : '');
     }
 
+    seriesAll = list;
+    seriesMode = 'simple';
+    seriesPage = 1;
+
     if (!list.length) {
-        container.innerHTML = '<div class="empty-state">No series yet. Click <strong>+ New Series</strong> to start.</div>';
+        document.getElementById('series-tbody').innerHTML = '';
+        document.getElementById('series-pagination').innerHTML = '';
+        document.getElementById('series-list').style.display = 'none';
+        document.getElementById('series-empty').style.display = '';
         return;
     }
-
-    let html = '<div class="table-wrap"><table class="table"><thead><tr><th>ID</th><th>Name</th><th>Status</th><th>Span Count</th></tr></thead><tbody>';
-    for (const s of list) {
-        const badgeClass = s.status === 'active' ? 'badge badge-green' : 'badge badge-gray';
-        html += `<tr class="clickable" onclick="viewSeries(${s.id},'${s.name}')">
-            <td class="text-secondary">#${s.id}</td>
-            <td class="fw-medium">${s.name}</td>
-            <td><span class="${badgeClass}">${s.status}</span></td>
-            <td>${s.span_count || 0}</td>
-        </tr>`;
-    }
-    html += '</tbody></table></div>';
-    container.innerHTML = html;
+    document.getElementById('series-list').style.display = '';
+    document.getElementById('series-empty').style.display = 'none';
+    renderSeriesTable();
 }
 
 async function startSeries() {
-    const list = await fetchSeriesList();
-    if (list.some(s => s.status === 'active')) {
+    var list = await fetchSeriesList();
+    if (list.some(function(s) { return s.status === 'active'; })) {
         showToast('A series is currently active. Stop it before creating a new one.', 'error');
         return;
     }
-    const name = prompt('Series name:', 'baseline-' + new Date().toISOString().slice(0, 19));
+    var name = prompt('Series name:', 'baseline-' + new Date().toISOString().slice(0, 19));
     if (!name) return;
     console.log('[series] starting:', name);
-    const result = await startSeriesReq(name);
+    var result = await startSeriesReq(name);
     if (result.error) {
         showToast('Failed to start series: ' + result.error, 'error');
         return;
@@ -56,7 +106,7 @@ async function startSeries() {
 
 async function stopSeries() {
     console.log('[series] stopping active series');
-    const result = await stopSeriesReq();
+    var result = await stopSeriesReq();
     if (result.error) {
         showToast('Failed to stop series', 'error');
         return;
@@ -70,11 +120,11 @@ async function viewSeries(id, name) {
     document.getElementById('series-hint').style.display = 'none';
     document.getElementById('series-detail').style.display = 'block';
 
-    const list = await fetchSeriesList();
-    const info = list.find(s => s.id == id);
+    var list = await fetchSeriesList();
+    var info = list.find(function(s) { return s.id == id; });
     if (!info) return;
 
-    const hasActive = list.some(s => s.status === 'active');
+    var hasActive = list.some(function(s) { return s.status === 'active'; });
     document.getElementById('series-detail-title').textContent = 'Series: ' + name;
     var reactivateBtn = document.getElementById('series-activate-btn');
     if (info.status === 'stopped' && !hasActive) {
@@ -112,7 +162,7 @@ function backToSeriesList() {
 
 async function activateSeries(id) {
     console.log('[series] activating:', id);
-    const result = await reactivateSeriesReq(id);
+    var result = await reactivateSeriesReq(id);
     if (result.error) {
         showToast('Failed to activate series: ' + result.error, 'error');
         return;
@@ -122,11 +172,11 @@ async function activateSeries(id) {
 }
 
 function showToast(msg, type) {
-    const el = document.createElement('div');
+    var el = document.createElement('div');
     el.className = 'toast toast-' + type;
     el.textContent = msg;
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), 2500);
+    setTimeout(function() { el.remove(); }, 2500);
 }
 
 loadSeries();
