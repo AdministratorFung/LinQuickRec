@@ -1,4 +1,7 @@
 async function loadSeries() {
+    document.getElementById('series-list').style.display = '';
+    document.getElementById('series-hint').style.display = '';
+    document.getElementById('series-detail').style.display = 'none';
     console.log('[series] loading...');
     const list = await fetchSeriesList();
     console.log('[series] loaded:', list.length, 'series');
@@ -63,12 +66,20 @@ async function stopSeries() {
 }
 
 async function viewSeries(id, name) {
+    document.getElementById('series-list').style.display = 'none';
+    document.getElementById('series-hint').style.display = 'none';
     document.getElementById('series-detail').style.display = 'block';
-    document.getElementById('series-detail-title').textContent = 'Series: ' + name;
 
     const list = await fetchSeriesList();
     const info = list.find(s => s.id == id);
     if (!info) return;
+
+    const hasActive = list.some(s => s.status === 'active');
+    var titleHtml = 'Series: ' + name;
+    if (info.status === 'stopped' && !hasActive) {
+        titleHtml += ' <button class="btn btn-ghost" onclick="activateSeries(' + id + ')" style="font-size:12px;padding:2px 10px;margin-left:8px">Activate</button>';
+    }
+    document.getElementById('series-detail-title').innerHTML = titleHtml;
 
     var container = document.getElementById('series-stats');
     var stats = await fetchSeriesStats(id);
@@ -88,6 +99,23 @@ async function viewSeries(id, name) {
         mgStats.stddev = stats.stddev;
     }
     renderMetricsGraph('series-stats', mgStats, { chartId: 'series-chart', chartHeight: 200, countLabel: 'Span Count', showStatus: true, showSuccessFail: true, title: 'Latency Distribution' });
+}
+
+function backToSeriesList() {
+    document.getElementById('series-detail').style.display = 'none';
+    document.getElementById('series-list').style.display = '';
+    document.getElementById('series-hint').style.display = '';
+}
+
+async function activateSeries(id) {
+    console.log('[series] activating:', id);
+    const result = await reactivateSeriesReq(id);
+    if (result.error) {
+        showToast('Failed to activate series: ' + result.error, 'error');
+        return;
+    }
+    showToast('Series activated', 'success');
+    loadSeries();
 }
 
 function showToast(msg, type) {

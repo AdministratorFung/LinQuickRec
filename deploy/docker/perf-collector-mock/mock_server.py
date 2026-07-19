@@ -141,6 +141,16 @@ class SeriesState:
         self.active_id = None
         return True
 
+    def reactivate(self, sid):
+        if self.active_id is not None:
+            return None
+        for s in self.series:
+            if s["id"] == sid:
+                s["status"] = "active"
+                self.active_id = sid
+                return s
+        return None
+
     def list_all(self):
         return list(self.series)
 
@@ -356,6 +366,19 @@ class MockHandler(BaseHTTPRequestHandler):
         elif path == "/api/v1/series/stop":
             series_state.stop()
             self._send_json(200, {"status": "stopped"})
+
+        elif path.startswith("/api/v1/series/") and path.endswith("/activate"):
+            sid_str = path[len("/api/v1/series/"):-len("/activate")]
+            try:
+                sid = int(sid_str)
+            except ValueError:
+                self._send_json(400, {"error": "invalid series id"})
+                return
+            s = series_state.reactivate(sid)
+            if s:
+                self._send_json(200, {"id": s["id"], "name": s["name"], "status": "active"})
+            else:
+                self._send_json(409, {"error": "a series is already active or not found"})
 
         elif path == "/Proxy/Recommend":
             self._handle_recommend()

@@ -62,6 +62,20 @@ async function stopSeriesReq() {
     }
 }
 
+async function reactivateSeriesReq(seriesId) {
+    const url = `${API_BASE}/api/v1/series/${seriesId}/activate`;
+    console.log('[api] reactivateSeries:', url);
+    try {
+        const resp = await fetch(url, { method: 'POST' });
+        const data = await resp.json();
+        console.log('[api] reactivateSeries ok:', data.status);
+        return data;
+    } catch (e) {
+        console.error('[api] reactivateSeries error:', e.message);
+        return { error: e.message };
+    }
+}
+
 async function fetchTrace(traceId) {
     const url = `${API_BASE}/api/v1/trace/${encodeURIComponent(traceId)}`;
     console.log('[api] fetchTrace:', url);

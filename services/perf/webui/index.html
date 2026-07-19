@@ -601,6 +601,8 @@
                     <label>Name:</label>
                     <input type="text" id="lt-series-name" class="form-input" style="width:240px" placeholder="auto-generated if empty">
                 </span>
+            </div>
+            <div class="control-bar">
                 <button class="btn btn-primary" id="lt-send-btn" onclick="runLoadTest()">Send</button>
             </div>
             <div class="progress-container" style="display:none" id="lt-progress-bar">
@@ -620,6 +622,7 @@
             <div id="series-hint" class="series-hint"></div>
             <div id="series-list"></div>
             <div id="series-detail" style="display:none">
+                <button class="btn btn-ghost" onclick="backToSeriesList()" style="margin-bottom:8px">← Back to List</button>
                 <h3 id="series-detail-title"></h3>
                 <div id="series-stats"></div>
             </div>
@@ -630,12 +633,11 @@
             <div class="control-bar">
                 <input type="text" id="traceIdInput" class="form-input" placeholder="Trace ID" style="width:320px">
                 <button class="btn btn-primary" onclick="searchTrace()">Search</button>
-                <button class="btn btn-ghost" onclick="showTraceTable()" style="margin-left:8px">Back to List</button>
             </div>
             <div id="trace-table">
                 <div class="table-wrap">
                     <table class="table">
-                        <thead><tr><th>Trace ID</th><th>Time</th><th>Spans</th><th class="text-end">Duration</th></tr></thead>
+                        <thead><tr><th>#</th><th>Trace ID</th><th>Time</th><th>Spans</th><th class="text-end">Duration</th></tr></thead>
                         <tbody id="trace-list"></tbody>
                     </table>
                 </div>
@@ -647,14 +649,14 @@
         </div>
     </div>
 
-    <script src="/js/theme.js?v=10"></script>
-    <script src="/js/api.js?v=10"></script>
-    <script src="/js/components.js?v=10"></script>
-    <script src="/js/perf.js?v=10"></script>
-    <script src="/js/series.js?v=10"></script>
-    <script src="/js/trace.js?v=10"></script>
-    <script src="/js/loadtest.js?v=10"></script>
-    <script src="/js/download.js?v=10"></script>
+    <script src="/js/theme.js?v=12"></script>
+    <script src="/js/api.js?v=12"></script>
+    <script src="/js/components.js?v=12"></script>
+    <script src="/js/perf.js?v=12"></script>
+    <script src="/js/series.js?v=12"></script>
+    <script src="/js/trace.js?v=12"></script>
+    <script src="/js/loadtest.js?v=12"></script>
+    <script src="/js/download.js?v=12"></script>
 
     <script>
         function switchTab(name, el) {
@@ -662,10 +664,19 @@
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             if (el) el.classList.add('active');
             document.getElementById(name + '-panel').classList.add('active');
+            localStorage.setItem('perf-tab', name);
             if (name === 'series') loadSeries();
             if (name === 'trace') showTraceTable();
             if (name === 'download') onDownloadFilterChange();
         }
+        // Restore saved tab
+        (function() {
+            var saved = localStorage.getItem('perf-tab');
+            if (saved && saved !== 'perf') {
+                var btn = document.querySelector('.tab[onclick*="' + saved + '"]');
+                if (btn) switchTab(saved, btn);
+            }
+        })();
     </script>
 
     <div class="init-overlay" id="init-overlay">

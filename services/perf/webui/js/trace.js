@@ -34,7 +34,8 @@ async function loadTraceList(append) {
     for (const t of list) {
         const row = document.createElement('tr');
         row.className = 'clickable';
-        row.innerHTML = '<td class="fw-medium">' + t.trace_id + '</td>' +
+        row.innerHTML = '<td class="text-secondary">#' + (traceOffset + 1) + '</td>' +
+            '<td class="fw-medium">' + t.trace_id + '</td>' +
             '<td class="text-secondary">' + new Date(t.ts_us / 1000).toISOString().slice(0,19).replace('T',' ') + '</td>' +
             '<td>' + t.span_count + '</td>' +
             '<td class="text-end fw-medium">' + t.total_duration_ms.toFixed(1) + ' ms</td>';
@@ -75,7 +76,8 @@ async function showTraceDetail(traceId) {
     const totalRange = ((allSpans[allSpans.length - 1].ts_us || 0) - minTs) / 1000;
     const refMs = Math.pow(10, Math.floor(Math.log10(maxDuration || 1)));
 
-    let html = '<div class="table-wrap"><table class="table"><thead><tr><th>Service</th><th>Stage</th><th class="text-end">Duration</th><th>Waterfall</th><th>Status</th></tr></thead><tbody>';
+    let html = '<button class="btn btn-ghost" onclick="showTraceTable()" style="margin-bottom:12px">← Back to List</button>';
+    html += '<div class="table-wrap"><table class="table"><thead><tr><th>Service</th><th>Stage</th><th class="text-end">Duration</th><th>Waterfall</th><th>Status</th></tr></thead><tbody>';
     function render(node, depth) {
         if (!node || (node.duration_ms === undefined && !node.virtual && !(node.children && node.children.length))) return;
         const indent = depth * 20;
