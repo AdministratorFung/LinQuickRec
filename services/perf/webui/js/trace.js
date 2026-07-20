@@ -115,7 +115,12 @@ async function showTraceDetail(traceId) {
     var minTs = allSpans[0].ts_us || 0;
     var maxDuration = Math.max.apply(null, allSpans.map(function(s) { return s.duration_ms || 0; }));
     if (maxDuration < 1) maxDuration = 1;
-    var totalRange = ((allSpans[allSpans.length - 1].ts_us || 0) - minTs) / 1000;
+    var maxEndTs = minTs;
+    allSpans.forEach(function(s) {
+        var end = (s.ts_us || 0) + (s.duration_ms || 0) * 1000;
+        if (end > maxEndTs) maxEndTs = end;
+    });
+    var totalRange = (maxEndTs - minTs) / 1000;
     var refMs = Math.pow(10, Math.floor(Math.log10(maxDuration || 1)));
 
     var html = '<div style="background:var(--card-bg);border-radius:8px;padding:24px;box-shadow:var(--shadow);border:1px solid var(--card-border);margin-bottom:12px">';
