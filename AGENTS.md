@@ -55,3 +55,52 @@ AI 辅助的 commit 必须在末尾加 `AI-assisted: opencode` 脚注。详见 `
 | 各服务 | `services/<name>/` |
 | Docker 部署 | `deploy/docker/` |
 | K8s 部署 | `deploy/k8s/` |
+
+## Web-UI 开发工作流（强制）
+
+**触发条件**：使用 `git diff --name-only HEAD` 检测到修改了以下目录中的文件：
+- `services/perf/webui/`
+- `deploy/docker/perf-webui/`
+- `deploy/docker/perf-collector-mock/`
+
+**不满足触发条件时**：跳过此流程，直接 `git commit`。
+
+**满足触发条件时**：必须执行以下流程，最多重试 **3 次**。
+
+### 流程
+
+```
+1. 部署 → 2. 测试 → 3a. 通过 → commit + push
+                   → 3b. 失败 → 分析 → 修复 → 回到 1（最多 3 次）
+                   → 3c. 超过 3 次 → 停止，总结问题，报告用户
+```
+
+### 详细步骤
+
+**1. 部署**：将修改的文件传输到 `lighthouse@114.132.51.227`：
+```bash
+tar -czf - <changed-files> | ssh lighthouse@114.132.51.227 'cd /home/lighthouse/LinQuickRec && tar -xzf -'
+ssh lighthouse@114.132.51.227 'cd /home/lighthouse/LinQuickRec && docker compose -f deploy/docker/docker-compose.mock.yml up -d --build'
+```
+
+**2. 测试**：在服务器 Docker 中运行 Playwright 测试：
+```bash
+bash scripts/run-tests.sh
+```
+
+**3a. 通过**：所有 12 个测试通过后：
+- `git add` + `git commit`（Conventional Commits 格式 + `AI-assisted: opencode` 脚注）
+- `git push origin dev`
+
+**3b. 失败**（第 1-3 次）：分析 Playwright 输出（失败的测试名、错误信息、截图名称），修复代码，回到步骤 1。
+
+**3c. 超过 3 次失败**：停止修改。收集以下信息并报告用户：
+- 每次失败的测试名称和错误信息
+- 尝试的修复内容
+- 建议用户手动介入
+
+### 设计理由
+
+- 测试在服务器 Docker 容器中运行，访问 `localhost:32000`，无代理/VPN/SSL 问题。
+- 本地 PC 无需 Node.js/Playwright/Chromium——只需 SSH 和 Git。
+- 只有通过测试的代码才能提交，保证 `origin/dev` 始终可用。
