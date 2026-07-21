@@ -23,6 +23,7 @@ spec:
       containers:
       - name: server
         image: linquickrec/ub-demo:latest
+        # Built via: bazel build && docker build
         args:
           - "--enable_urma"
           - "--port=8080"

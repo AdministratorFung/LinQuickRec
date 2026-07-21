@@ -1,21 +1,14 @@
-FROM linquickrec/base-urma:latest
+FROM openeuler/openeuler:24.03-sp3-lts
 
-ARG PROTO_DIR=proto/
-ARG DEMO_DIR=services/ub-demo/
+ARG BUILD_BIN_DIR=bazel-bin
 
-WORKDIR /app
+COPY ${BUILD_BIN_DIR}/ub_demo_server /app/ub_demo_server
+COPY ${BUILD_BIN_DIR}/ub_demo_client /app/ub_demo_client
 
-COPY ${PROTO_DIR} /app/proto/
-COPY ${DEMO_DIR} /app/services/ub-demo/
+RUN chmod +x /app/ub_demo_server /app/ub_demo_client
 
-RUN mkdir -p /app/build && cd /app/build && \
-    cmake ../services/ub-demo \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DENABLE_URMA=ON && \
-    make -j$(nproc) ub_demo_server ub_demo_client
-
-ENV LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64:/usr/lib64:${LD_LIBRARY_PATH:-}
+ENV LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64:/usr/lib64
 
 EXPOSE 8080
 
-CMD ["/app/build/bin/ub_demo_server", "--enable_urma", "--port=8080"]
+CMD ["/app/ub_demo_server", "--enable_urma", "--port=8080"]

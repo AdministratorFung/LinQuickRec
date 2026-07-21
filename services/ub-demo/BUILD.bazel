@@ -1,0 +1,30 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_proto_library")
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
+proto_library(
+    name = "echo_proto",
+    srcs = ["proto/echo.proto"],
+)
+
+cc_proto_library(
+    name = "echo_cc_proto",
+    deps = [":echo_proto"],
+)
+
+cc_binary(
+    name = "ub_demo_server",
+    srcs = ["server/main.cpp"],
+    deps = [
+        "@brpc//:brpc",
+        ":echo_cc_proto",
+    ],
+)
+
+cc_binary(
+    name = "ub_demo_client",
+    srcs = ["client/main.cpp"],
+    deps = [
+        "@brpc//:brpc",
+        ":echo_cc_proto",
+    ],
+)

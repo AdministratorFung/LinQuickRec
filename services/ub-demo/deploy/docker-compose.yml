@@ -1,20 +1,24 @@
 # Two-container demo: server + client.
 #
-# Usage:
-#   docker compose build
-#   docker compose up
-#   docker compose logs client
+# Prerequisite: build Bazel binaries first
+#   cd services/ub-demo
+#   bazel build //:ub_demo_server //:ub_demo_client \
+#       --override_repository=brpc=/path/to/brpc-fork
 #
-# The server starts in daemon mode. The client runs once, sends 10 echo
-# requests, prints latency summary, then exits.
+# Then run:
+#   docker compose -f deploy/docker-compose.yml build
+#   docker compose -f deploy/docker-compose.yml up
+#   docker compose logs client
 
 services:
   server:
     build:
       context: ../..
       dockerfile: services/ub-demo/Dockerfile
+      args:
+        BUILD_BIN_DIR: services/ub-demo/bazel-bin
     command:
-      - "/app/build/bin/ub_demo_server"
+      - "/app/ub_demo_server"
       - "--enable_urma"
       - "--port=8080"
       - "--ubsocket_auto_fallback_tcp=true"
@@ -30,8 +34,10 @@ services:
     build:
       context: ../..
       dockerfile: services/ub-demo/Dockerfile
+      args:
+        BUILD_BIN_DIR: services/ub-demo/bazel-bin
     command:
-      - "/app/build/bin/ub_demo_client"
+      - "/app/ub_demo_client"
       - "--enable_urma"
       - "--server=server:8080"
       - "--count=10"

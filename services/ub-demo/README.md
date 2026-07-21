@@ -8,21 +8,24 @@
 
 - 在编译了 `BRPC_WITH_URMA` 的情况下，在服务端启动和 Channel 创建前调用 `brpc::InitializeUBSocket()`。所有 `--ubsocket_*` gflag 均可在此使用。
 - `--ubsocket_auto_fallback_tcp=true`（默认）支持在没有 UB 硬件的情况下自动回退到 TCP——方案适用于任何环境。
-- 纯使用 `#ifdef BRPC_WITH_URMA` 的 C++ 代码，未定义时无缝编译为纯 TCP brpc。
+- 使用 `#ifdef BRPC_WITH_URMA` 守卫的纯 C++ 代码，未定义时无缝编译为纯 TCP brpc。
 - 客户端测量往返时延，并输出 avg/p50/p99/min/max 汇总信息。
+- **使用 Bazel 构建** — 无需安装头文件或库到系统目录。
 
 ## 目录结构
 
 ```
 services/ub-demo/
-├── CMakeLists.txt               # 构建服务端 + 客户端（ENABLE_URMA 选项）
+├── WORKSPACE                    # 声明 @brpc 为 local_repository
+├── BUILD.bazel                  # 构建目标 (proto + server + client)
+├── .bazelrc                     # URMA + ARM + C++17 flags
 ├── proto/
 │   └── echo.proto               # EchoService: EchoRequest → EchoResponse
 ├── server/
 │   └── main.cpp                 # 服务端：注册 EchoService，启动前调用 UBSocket.init
 ├── client/
 │   └── main.cpp                 # 客户端：创建 Channel，发送回显请求，打印时延
-├── Dockerfile                   # 基于 linquickrec/base-urma:latest 构建镜像
+├── Dockerfile                   # 运行时 image，复制预构建的二进制
 ├── deploy/
 │   ├── docker-compose.yml       # 两容器测试（服务端 + 客户端）
 │   └── k8s/
@@ -48,20 +51,30 @@ URMA 路径：
 
 ## 编译命令
 
-**前置条件：** 基础镜像 `linquickrec/base-urma:latest`，其中需包含已编译了 `BRPC_WITH_URMA=ON` 的 brpc 分支版本，以及作为系统库安装的 `libubsocket.so`。
+**前置条件：**
+- [Bazel](https://bazel.build/) (推荐 4.2.2+)
+- 本地 clone 的 [brpc fork](https://atomgit.com/fanzhaonan/brpc)
 
 ```bash
-# 不使用 URMA（纯 TCP）：
-mkdir -p build && cd build
-cmake ../services/ub-demo -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc) ub_demo_server ub_demo_client
+cd services/ub-demo
 
-# 启用 URMA：
-cmake ../services/ub-demo -DCMAKE_BUILD_TYPE=Release -DENABLE_URMA=ON
-make -j$(nproc) ub_demo_server ub_demo_client
+# 构建 (用户指定 brpc 路径)
+bazel build //:ub_demo_server //:ub_demo_client \
+    --override_repository=brpc=/path/to/your/brpc-fork
+
+# 产物
+#   bazel-bin/ub_demo_server
+#   bazel-bin/ub_demo_client
 ```
 
-不带 `ENABLE_URMA` 编译时，代码中所有 `#ifdef BRPC_WITH_URMA` 相关部分会被编译掉。不带 `UB` 二进制文件以纯 TCP 模式运行。
+**`--override_repository`** 是关键的构建时参数——它告诉 Bazel 在哪里找到你本地 clone 的 brpc fork。无需修改任何文件。
+
+Bazel 会自动：
+1. 从 brpc fork 的 WORKSPACE 解析所有传递依赖 (protobuf, gflags, openssl, leveldb, abseil, ubsocket)
+2. 从 brpc fork 的 BUILD.bazel 解析 include 路径
+3. 将 `@brpc//:brpc` 链接为依赖，包含 `:butil`、`:bthread` 及所有传递依赖
+
+**无需安装任何内容到 `/usr/local`。**
 
 ## 启动方式
 
@@ -69,13 +82,13 @@ make -j$(nproc) ub_demo_server ub_demo_client
 
 ```bash
 # 启用 URMA（需要 UB 硬件，或回退到 TCP）：
-./build/bin/ub_demo_server --enable_urma --port=8080
+bazel-bin/ub_demo_server --enable_urma --port=8080
 
 # 纯 TCP：
-./build/bin/ub_demo_server --port=8080
+bazel-bin/ub_demo_server --port=8080
 
-# 全部 ubsocket gflag（在启用 URMA 时可用）：
-./build/bin/ub_demo_server --enable_urma --port=8080 \
+# 全部 ubsocket gflag（在编译 libbrpc.a 时启用 URMA 时可用）：
+bazel-bin/ub_demo_server --enable_urma --port=8080 \
     --ubsocket_trans_mode=ub \
     --ubsocket_dev_name=udma2 \
     --ubsocket_dev_ip=192.168.1.100 \
@@ -86,13 +99,13 @@ make -j$(nproc) ub_demo_server ub_demo_client
 
 ```bash
 # 启用 URMA：
-./build/bin/ub_demo_client --enable_urma --server=127.0.0.1:8080 --count=10
+bazel-bin/ub_demo_client --enable_urma --server=127.0.0.1:8080 --count=10
 
 # 纯 TCP：
-./build/bin/ub_demo_client --server=127.0.0.1:8080 --count=10
+bazel-bin/ub_demo_client --server=127.0.0.1:8080 --count=10
 
 # 客户端 gflag：
-./build/bin/ub_demo_client \
+bazel-bin/ub_demo_client \
     --enable_urma \
     --server=127.0.0.1:8080 \
     --count=10 \
@@ -117,10 +130,35 @@ make -j$(nproc) ub_demo_server ub_demo_client
 
 ## 容器搭建
 
+### Docker 镜像（本地 Bazel 构建 + Docker 运行时）
+
+```bash
+# 1. 先本地 Bazel 构建
+bazel build //:ub_demo_server //:ub_demo_client \
+    --override_repository=brpc=/path/to/brpc-fork
+
+# 2. Docker 镜像（从 builds/Build 上下文复制二进制）
+docker build -t linquickrec/ub-demo:latest \
+    --build-arg BUILD_BIN_DIR=bazel-bin \
+    -f Dockerfile .
+```
+
+Dockerfile 极其精简——仅从构建上下文复制预构建的二进制文件：
+```dockerfile
+FROM openeuler/openeuler:24.03-sp3-lts
+ARG BUILD_BIN_DIR=bazel-bin
+COPY ${BUILD_BIN_DIR}/ub_demo_server /app/ub_demo_server
+COPY ${BUILD_BIN_DIR}/ub_demo_client /app/ub_demo_client
+```
+
 ### Docker Compose（两容器）
 
 ```bash
-cd services/ub-demo
+# 先构建 Bazel 二进制：
+bazel build //:ub_demo_server //:ub_demo_client \
+    --override_repository=brpc=/path/to/brpc-fork
+
+# 然后运行 compose：
 docker compose -f deploy/docker-compose.yml build
 docker compose -f deploy/docker-compose.yml up
 
@@ -131,6 +169,10 @@ docker compose -f deploy/docker-compose.yml logs client
 ### K8s
 
 ```bash
+# 先构建并推送镜像：
+docker build ... -t linquickrec/ub-demo:latest .
+docker push linquickrec/ub-demo:latest
+
 # 部署服务端：
 kubectl apply -f deploy/k8s/server.yaml
 
@@ -144,14 +186,6 @@ kubectl logs -n linquickrec job/ub-demo-client
 kubectl delete -f deploy/k8s/client.yaml
 kubectl delete -f deploy/k8s/server.yaml
 ```
-
-### 构建 Docker 镜像
-
-```bash
-docker build -t linquickrec/ub-demo:latest -f services/ub-demo/Dockerfile .
-```
-
-然后在 Docker Compose 或 K8s 部署文件中引用 `linquickrec/ub-demo:latest`。
 
 ## 配置参数
 

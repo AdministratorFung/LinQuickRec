@@ -1,0 +1,16 @@
+# Enable UBSocket/URMA
+build --define=brpc_with_urma=true
+
+# Match brpc fork defaults
+build --define=BRPC_WITH_GLOG=true
+build --define=BRPC_WITH_BORINGSSL=true
+
+# C++17
+build --cxxopt=-std=c++17
+
+# ARM Kunpeng
+build --cxxopt=-march=armv8.1-a+lse
+build --conlyopt=-march=armv8.1-a+lse
+
+# Common
+build --copt=-fPIC
