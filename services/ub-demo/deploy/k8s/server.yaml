@@ -1,0 +1,65 @@
+# UBSocket/URMA demo server
+# Optionally restrict to URMA-capable nodes with nodeSelector.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ub-demo-server
+  namespace: linquickrec
+  labels:
+    app: ub-demo-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ub-demo-server
+  template:
+    metadata:
+      labels:
+        app: ub-demo-server
+    spec:
+      # Uncomment to require URMA-capable nodes:
+      # nodeSelector:
+      #   urma: "true"
+      containers:
+      - name: server
+        image: linquickrec/ub-demo:latest
+        args:
+          - "--enable_urma"
+          - "--port=8080"
+          - "--ubsocket_auto_fallback_tcp=true"
+        ports:
+        - containerPort: 8080
+          name: rpc
+          protocol: TCP
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ub-demo-server
+  namespace: linquickrec
+spec:
+  selector:
+    app: ub-demo-server
+  ports:
+  - name: rpc
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  type: ClusterIP

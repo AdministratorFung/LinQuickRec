@@ -1,0 +1,43 @@
+# Two-container demo: server + client.
+#
+# Usage:
+#   docker compose build
+#   docker compose up
+#   docker compose logs client
+#
+# The server starts in daemon mode. The client runs once, sends 10 echo
+# requests, prints latency summary, then exits.
+
+services:
+  server:
+    build:
+      context: ../..
+      dockerfile: services/ub-demo/Dockerfile
+    command:
+      - "/app/build/bin/ub_demo_server"
+      - "--enable_urma"
+      - "--port=8080"
+      - "--ubsocket_auto_fallback_tcp=true"
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/EchoService/Echo", "-d", '{"message":"health"}']
+      interval: 2s
+      timeout: 3s
+      retries: 10
+
+  client:
+    build:
+      context: ../..
+      dockerfile: services/ub-demo/Dockerfile
+    command:
+      - "/app/build/bin/ub_demo_client"
+      - "--enable_urma"
+      - "--server=server:8080"
+      - "--count=10"
+      - "--message=hello_ub"
+      - "--ubsocket_auto_fallback_tcp=true"
+    depends_on:
+      server:
+        condition: service_healthy
+    restart: "no"

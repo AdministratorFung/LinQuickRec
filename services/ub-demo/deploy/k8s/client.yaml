@@ -1,0 +1,38 @@
+# UBSocket/URMA demo client — sends echo requests and exits.
+# Check logs: kubectl logs -n linquickrec job/ub-demo-client
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ub-demo-client
+  namespace: linquickrec
+  labels:
+    app: ub-demo-client
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: ub-demo-client
+    spec:
+      restartPolicy: Never
+      # Uncomment to require URMA-capable nodes:
+      # nodeSelector:
+      #   urma: "true"
+      containers:
+      - name: client
+        image: linquickrec/ub-demo:latest
+        args:
+          - "/app/build/bin/ub_demo_client"
+          - "--enable_urma"
+          - "--server=ub-demo-server:8080"
+          - "--count=10"
+          - "--message=hello_k8s"
+          - "--ubsocket_auto_fallback_tcp=true"
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "200m"
+            memory: "128Mi"
