@@ -8,13 +8,23 @@ build --define=brpc_with_urma=true
 # Match brpc fork defaults
 build --define=BRPC_WITH_GLOG=true
 build --define=BRPC_WITH_BORINGSSL=true
+build --define absl=1
+
+# Action environment — CRITICAL for rules_foreign_cc to find ninja + compiler
+build --action_env=CC
+build --action_env=CXX
+build --action_env=LLVM_CONFIG
+build --action_env=PATH
 
 # C++17
 build --cxxopt=-std=c++17
+build --conlyopt=-std=gnu17
 
 # ARM Kunpeng
 build --cxxopt=-march=armv8.1-a+lse
 build --conlyopt=-march=armv8.1-a+lse
 
-# Common
+# Debug info
 build --copt=-fPIC
+build --fission=dbg,opt
+build --features=per_object_debug_info

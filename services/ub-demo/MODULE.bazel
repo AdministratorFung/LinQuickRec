@@ -1,10 +1,8 @@
 module(name = "ub_demo", version = "0.1.0")
 
-# Build rules needed by BUILD.bazel
-bazel_dep(name = "rules_cc", version = "0.0.1")
-bazel_dep(name = "rules_proto", version = "4.0.0")
-
-# Import brpc with all transitive Bzlmod deps
+# Import brpc — all transitive deps (rules_cc, rules_proto, protobuf, etc.)
+# are resolved automatically by Bzlmod from brpc's own MODULE.bazel.
+# No need to declare them as direct deps — avoids MVS version conflicts.
 bazel_dep(name = "brpc", version = "1.15.0")
 
 # Override with local fork — edit this path before building
