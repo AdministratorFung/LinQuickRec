@@ -1,9 +1,0 @@
-workspace(name = "ub_demo")
-
-# brpc fork — user specifies actual path at build time via:
-#   bazel build //:ub_demo_server \
-#       --override_repository=brpc=/path/to/brpc-fork
-local_repository(
-    name = "brpc",
-    path = "/placeholder",
-)

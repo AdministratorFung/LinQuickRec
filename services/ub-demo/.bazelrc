@@ -1,5 +1,6 @@
-# Use legacy WORKSPACE mode (brpc fork does not support Bzlmod)
-common --noenable_bzlmod
+# Custom registries (required by brpc fork)
+common --registry=https://bcr.bazel.build
+common --registry=https://baidu.github.io/babylon/registry
 
 # Enable UBSocket/URMA
 build --define=brpc_with_urma=true
