@@ -29,7 +29,6 @@ add_subdirectory(services/precalc-and-rank-master)
 add_subdirectory(services/rank_sub)
 add_subdirectory(services/proxy)
 add_subdirectory(services/discovery)
-add_subdirectory(services/feature)
 add_subdirectory(services/perf/collector)
 add_subdirectory(services/feature)
 
