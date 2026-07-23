@@ -25,6 +25,9 @@ else
     DISCOVERY_FLAGS="--discovery_addr=$DISCOVERY_ADDR"
 fi
 
+ENABLE_URMA="${ENABLE_URMA:-false}"
+UBSOCKET_ENABLE="${UBSOCKET_ENABLE:-false}"
+
 /app/build/bin/proxy_server \
     --server_port="$SERVICE_PORT" \
     --server_num_threads=${SERVER_NUM_THREADS:-0} \
@@ -50,6 +53,8 @@ fi
     --rank_backup_request_ms=${RANK_BACKUP_REQUEST_MS:--1} \
     --rank_master_parallelism=${RANK_MASTER_PARALLELISM:-4} \
     --top_k=${TOP_K:-100} \
+    --enable_urma=${ENABLE_URMA} \
+    --ubsocket_enable=${UBSOCKET_ENABLE} \
     "$@" &
 PID_PROXY=$!
 

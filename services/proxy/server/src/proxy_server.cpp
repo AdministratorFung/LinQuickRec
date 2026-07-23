@@ -52,6 +52,7 @@ DEFINE_int32(server_idle_timeout_sec, -1,
              "Server idle connection timeout (sec), -1 = BRPC default");
 DEFINE_int32(server_max_concurrency, 0,
              "Server max concurrency, 0 = no limit");
+DECLARE_bool(enable_urma);
 
 namespace {
 
@@ -112,6 +113,7 @@ std::unique_ptr<brpc::Channel> make_channel(
     auto ch = std::make_unique<brpc::Channel>();
     brpc::ChannelOptions opts;
     opts.timeout_ms = timeout_ms;
+    opts.use_ub = FLAGS_enable_urma;
     opts.connection_type = FLAGS_downstream_connection_type.c_str();
     opts.max_retry = FLAGS_downstream_max_retry;
     if (FLAGS_downstream_connect_timeout_ms >= 0) {

@@ -16,6 +16,7 @@ DEFINE_string(recall_service_name, "recall_service", "Recall service name in dis
 DEFINE_string(precalc_service_name, "precalc_service", "Precalc service name in discovery");
 DEFINE_string(rank_service_name, "rank_service", "Rank service name in discovery");
 DEFINE_int32(discovery_refresh_interval_ms, 5000, "Discovery cache refresh interval (ms)");
+DEFINE_bool(enable_urma, false, "Enable UBSocket/URMA transport");
 
 int main(int argc, char* argv[]) {
     google::ParseCommandLineFlags(&argc, &argv, true);
@@ -55,6 +56,7 @@ int main(int argc, char* argv[]) {
     }
 
     brpc::ServerOptions server_options;
+    server_options.use_ub = FLAGS_enable_urma;
     if (FLAGS_server_num_threads > 0) {
         server_options.num_threads = FLAGS_server_num_threads;
     }
