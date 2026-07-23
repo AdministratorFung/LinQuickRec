@@ -5,9 +5,9 @@
 #include "common/logger.h"
 #include "discovery.pb.h"
 
-namespace discovery {
-
 DECLARE_bool(enable_urma);
+
+namespace discovery {
 
 BrpcDiscoveryProvider::BrpcDiscoveryProvider(
     const std::string& discovery_addr) {

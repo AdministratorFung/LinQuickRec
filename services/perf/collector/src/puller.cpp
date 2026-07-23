@@ -15,9 +15,9 @@
 #include "sqlite_store.h"
 #include "stats_engine.h"
 
-namespace perf {
-
 DECLARE_bool(enable_urma);
+
+namespace perf {
 
 namespace {
 
