@@ -67,7 +67,8 @@ DEFINE_int32(vllm_max_retry, 3,
 DEFINE_int32(vllm_connect_timeout_ms, -1,
              "vLLM channel connect timeout (ms), -1 = disabled");
 DEFINE_int32(vllm_backup_request_ms, -1,
-             "vLLM channel backup request (ms), -1 = disabled");
+              "vLLM channel backup request (ms), -1 = disabled");
+DEFINE_bool(enable_urma, false, "Enable UBSocket/URMA transport");
 
 
 namespace recall {
