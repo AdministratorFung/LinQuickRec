@@ -4,6 +4,8 @@ set -e
 REGISTRY_BACKEND="${REGISTRY_BACKEND:-discovery_server}"
 ETCD_ENDPOINTS="${ETCD_ENDPOINTS:-etcd:2379}"
 DISCOVERY_ADDR="${DISCOVERY_ADDR:-discovery-server:8100}"
+ENABLE_URMA="${ENABLE_URMA:-false}"
+UBSOCKET_ENABLE="${UBSOCKET_ENABLE:-false}"
 
 # 元戎 SDK 不接受 DNS hostname，需解析为 IP
 if [ "$REGISTRY_BACKEND" = "etcd" ]; then
@@ -33,6 +35,8 @@ cd /app/build
     $DISCOVERY_FLAGS \
     --rank_sub_sleep_time_ms=${RANK_SUB_SLEEP_TIME_MS:-30} \
     --rank_sub_payload_size_kb=${RANK_SUB_PAYLOAD_SIZE_KB:-0} \
+    --enable_urma=${ENABLE_URMA} \
+    --ubsocket_enable=${UBSOCKET_ENABLE} \
     "$@" &
 SERVICE_PID=$!
 

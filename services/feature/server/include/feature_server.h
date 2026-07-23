@@ -12,6 +12,7 @@
 DECLARE_int32(server_port);
 DECLARE_int32(feature_sleep_time_ms);
 DECLARE_int32(feature_payload_size_kb);
+DECLARE_bool(enable_urma);
 
 namespace feature {
 

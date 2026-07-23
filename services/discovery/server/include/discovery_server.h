@@ -23,6 +23,7 @@ DECLARE_int32(heartbeat_check_interval_ms);
 DECLARE_double(heartbeat_grace_factor);
 DECLARE_double(cleanup_factor);
 DECLARE_int32(default_heartbeat_interval_sec);
+DECLARE_bool(enable_urma);
 
 namespace discovery {
 

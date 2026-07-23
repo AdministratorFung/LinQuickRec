@@ -13,7 +13,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 set(BRPC_INCLUDE_DIR /usr/local/include /usr/local/include/absl/strings/)
-set(BRPC_LIBRARIES brpc gflags ssl crypto z pthread)
+set(BRPC_LIBRARIES brpc gflags ssl crypto z pthread ubsocket)
 link_directories(/usr/local/lib64)
 
 find_package(Protobuf REQUIRED)

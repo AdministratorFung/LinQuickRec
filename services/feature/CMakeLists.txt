@@ -8,7 +8,7 @@ find_package(Threads REQUIRED)
 find_package(Protobuf REQUIRED)
 
 set(BRPC_INCLUDE_DIR /usr/local/include /usr/local/include/absl/strings/)
-set(BRPC_LIBRARIES brpc gflags ssl crypto z pthread leveldb)
+set(BRPC_LIBRARIES brpc gflags ssl crypto z pthread leveldb ubsocket)
 link_directories(/usr/local/lib64)
 
 set(ABSL_LIBS

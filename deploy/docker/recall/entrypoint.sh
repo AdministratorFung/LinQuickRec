@@ -10,6 +10,8 @@ REGISTRY_BACKEND="${REGISTRY_BACKEND:-discovery_server}"
 ETCD_ENDPOINTS="${ETCD_ENDPOINTS:-etcd:2379}"
 DISCOVERY_ADDR="${DISCOVERY_ADDR:-discovery-server:8100}"
 ENABLE_VLLM="${ENABLE_VLLM:-false}"
+ENABLE_URMA="${ENABLE_URMA:-false}"
+UBSOCKET_ENABLE="${UBSOCKET_ENABLE:-false}"
 
 # 元戎 SDK 不接受 DNS hostname，需解析为 IP
 if [ "$REGISTRY_BACKEND" = "etcd" ]; then
@@ -90,6 +92,8 @@ fi
     --kvcache_hit_sleep_time_ms=${KVCACHE_HIT_SLEEP_TIME_MS:-10} \
     --kvcache_miss_sleep_time_ms=${KVCACHE_MISS_SLEEP_TIME_MS:-100} \
     $KV_DISCOVERY_FLAGS \
+    --enable_urma=${ENABLE_URMA} \
+    --ubsocket_enable=${UBSOCKET_ENABLE} \
     "$@" &
 RECALL_PID=$!
 

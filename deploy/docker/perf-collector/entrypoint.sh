@@ -9,6 +9,8 @@ fi
 REGISTRY_BACKEND="${REGISTRY_BACKEND:-etcd}"
 ETCD_ENDPOINTS="${ETCD_ENDPOINTS:-etcd-client:2379}"
 DISCOVERY_ADDR="${DISCOVERY_ADDR:-discovery-server:8100}"
+ENABLE_URMA="${ENABLE_URMA:-false}"
+UBSOCKET_ENABLE="${UBSOCKET_ENABLE:-false}"
 
 echo "==========================================="
 echo "Starting Perf-collector"
@@ -24,4 +26,6 @@ cd /app/build
     --discovery_addr="${DISCOVERY_ADDR}" \
     --sqlite_db_path="${SQLITE_DB_PATH:-/var/lib/perf/perf.db}" \
     --retention_days=${RETENTION_DAYS:-30} \
+    --enable_urma=${ENABLE_URMA} \
+    --ubsocket_enable=${UBSOCKET_ENABLE} \
     "$@"

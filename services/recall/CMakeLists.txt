@@ -19,6 +19,7 @@ set(BRPC_LIBRARIES
     crypto
     z
     pthread
+    ubsocket
 )
 link_directories(/usr/local/lib64)
 

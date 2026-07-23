@@ -12,7 +12,7 @@ if(NOT TARGET common_lib)
 endif()
 
 set(BRPC_INCLUDE_DIR /usr/local/include /usr/local/include/absl/strings/)
-set(BRPC_LIBRARIES brpc gflags ssl crypto z pthread leveldb)
+set(BRPC_LIBRARIES brpc gflags ssl crypto z pthread leveldb ubsocket)
 link_directories(/usr/local/lib64)
 
 set(PROTO_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../../proto/discovery.proto)
