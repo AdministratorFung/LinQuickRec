@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="${SCRIPT_DIR}/.."
-NAMESPACE="linquickrec"
+NAMESPACE="${K8S_NAMESPACE:-linquickrec}"
 OVERLAY_DIR="${REPO_ROOT}/deploy/k8s"
 
 RECALL_MODE="novllm"
@@ -48,6 +48,7 @@ Options:
   --discovery-backend etcd|discovery-server  Discovery backend (--all only)
   --replicas <N>                         Override default replicas (start <service> only)
   -r, --registry <host:port>             Private registry (--all only)
+  -n, --namespace <name>                 K8s namespace (default: linquickrec)
   -h, --help
 
 Examples:
@@ -96,6 +97,9 @@ parse_args() {
             -r|--registry)
                 if [[ $# -lt 2 ]]; then die "Missing value for --registry"; fi
                 REGISTRY="${2%/}"; shift 2 ;;
+            -n|--namespace)
+                if [[ $# -lt 2 ]]; then die "Missing value for --namespace"; fi
+                NAMESPACE="$2"; shift 2 ;;
             etcd|feature|proxy|precalc|recall|rank-sub|perf-collector|perf-webui)
                 if [[ -n "$SERVICE" ]]; then die "Only one service allowed, got '${SERVICE}' and '$1'"; fi
                 SERVICE="$1"; shift ;;

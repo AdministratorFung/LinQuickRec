@@ -73,8 +73,18 @@ bash scripts/deploy-to-k8s.sh start -r <your-docker-hub-ip>:<your-docker-hub-por
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
 | `-r, --registry` | (本地) | 私有 registry 地址，如 `192.168.0.1:5000` |
+| `-n, --namespace` | `linquickrec` | K8s 命名空间（也可设置 `K8S_NAMESPACE` 环境变量） |
 | `--recall-mode` | `novllm` | Recall 部署模式：`vllm` 或 `novllm` |
 | `--discovery-backend` | `etcd` | 服务发现后端：`etcd` 或 `discovery-server` |
+
+**自定义命名空间：**
+
+```bash
+# 命令行参数
+bash scripts/deploy-to-k8s.sh start -n dev-haoyu
+
+# 环境变量
+K8S_NAMESPACE=dev-haoyu bash scripts/deploy-to-k8s.sh start
 
 **停止和删除：**
 
@@ -103,33 +113,31 @@ kubectl apply -k components/discovery && kubectl apply -k base/
 ### 查看状态
 
 ```bash
-kubectl get all -n linquickrec
-kubectl get pods -n linquickrec -o wide
+kubectl get all -n ${NAMESPACE:-linquickrec}
+kubectl get pods -n ${NAMESPACE:-linquickrec} -o wide
 
 # 查看 etcd 中注册的服务
-kubectl exec -n linquickrec etcd-0 -- etcdctl get /linquickrec/services/ --prefix
+kubectl exec -n ${NAMESPACE:-linquickrec} etcd-0 -- etcdctl get /linquickrec/services/ --prefix
 
 # 查看日志
-kubectl logs -f deployment/proxy-service -n linquickrec
-kubectl logs -f deployment/recall-service -n linquickrec
-kubectl logs -f deployment/feature-service -n linquickrec
+kubectl logs -f deployment/proxy-service -n ${NAMESPACE:-linquickrec}
+kubectl logs -f deployment/recall-service -n ${NAMESPACE:-linquickrec}
+kubectl logs -f deployment/feature-service -n ${NAMESPACE:-linquickrec}
 
 # 查看事件
-kubectl get events -n linquickrec --sort-by='.lastTimestamp'
+kubectl get events -n ${NAMESPACE:-linquickrec} --sort-by='.lastTimestamp'
 ```
 
 ### 扩缩容
 
 ```bash
 # 调整 RankSub 副本数
-kubectl scale deployment rank-sub-service --replicas=10 -n linquickrec
+kubectl scale deployment rank-sub-service --replicas=10 -n ${NAMESPACE:-linquickrec}
 
-# 调整其他服务（支持多副本的服务）
-kubectl scale deployment feature-service --replicas=3 -n linquickrec
-kubectl scale deployment precalc-and-rank-master-service --replicas=3 -n linquickrec
-
-# 如需压测 Proxy Service 入口的负载均衡，先扩容 Proxy
-kubectl scale deployment proxy-service --replicas=3 -n linquickrec
+# 调整其他服务
+kubectl scale deployment feature-service --replicas=3 -n ${NAMESPACE:-linquickrec}
+kubectl scale deployment precalc-and-rank-master-service --replicas=3 -n ${NAMESPACE:-linquickrec}
+kubectl scale deployment proxy-service --replicas=3 -n ${NAMESPACE:-linquickrec}
 ```
 
 > 服务通过 etcd 服务发现动态感知副本变化，无需额外配置修改。
@@ -153,10 +161,10 @@ bash scripts/send-proxy-request.sh --url=http://<node-or-lb>:8080/Proxy/Recommen
 ### 更新与回滚
 
 ```bash
-kubectl set image deployment/recall-service recall=linquickrec/recall:v2 -n linquickrec
-kubectl rollout status deployment/recall-service -n linquickrec
-kubectl rollout history deployment/recall-service -n linquickrec
-kubectl rollout undo deployment/recall-service -n linquickrec
+kubectl set image deployment/recall-service recall=${REGISTRY_PREFIX:-linquickrec}/recall:v2 -n ${NAMESPACE:-linquickrec}
+kubectl rollout status deployment/recall-service -n ${NAMESPACE:-linquickrec}
+kubectl rollout history deployment/recall-service -n ${NAMESPACE:-linquickrec}
+kubectl rollout undo deployment/recall-service -n ${NAMESPACE:-linquickrec}
 ```
 
 ## 配置说明

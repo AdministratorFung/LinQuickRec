@@ -3,7 +3,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: recall-service
-  namespace: linquickrec
   labels:
     app: recall-service
 spec:
