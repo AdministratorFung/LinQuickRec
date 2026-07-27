@@ -22,6 +22,8 @@
 #include "common/logger.h"
 #include "registry_backend.h"
 
+DEFINE_bool(use_ub, false, "Enable UBSocket/URMA transport");
+
 DEFINE_string(service_type, "",
     "Service type in snake_case (e.g. proxy, feature_service)");
 DEFINE_int32(service_port, 0,

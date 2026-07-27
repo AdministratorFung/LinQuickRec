@@ -5,7 +5,7 @@
 #include "common/logger.h"
 #include "discovery.pb.h"
 
-DEFINE_bool(use_ub, false, "Enable UBSocket/URMA transport");
+DECLARE_bool(use_ub);
 
 namespace discovery {
 
