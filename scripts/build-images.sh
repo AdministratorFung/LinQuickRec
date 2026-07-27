@@ -108,26 +108,23 @@ main() {
         log "Removing containers..."
         docker compose -f "$COMPOSE_FILE" rm -f 2>/dev/null || true
 
-        # Step 3: find image IDs matching the prefix (single source of truth)
+        # Step 3: find image names matching the prefix (full name: repository:tag)
         # Both local tags (prefix/*) and registry-pushed tags (*/prefix/*)
-        local ids1=$(docker images --filter "reference=${PREFIX}/*" -q 2>/dev/null)
-        local ids2=$(docker images --filter "reference=*/${PREFIX}/*" -q 2>/dev/null)
-        local ids=$( (echo "$ids1"; echo "$ids2") | sort -u | sed '/^$/d' )
+        # Use full names instead of SHA to show and delete exactly what matches
+        local names1=$(docker images --filter "reference=${PREFIX}/*" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null)
+        local names2=$(docker images --filter "reference=*/${PREFIX}/*" --format "{{.Repository}}:{{.Tag}}" 2>/dev/null)
+        local names=$( (echo "$names1"; echo "$names2") | sort -u | sed '/^$/d' )
 
-        if [[ -z "$ids" ]]; then
+        if [[ -z "$names" ]]; then
             log "No images found with prefix ${PREFIX}"
             exit 0
         fi
 
-        # Step 4: show ALL tags referencing these image IDs
-        # This ensures the user sees exactly what will be deleted (including
-        # tags from other prefixes that share the same image SHA)
+        # Step 4: show image names (this IS the exact list that will be deleted)
         log "Containers stopped and removed."
         log "The following images will be deleted:"
         echo ""
-        docker images --format "{{.ID}} {{.Repository}}:{{.Tag}}" \
-            | grep -Ff <(echo "$ids") \
-            | awk '{printf "  %-50s (SHA: %s)\n", $2, substr($1,1,12)}'
+        echo "$names" | awk '{printf "  %s\n", $0}'
         echo ""
 
         # Step 5: user confirmation (default N for safety)
@@ -137,8 +134,9 @@ main() {
             exit 0
         fi
 
-        # Step 6: delete images by ID (docker rmi operates on SHA hashes)
-        echo "$ids" | xargs docker rmi -f 2>/dev/null
+        # Step 6: delete images by full name (docker rmi removes the tag;
+        # if this is the last tag, the image SHA is also removed)
+        echo "$names" | xargs docker rmi -f 2>/dev/null
         log "Clean complete"
         exit 0
     fi
