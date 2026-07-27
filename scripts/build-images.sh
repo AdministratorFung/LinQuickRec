@@ -153,7 +153,12 @@ main() {
         if [[ ${#SERVICES[@]} -gt 0 ]]; then
             push_targets="${SERVICES[*]}"
         fi
-        bash "${SCRIPT_DIR}/push-to-registry.sh" -r "$PUSH_REG" ${push_targets:-all}
+        local push_prefix="linquickrec"
+        if [[ -f "${REPO_ROOT}/deploy/docker/.env" ]]; then
+            push_prefix=$(grep '^REGISTRY_PREFIX=' "${REPO_ROOT}/deploy/docker/.env" | cut -d= -f2)
+            push_prefix="${push_prefix:-linquickrec}"
+        fi
+        bash "${SCRIPT_DIR}/push-to-registry.sh" -r "$PUSH_REG" --prefix "$push_prefix" ${push_targets:-all}
     fi
 
 }
