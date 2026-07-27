@@ -167,16 +167,22 @@ COMP
 COMP
     fi
 
-    # Image registry override (only if --registry specified)
-    if [[ -n "$REGISTRY" ]]; then
+    # Image name override (when using custom prefix or registry)
+    # `name` must match the hardcoded value in YAML files
+    # `newName` replaces it with the actual image to pull
+    if [[ -n "$REGISTRY" || "$PREFIX" != "linquickrec" ]]; then
+        local new_prefix="${PREFIX}"
+        if [[ -n "$REGISTRY" ]]; then
+            new_prefix="${REGISTRY}/${PREFIX}"
+        fi
         cat >> "${OVERLAY_TMP}/kustomization.yaml" <<IMAGES
 
 images:
 IMAGES
         for img in base proxy feature recall precalc-and-rank-master perf-collector perf-webui rank-sub kv-worker etcd discovery; do
             cat >> "${OVERLAY_TMP}/kustomization.yaml" <<LINE
-  - name: ${PREFIX}/${img}
-    newName: ${REGISTRY}/${PREFIX}/${img}
+  - name: linquickrec/${img}
+    newName: ${new_prefix}/${img}
 LINE
         done
     fi
