@@ -89,8 +89,13 @@ main() {
     fi
 
     if [[ "$CLEAN" == true ]]; then
-        log "Cleaning images..."
-        docker compose -f "$COMPOSE_FILE" down --rmi all
+        local PREFIX="${REGISTRY_PREFIX:-linquickrec}"
+        log "Cleaning images with prefix ${PREFIX}..."
+        docker compose -f "$COMPOSE_FILE" down --remove-orphans
+        local ids=$(docker images --filter "reference=${PREFIX}/*" -q 2>/dev/null)
+        if [[ -n "$ids" ]]; then
+            echo "$ids" | xargs docker rmi -f 2>/dev/null
+        fi
         log "Clean complete"
         exit 0
     fi
