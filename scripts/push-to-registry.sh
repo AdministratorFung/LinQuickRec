@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 trap 'log "Interrupted"; exit 130' INT
 
 REGISTRY=""
-PREFIX="${REGISTRY_PREFIX:-linquickrec}"
+PREFIX="linquickrec"
 DRY_RUN=false
 TARGET=""
 
@@ -60,8 +60,9 @@ Images:
   precalc-and-rank-master, rank-sub, proxy
 
 Examples:
-  $(basename "$0") -r 192.168.0.1:5000                   # push all images (default)
+  $(basename "$0") -r 192.168.0.1:5000                   # push all images (default prefix)
   $(basename "$0") -r 192.168.0.1:5000 recall            # push recall only
+  $(basename "$0") -r 192.168.0.1:5000 --prefix dev-haoyu # custom prefix
   $(basename "$0") -r 192.168.0.1:5000 --dry-run all     # dry-run
 EOF
 }
