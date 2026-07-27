@@ -15,6 +15,7 @@ DEFINE_int32(heartbeat_check_interval_ms, 1000, "Health check scan interval (ms)
 DEFINE_double(heartbeat_grace_factor, 2.0, "Heartbeat timeout multiplier");
 DEFINE_double(cleanup_factor, 5.0, "Stale instance cleanup multiplier");
 DEFINE_int32(default_heartbeat_interval_sec, 5, "Default heartbeat interval (seconds)");
+DEFINE_bool(use_ub, false, "Enable UBSocket/URMA transport");
 
 namespace discovery {
 

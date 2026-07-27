@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
     }
 
     brpc::ServerOptions server_options;
-    server_options.use_ub = FLAGS_enable_urma;
+    server_options.use_ub = FLAGS_use_ub;
     if (FLAGS_server_num_threads > 0) {
         server_options.num_threads = FLAGS_server_num_threads;
     }

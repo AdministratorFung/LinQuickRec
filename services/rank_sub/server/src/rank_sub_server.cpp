@@ -31,6 +31,7 @@ DEFINE_string(etcd_endpoints, "127.0.0.1:2379",
     "etcd endpoints, comma-separated (for etcd backend)");
 DEFINE_int32(rank_sub_sleep_time_ms, 30, "RankSub service simulated sleep time (ms)");
 DEFINE_int32(rank_sub_payload_size_kb, 0, "RankSub response payload size (KB)");
+DEFINE_bool(use_ub, false, "Enable UBSocket/URMA transport");
 
 
 namespace rank {

@@ -17,14 +17,14 @@ DEFINE_string(server, "127.0.0.1:8080", "Server address (host:port)");
 DEFINE_int32(count, 1, "Number of echo requests");
 DEFINE_int32(timeout_ms, 3000, "RPC timeout in ms");
 DEFINE_string(protocol, "http", "Protocol: http or baidu_std");
-DEFINE_bool(enable_urma, false, "Enable UBSocket/URMA transport");
+DEFINE_bool(use_ub, false, "Enable UBSocket/URMA transport");
 DEFINE_string(message, "hello", "Echo message to send");
 
 int main(int argc, char* argv[]) {
     gflags::ParseCommandLineFlags(&argc, &argv, true);
 
 #ifdef BRPC_WITH_URMA
-    if (FLAGS_enable_urma) {
+    if (FLAGS_use_ub) {
         printf("[client] Initializing UBSocket/URMA...\n");
         if (brpc::InitializeUBSocket() == 0) {
             printf("[client] UBSocket/URMA initialized successfully\n");
@@ -33,10 +33,10 @@ int main(int argc, char* argv[]) {
         }
     }
 #else
-    if (FLAGS_enable_urma) {
+    if (FLAGS_use_ub) {
         fprintf(stderr,
                 "[client] BRPC_WITH_URMA not compiled in. "
-                "Build with -DENABLE_URMA=ON\n");
+                "Build with -DUSE_UB=ON\n");
     }
 #endif
 

@@ -4,7 +4,7 @@ set -e
 REGISTRY_BACKEND="${REGISTRY_BACKEND:-discovery_server}"
 ETCD_ENDPOINTS="${ETCD_ENDPOINTS:-etcd:2379}"
 DISCOVERY_ADDR="${DISCOVERY_ADDR:-discovery-server:8100}"
-ENABLE_URMA="${ENABLE_URMA:-false}"
+USE_UB="${USE_UB:-false}"
 UBSOCKET_ENABLE="${UBSOCKET_ENABLE:-false}"
 
 echo "==========================================="
@@ -22,7 +22,7 @@ cd /app/build
     --user_log_count=${USER_LOG_COUNT:-10} \
     --user_log_vec_size=${USER_LOG_VEC_SIZE:-30} \
     --sku_feat_length=${SKU_FEAT_LENGTH:-20} \
-    --enable_urma=${ENABLE_URMA:-false} \
+    --use_ub=${USE_UB} \
     --ubsocket_enable=${UBSOCKET_ENABLE} \
     "$@" &
 SERVICE_PID=$!

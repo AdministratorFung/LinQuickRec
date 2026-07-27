@@ -18,6 +18,7 @@ DEFINE_int32(user_log_vec_size, 30, "Vector size per user log");
 DEFINE_int32(sku_feat_length, 20, "SKU feature string length");
 DEFINE_int32(feature_sleep_time_ms, 30, "Feature service simulated sleep time (ms)");
 DEFINE_int32(feature_payload_size_kb, 0, "Feature response payload size (KB)");
+DEFINE_bool(use_ub, false, "Enable UBSocket/URMA transport");
 
 namespace {
 

@@ -4,7 +4,7 @@ set -e
 REGISTRY_BACKEND="${REGISTRY_BACKEND:-discovery_server}"
 ETCD_ENDPOINTS="${ETCD_ENDPOINTS:-etcd:2379}"
 DISCOVERY_ADDR="${DISCOVERY_ADDR:-discovery-server:8100}"
-ENABLE_URMA="${ENABLE_URMA:-false}"
+USE_UB="${USE_UB:-false}"
 UBSOCKET_ENABLE="${UBSOCKET_ENABLE:-false}"
 
 # 元戎 SDK 不接受 DNS hostname，需解析为 IP
@@ -47,7 +47,7 @@ cd /app/build
     --sub_worker_connect_timeout_ms=${SUB_WORKER_CONNECT_TIMEOUT_MS:--1} \
     --sub_worker_backup_request_ms=${SUB_WORKER_BACKUP_REQUEST_MS:--1} \
     --rank_master_sleep_time_ms=${RANK_MASTER_SLEEP_TIME_MS:-30} \
-    --enable_urma=${ENABLE_URMA} \
+    --use_ub=${USE_UB} \
     --ubsocket_enable=${UBSOCKET_ENABLE} \
     "$@" &
 SERVICE_PID=$!

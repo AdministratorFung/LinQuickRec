@@ -11,4 +11,4 @@ ENV LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64:/usr/lib64
 
 EXPOSE 8080
 
-CMD ["/app/ub_demo_server", "--enable_urma", "--port=8080"]
+CMD ["/app/ub_demo_server", "--use_ub", "--port=8080"]

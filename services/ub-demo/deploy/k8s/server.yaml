@@ -25,7 +25,7 @@ spec:
         image: linquickrec/ub-demo:latest
         # Built via: bazel build && docker build
         args:
-          - "--enable_urma"
+          - "--use_ub"
           - "--port=8080"
           - "--ubsocket_auto_fallback_tcp=true"
         ports:

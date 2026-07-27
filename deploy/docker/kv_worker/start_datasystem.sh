@@ -21,8 +21,8 @@ if [ -z "${etcd_address}" ]; then
     exit 1
 fi
 
-if [ -z "${enable_urma}" ]; then
-     echo "[ERROR] enable_urma is not set. Please set it to 0 or 1"
+if [ -z "${use_ub}" ]; then
+     echo "[ERROR] use_ub is not set. Please set it to 0 or 1"
      exit 1
 fi
 
@@ -44,7 +44,7 @@ cpu_affinity="${cpu_affinity:-0-64}"
 echo "=== System Info ==="
 echo "Worker Address:   ${worker_address}"
 echo "Etcd Addrress:    ${etcd_address}"
-echo "Enable Urma:      ${enable_urma}"
+echo "Enable Urma:      ${use_ub}"
 echo "==================="
 
 # Start Worker
@@ -57,7 +57,7 @@ dscli start --worker_args \
     --log_dir "./datasystem_log/log_${worker_port}" \
     --arena_per_tenant 1 \
     --skip_authenticate 1 \
-    --enable_urma ${enable_urma} \
+    --use_ub ${use_ub} \
     --urma_mode UB \
     --minloglevel 1 \
     --oc_thread_num 64 \

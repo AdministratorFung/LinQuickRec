@@ -29,7 +29,7 @@ DECLARE_int32(sub_worker_max_retry);
 DECLARE_int32(sub_worker_connect_timeout_ms);
 DECLARE_int32(sub_worker_backup_request_ms);
 DECLARE_int32(rank_master_sleep_time_ms);
-DECLARE_bool(enable_urma);
+DECLARE_bool(use_ub);
 
 namespace rank {
 

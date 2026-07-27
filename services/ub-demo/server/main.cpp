@@ -25,13 +25,13 @@ public:
 };
 
 DEFINE_int32(port, 8080, "Server port");
-DEFINE_bool(enable_urma, false, "Enable UBSocket/URMA transport");
+DEFINE_bool(use_ub, false, "Enable UBSocket/URMA transport");
 
 int main(int argc, char* argv[]) {
     gflags::ParseCommandLineFlags(&argc, &argv, true);
 
 #ifdef BRPC_WITH_URMA
-    if (FLAGS_enable_urma) {
+    if (FLAGS_use_ub) {
         printf("[server] Initializing UBSocket/URMA...\n");
         if (brpc::InitializeUBSocket() == 0) {
             printf("[server] UBSocket/URMA initialized successfully\n");
@@ -40,10 +40,10 @@ int main(int argc, char* argv[]) {
         }
     }
 #else
-    if (FLAGS_enable_urma) {
+    if (FLAGS_use_ub) {
         fprintf(stderr,
                 "[server] BRPC_WITH_URMA not compiled in. "
-                "Build with -DENABLE_URMA=ON\n");
+                "Build with -DUSE_UB=ON\n");
     }
 #endif
 
@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
     }
 
     printf("[server] Listening on :%d (URMA=%s)\n",
-           FLAGS_port, FLAGS_enable_urma ? "on" : "off");
+           FLAGS_port, FLAGS_use_ub ? "on" : "off");
 
     server.RunUntilAskedToQuit();
     return 0;

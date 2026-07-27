@@ -12,7 +12,6 @@ DEFINE_int32(server_idle_timeout_sec, -1,
              "Server idle connection timeout (sec), -1 = BRPC default");
 DEFINE_int32(server_max_concurrency, 0,
              "Server max concurrency, 0 = no limit");
-DEFINE_bool(enable_urma, false, "Enable UBSocket/URMA transport");
 
 int main(int argc, char* argv[]) {
     gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -48,7 +47,7 @@ int main(int argc, char* argv[]) {
     }
 
     brpc::ServerOptions server_options;
-    server_options.use_ub = FLAGS_enable_urma;
+    server_options.use_ub = FLAGS_use_ub;
     if (FLAGS_server_num_threads > 0) {
         server_options.num_threads = FLAGS_server_num_threads;
     }

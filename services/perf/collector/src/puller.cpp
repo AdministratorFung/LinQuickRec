@@ -15,7 +15,7 @@
 #include "sqlite_store.h"
 #include "stats_engine.h"
 
-DECLARE_bool(enable_urma);
+DEFINE_bool(use_ub, false, "Enable UBSocket/URMA transport");
 
 namespace perf {
 
@@ -49,7 +49,7 @@ bool PullService(const std::string& host, int port,
     brpc::ChannelOptions opts;
     opts.protocol = "http";
     opts.timeout_ms = 2000;
-    opts.use_ub = FLAGS_enable_urma;
+    opts.use_ub = FLAGS_use_ub;
     opts.connection_type = "short";
     opts.max_retry = 0;
 
