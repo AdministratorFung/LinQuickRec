@@ -6,11 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 trap 'log "Interrupted"; exit 130' INT
 
 REGISTRY=""
-PREFIX="${REGISTRY_PREFIX:-}"
-if [[ -z "$PREFIX" ]] && [[ -f "${SCRIPT_DIR}/../deploy/docker/.env" ]]; then
-    PREFIX=$(grep '^REGISTRY_PREFIX=' "${SCRIPT_DIR}/../deploy/docker/.env" | cut -d= -f2)
-fi
-PREFIX="${PREFIX:-linquickrec}"
+PREFIX="${REGISTRY_PREFIX:-linquickrec}"
 DRY_RUN=false
 TARGET=""
 
