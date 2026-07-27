@@ -60,10 +60,10 @@ Images:
   precalc-and-rank-master, rank-sub, proxy
 
 Examples:
-  $(basename "$0") -r 192.168.0.1:5000                   # push all images (default prefix)
-  $(basename "$0") -r 192.168.0.1:5000 recall            # push recall only
-  $(basename "$0") -r 192.168.0.1:5000 --prefix dev-haoyu # custom prefix
-  $(basename "$0") -r 192.168.0.1:5000 --dry-run all     # dry-run
+  $(basename "$0") -r 127.0.0.1:5000                      # push all images (default prefix)
+  $(basename "$0") -r 127.0.0.1:5000 recall               # push recall only (default prefix)
+  $(basename "$0") -r 127.0.0.1:5000 --prefix linquickrec # custom prefix
+  $(basename "$0") -r 127.0.0.1:5000 --dry-run all        # dry-run
 EOF
 }
 

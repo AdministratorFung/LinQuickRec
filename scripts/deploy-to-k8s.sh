@@ -45,26 +45,26 @@ Actions:
 Service names: etcd feature proxy precalc recall rank-sub perf-collector perf-webui
 
 Options:
-  --recall-mode vllm|novllm              Recall mode (default: novllm, --all only)
-  --discovery-backend etcd|discovery-server  Discovery backend (--all only)
-  --replicas <N>                         Override default replicas (start <service> only)
-  -r, --registry <host:port>             Private registry (--all only)
-  -p, --prefix <name>                    Image prefix (default: linquickrec)
-  -n, --namespace <name>                 K8s namespace (default: linquickrec)
+  --recall-mode vllm|novllm                 Recall mode (default: novllm, all only)
+  --discovery-backend etcd|discovery-server Discovery backend (all only)
+  --replicas <N>                            Override default replicas (start <service> only)
+  -r, --registry <host:port>                Private registry (all only)
+  -p, --prefix <name>                       Image prefix (default: linquickrec)
+  -n, --namespace <name>                    K8s namespace (default: linquickrec)
   -h, --help
 
 Examples:
   $(basename "$0") start                         # deploy everything
-  $(basename "$0") start -r 192.168.0.1:5000     # deploy with registry
-  $(basename "$0") start -p dev-haoyu            # deploy with custom prefix
-  $(basename "$0") start -n dev-haoyu            # deploy to custom namespace
-  $(basename "$0") stop                           # scale all to 0
-  $(basename "$0") stop feature                   # scale feature-service to 0
-  $(basename "$0") start feature                  # scale feature-service to 1
-  $(basename "$0") start recall --replicas 3      # scale recall-service to 3
-  $(basename "$0") restart perf-collector           # rollout restart perf-collector-service
-  $(basename "$0") delete proxy                   # delete proxy-service
-  $(basename "$0") delete                         # delete everything
+  $(basename "$0") start -r 127.0.0.1:5000       # deploy with registry
+  $(basename "$0") start -p linquickrec          # deploy with custom prefix
+  $(basename "$0") start -n linquickrec          # deploy to custom namespace
+  $(basename "$0") stop                          # scale all to 0
+  $(basename "$0") stop proxy                    # scale proxy-service to 0
+  $(basename "$0") start proxy                   # scale proxy-service to 1
+  $(basename "$0") start proxy --replicas 3      # scale recall-service to 3
+  $(basename "$0") restart proxy                 # rollout restart proxy-service
+  $(basename "$0") delete proxy                  # delete proxy-service
+  $(basename "$0") delete                        # delete everything
 EOF
     exit 0
 }

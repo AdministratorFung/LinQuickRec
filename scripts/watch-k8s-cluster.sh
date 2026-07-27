@@ -19,9 +19,9 @@ Options:
   -h, --help                 Show this help
 
 Examples:
-  $(basename "$0")                                    # default namespace
-  $(basename "$0") -n dev-haoyu                       # custom namespace
-  $(basename "$0") -n dev-haoyu -t 300                # 5 min timeout
+  $(basename "$0")                        # default namespace
+  $(basename "$0") -n linquickrec         # custom namespace
+  $(basename "$0") -n linquickrec -t 300  # 5 min timeout
 EOF
     exit 0
 }

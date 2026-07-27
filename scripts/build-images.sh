@@ -42,9 +42,6 @@ Examples:
   bash scripts/build-images.sh perf-collector perf-webui            # build specific services
   bash scripts/build-images.sh recall --vllm                        # build recall with vLLM
   bash scripts/build-images.sh --push 127.0.0.1:5000                # build all + push to registry
-  bash scripts/build-images.sh --push 127.0.0.1:5000 recall --vllm  # build recall + push
-  bash scripts/build-images.sh --no-cache                           # force rebuild (no cache)
-  bash scripts/build-images.sh --clean                              # remove all local images (no build)
 EOF
     exit 0
 }
