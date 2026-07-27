@@ -36,9 +36,10 @@ class MockVllmServer {
 public:
     explicit MockVllmServer(int port) : port_(port) {}
 
-    void SetResponse(const std::string& body, int status = 200) {
+    void SetResponse(const std::string& body, int status = 200, int delay_ms = 0) {
         response_body_ = body;
         http_status_ = status;
+        delay_ms_ = delay_ms;
     }
 
     void Start() {
@@ -93,6 +94,10 @@ private:
             ssize_t n = recv(client, buf, sizeof(buf) - 1, 0);
             (void)n;
 
+            if (delay_ms_ > 0) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms_));
+            }
+
             std::string resp = build_http_response(http_status_, response_body_);
             send(client, resp.c_str(), resp.size(), 0);
             close(client);
@@ -102,6 +107,7 @@ private:
     int port_;
     std::string response_body_;
     int http_status_ = 200;
+    int delay_ms_ = 0;
     std::atomic<bool> running_{false};
     std::thread thread_;
     int fd_ = -1;
@@ -115,6 +121,9 @@ struct Scenario {
     const char* name;
     bool start_mock;
     std::string mock_body;
+    int mock_http_status;
+    int mock_delay_ms;
+    int timeout_ms;
     int expect_error_code;
     int expect_sku_count;
     std::vector<uint64_t> expect_prefix;
@@ -125,14 +134,14 @@ static void run_scenario(const Scenario& s) {
 
     MockVllmServer mock(MOCK_VLLM_PORT);
     if (s.start_mock) {
-        mock.SetResponse(s.mock_body);
+        mock.SetResponse(s.mock_body, s.mock_http_status, s.mock_delay_ms);
         mock.Start();
     }
 
     FLAGS_vllm_base_url = std::string("http://127.0.0.1:") + std::to_string(MOCK_VLLM_PORT);
     FLAGS_enable_vllm = true;
     FLAGS_sku_count = 5;
-    FLAGS_vllm_timeout_ms = 3000;
+    FLAGS_vllm_timeout_ms = s.timeout_ms;
     FLAGS_vllm_max_retry = 0;
     FLAGS_recall_sleep_time_ms = 0;
     FLAGS_recall_payload_size_kb = 0;
@@ -189,7 +198,7 @@ static void run_scenario(const Scenario& s) {
 
 int main(int argc, char* argv[]) {
     google::ParseCommandLineFlags(&argc, &argv, true);
-    common::logger::AddConsoleSink();
+    common::logger::InitializeDefault();
 
     std::cout << "=== Recall Service Integration Tests ===" << std::endl;
 
@@ -199,6 +208,7 @@ int main(int argc, char* argv[]) {
         "Happy path: vLLM returns valid SKUs",
         true,
         R"({"choices":[{"message":{"content":"123456,234567,345678,456789,567890"}}]})",
+        200, 0, 3000,
         static_cast<int>(OK_CODE),
         5,
         {123456, 234567, 345678, 456789, 567890}
@@ -208,6 +218,7 @@ int main(int argc, char* argv[]) {
         "vLLM unreachable (no mock server)",
         false,
         "",
+        0, 0, 3000,
         static_cast<int>(recall_errors::VLLM_REQUEST_FAILED),
         0,
         {}
@@ -217,6 +228,7 @@ int main(int argc, char* argv[]) {
         "vLLM returns malformed JSON",
         true,
         "{ this is not valid json",
+        200, 0, 3000,
         static_cast<int>(recall_errors::VLLM_RESPONSE_PARSE_FAILED),
         0,
         {}
@@ -226,6 +238,7 @@ int main(int argc, char* argv[]) {
         "vLLM returns empty choices array",
         true,
         R"({"choices":[]})",
+        200, 0, 3000,
         static_cast<int>(recall_errors::VLLM_RESPONSE_PARSE_FAILED),
         0,
         {}
@@ -235,9 +248,80 @@ int main(int argc, char* argv[]) {
         "vLLM returns fewer SKUs + random fill to target",
         true,
         R"({"choices":[{"message":{"content":"111111,222222,333333"}}]})",
+        200, 0, 3000,
         static_cast<int>(OK_CODE),
         5,
         {111111, 222222, 333333}
+    });
+
+    run_scenario({
+        "vLLM returns HTTP 504 Gateway Timeout",
+        true,
+        "Gateway Timeout",
+        504, 0, 3000,
+        static_cast<int>(recall_errors::VLLM_REQUEST_FAILED),
+        0,
+        {}
+    });
+
+    run_scenario({
+        "vLLM returns plain text (non-JSON)",
+        true,
+        "Internal Server Error",
+        500, 0, 3000,
+        static_cast<int>(recall_errors::VLLM_REQUEST_FAILED),
+        0,
+        {}
+    });
+
+    run_scenario({
+        "vLLM returns SKU with non-numeric characters",
+        true,
+        R"({"choices":[{"message":{"content":"123abc,456xyz,111111,222222,333333"}}]})",
+        200, 0, 3000,
+        static_cast<int>(OK_CODE),
+        5,
+        {111111, 222222, 333333}
+    });
+
+    run_scenario({
+        "vLLM returns SKU shorter than 6 digits",
+        true,
+        R"({"choices":[{"message":{"content":"123,456789,234567,345678,456789"}}]})",
+        200, 0, 3000,
+        static_cast<int>(OK_CODE),
+        5,
+        {456789, 234567, 345678, 456789}
+    });
+
+    run_scenario({
+        "vLLM returns duplicate SKUs (dedup verification)",
+        true,
+        R"({"choices":[{"message":{"content":"111111,222222,333333,111111,222222"}}]})",
+        200, 0, 3000,
+        static_cast<int>(OK_CODE),
+        5,
+        {111111, 222222, 333333}
+    });
+
+    run_scenario({
+        "vLLM returns zero SKUs after parse",
+        true,
+        R"({"choices":[{"message":{"content":"aaa,bbb,ccc"}}]})",
+        200, 0, 3000,
+        static_cast<int>(recall_errors::NO_SKU_RETURNED),
+        0,
+        {}
+    });
+
+    run_scenario({
+        "vLLM HTTP timeout (delay > timeout)",
+        true,
+        R"({"choices":[{"message":{"content":"123456,234567,345678,456789,567890"}}]})",
+        200, 500, 100,
+        static_cast<int>(recall_errors::VLLM_REQUEST_FAILED),
+        0,
+        {}
     });
 
     std::cout << "\n=== All Integration Tests Passed ===" << std::endl;

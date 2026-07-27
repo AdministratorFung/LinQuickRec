@@ -3,6 +3,7 @@
 
 #include "rank_sub_server.h"
 
+#include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <string>
@@ -58,6 +59,14 @@ void test_parse_skus_many() {
     std::cout << "[PASS] parse_skus_from_string: 500 SKUs" << std::endl;
 }
 
+void test_parse_skus_large_sku_id() {
+    std::string input = "1000000000000000000";
+    auto result = parse_skus_from_string(input);
+    assert(result.size() == 1);
+    assert(result[0] == 1000000000000000000ULL);
+    std::cout << "[PASS] parse_skus_from_string: large SKU ID (1e18)" << std::endl;
+}
+
 // ============================================================================
 // simulate_score 测试
 // ============================================================================
@@ -92,7 +101,6 @@ void test_simulate_score_different_user_feat() {
 }
 
 void test_simulate_score_various_feats() {
-    // Test with various feature string sizes
     simulate_score(1, "");
     simulate_score(1, "a");
     simulate_score(1, std::string(10000, 'x'));
@@ -105,6 +113,46 @@ void test_simulate_score_zero_sku() {
     std::cout << "[PASS] simulate_score: SKU ID 0 handled correctly" << std::endl;
 }
 
+void test_simulate_score_large_user_feat() {
+    std::string large_feat(10 * 1024 * 1024, 'z');
+    double score = simulate_score(999, large_feat);
+    assert(score >= 0.0 && score < 100.0);
+    std::cout << "[PASS] simulate_score: handles 10MB user_feat" << std::endl;
+}
+
+void test_simulate_score_sorting_consistency() {
+    std::vector<uint64_t> sku_ids = {999, 1, 100000, 42, 8888};
+    std::string feat = "sorting_test_feat";
+
+    std::vector<double> scores_first;
+    for (uint64_t sku : sku_ids) {
+        scores_first.push_back(simulate_score(sku, feat));
+    }
+
+    std::vector<double> scores_second;
+    for (uint64_t sku : sku_ids) {
+        scores_second.push_back(simulate_score(sku, feat));
+    }
+
+    assert(scores_first == scores_second);
+
+    std::vector<std::pair<uint64_t, double>> pairs;
+    for (size_t i = 0; i < sku_ids.size(); ++i) {
+        pairs.emplace_back(sku_ids[i], scores_first[i]);
+    }
+    std::vector<std::pair<uint64_t, double>> sorted = pairs;
+    std::sort(sorted.begin(), sorted.end(),
+              [](const auto& a, const auto& b) { return a.second > b.second; });
+
+    std::vector<double> scores_third;
+    for (const auto& p : sorted) {
+        scores_third.push_back(simulate_score(p.first, feat));
+    }
+    assert(sorted[0].second == scores_third[0]);
+
+    std::cout << "[PASS] simulate_score: sorting consistency verified" << std::endl;
+}
+
 // ============================================================================
 // main
 // ============================================================================
@@ -115,20 +163,21 @@ int main(int argc, char* argv[]) {
 
     std::cout << "=== RankSub Service Unit Tests ===" << std::endl;
 
-    // parse_skus_from_string
     test_parse_skus_empty();
     test_parse_skus_normal();
     test_parse_skus_partial_trailing();
     test_parse_skus_short_string();
     test_parse_skus_many();
+    test_parse_skus_large_sku_id();
 
-    // simulate_score
     test_simulate_score_deterministic();
     test_simulate_score_range();
     test_simulate_score_different_sku();
     test_simulate_score_different_user_feat();
     test_simulate_score_various_feats();
     test_simulate_score_zero_sku();
+    test_simulate_score_large_user_feat();
+    test_simulate_score_sorting_consistency();
 
     std::cout << "\n=== All RankSub Tests Passed ===" << std::endl;
     return 0;

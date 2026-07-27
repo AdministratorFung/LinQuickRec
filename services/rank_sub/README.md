@@ -63,6 +63,23 @@ make rank_sub_server rank_sub_client rank_sub_test -j$(nproc)
 | `rank_sub_server` | 精排子图服务主程序 |
 | `rank_sub_client` | 测试客户端     |
 | `rank_sub_test`   | 单元测试      |
+| `rank_sub_integration_test` | 单进程集成测试 |
+
+### 集成测试
+
+与 proxy / recall 一样，集成测试通过容器入口脚本触发：
+
+```bash
+docker run --rm linquickrec/rank-sub:latest test
+```
+
+如果是在源码目录中直接运行本地测试二进制，也可以执行：
+
+```bash
+./bin/rank_sub_integration_test
+```
+
+测试会在单个进程内启动真实 `RankSubServiceImpl`，通过 BRPC RPC 验证正常打分流程以及空用户特征/空 SKU 输入的错误分支。
 
 ## 启动方式
 

@@ -14,11 +14,11 @@ COPY ${SERVICE_DIR} /app/services/proxy/
 COPY ${DISCOVERY_DIR} /app/services/discovery/
 
 RUN mkdir -p /app/build && cd /app/build && \
-    cmake ../services/proxy -DCMAKE_BUILD_TYPE=Release && \
+    cmake ../services/proxy -DCMAKE_BUILD_TYPE=Debug && \
     make -j$(nproc) proxy_server proxy_test_client proxy_integration_test
 
 RUN mkdir -p /app/build/discovery && cd /app/build/discovery && \
-    cmake ../../services/discovery -DCMAKE_BUILD_TYPE=Release && \
+    cmake ../../services/discovery -DCMAKE_BUILD_TYPE=Debug && \
     make discovery_client -j$(nproc)
 
 COPY ${ENTRYPOINT_FILE} /app/entrypoint.sh

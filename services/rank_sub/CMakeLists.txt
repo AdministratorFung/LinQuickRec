@@ -55,4 +55,22 @@ target_link_libraries(rank_sub_client PRIVATE common_lib ${BRPC_LIBRARIES} level
     ${Protobuf_LIBRARIES} ${ABSL_LIBS})
 set_target_properties(rank_sub_client PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-message(STATUS "Build targets: rank_sub_server rank_sub_client")
+add_executable(rank_sub_integration_test tests/integration_test.cpp server/src/rank_sub_server.cpp
+    ${PROTO_OUT_DIR}/rank_sub.pb.cc)
+target_include_directories(rank_sub_integration_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../..
+    ${PROTO_OUT_DIR} ${PROTO_DIR} ${PROTOBUF_INCLUDE_DIRS} ${BRPC_INCLUDE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/server/include ${CMAKE_CURRENT_SOURCE_DIR}/../../common/include)
+target_link_libraries(rank_sub_integration_test PRIVATE common_lib ${BRPC_LIBRARIES} leveldb
+    ${Protobuf_LIBRARIES} Threads::Threads ${ABSL_LIBS})
+set_target_properties(rank_sub_integration_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+add_executable(rank_sub_unit_test tests/test_rank_sub.cpp server/src/rank_sub_server.cpp
+    ${PROTO_OUT_DIR}/rank_sub.pb.cc)
+target_include_directories(rank_sub_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../..
+    ${PROTO_OUT_DIR} ${PROTO_DIR} ${PROTOBUF_INCLUDE_DIRS} ${BRPC_INCLUDE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/server/include ${CMAKE_CURRENT_SOURCE_DIR}/../../common/include)
+target_link_libraries(rank_sub_unit_test PRIVATE common_lib ${BRPC_LIBRARIES} leveldb
+    ${Protobuf_LIBRARIES} Threads::Threads ${ABSL_LIBS})
+set_target_properties(rank_sub_unit_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+message(STATUS "Build targets: rank_sub_server rank_sub_client rank_sub_integration_test rank_sub_unit_test")

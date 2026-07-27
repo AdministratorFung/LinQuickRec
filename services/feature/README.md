@@ -32,6 +32,23 @@ make -j$(nproc)
 | 二进制 | 说明 |
 |---|---|
 | `feature_server` | 特征服务主程序 |
+| `feature_integration_test` | 单进程集成测试 |
+
+### 集成测试
+
+与 proxy / recall 一样，集成测试通过容器入口脚本触发：
+
+```bash
+docker run --rm linquickrec/feature:latest test
+```
+
+如果是在源码目录中直接运行本地测试二进制，也可以执行：
+
+```bash
+./bin/feature_integration_test
+```
+
+测试会在一个进程内启动真实 `FeatureServiceImpl` 和本地 BRPC server，直接通过 `FeatureService_Stub` 验证用户特征和 SKU 特征 RPC 的正常返回与输入校验错误。
 
 ## 启动方式
 

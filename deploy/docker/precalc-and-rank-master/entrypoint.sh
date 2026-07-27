@@ -1,6 +1,20 @@
 #!/bin/bash
 set -e
 
+if [ "$1" = "test" ]; then
+    shift
+    echo "=== Running rank_master integration test ==="
+    /app/build/bin/rank_master_integration_test "$@"
+    exit 0
+fi
+
+if [ "$1" = "test-precalc" ]; then
+    shift
+    echo "=== Running precalc integration test ==="
+    /app/build/bin/precalc_integration_test "$@"
+    exit 0
+fi
+
 REGISTRY_BACKEND="${REGISTRY_BACKEND:-discovery_server}"
 ETCD_ENDPOINTS="${ETCD_ENDPOINTS:-etcd:2379}"
 DISCOVERY_ADDR="${DISCOVERY_ADDR:-discovery-server:8100}"

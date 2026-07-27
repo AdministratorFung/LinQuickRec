@@ -128,7 +128,9 @@ REGISTRY_PREFIX=dev-haoyu bash scripts/push-to-registry.sh -r 192.168.0.1:5000
 |------|---------|
 | proxy | `docker run --rm linquickrec/proxy:latest test` |
 | recall | `docker run --rm linquickrec/recall:latest test` |
-| precalc | `docker run --rm linquickrec/precalc:latest test` |
+| feature | `docker run --rm linquickrec/feature:latest test` |
+| precalc-and-rank-master | `docker run --rm linquickrec/precalc-and-rank-master:latest test` |
+| rank-sub | `docker run --rm linquickrec/rank-sub:latest test` |
 
 测试通过时输出 `=== All ... Tests Passed ===`。
 
@@ -142,7 +144,7 @@ docker run --rm -p 8001:8001 linquickrec/feature:latest &
 sleep 2 && nc -z localhost 8001 && echo "Feature OK" && kill %1
 
 # RankMaster 服务
-docker run --rm -p 8004:8004 linquickrec/rank-master:latest &
+docker run --rm -p 8004:8004 linquickrec/precalc-and-rank-master:latest &
 sleep 2 && nc -z localhost 8004 && echo "RankMaster OK" && kill %1
 
 # RankSub 服务

@@ -15,7 +15,7 @@ COPY ${DISCOVERY_DIR} /app/services/discovery/
 
 RUN mkdir -p /app/build && cd /app/build && \
     cmake ../services/feature -DCMAKE_BUILD_TYPE=Release && \
-    make -j$(nproc) feature_server
+    make -j$(nproc) feature_server feature_integration_test
 
 RUN mkdir -p /tmp/build_discovery && cd /tmp/build_discovery && \
     cmake /app/services/discovery -DCMAKE_BUILD_TYPE=Release && \
