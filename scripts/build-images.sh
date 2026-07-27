@@ -89,10 +89,41 @@ main() {
     fi
 
     if [[ "$CLEAN" == true ]]; then
-        local PREFIX="${REGISTRY_PREFIX:-linquickrec}"
-        log "Cleaning images with prefix ${PREFIX}..."
-        docker compose -f "$COMPOSE_FILE" down --remove-orphans
-        local ids=$(docker images --filter "reference=${PREFIX}/*" -q 2>/dev/null)
+        local env_file="${REPO_ROOT}/deploy/docker/.env"
+        if [[ ! -f "$env_file" ]]; then
+            die "Env file not found: ${env_file}"
+        fi
+        local PREFIX
+        PREFIX=$(grep '^REGISTRY_PREFIX=' "$env_file" | cut -d= -f2)
+        if [[ -z "$PREFIX" ]]; then
+            die "REGISTRY_PREFIX not set in ${env_file}"
+        fi
+
+        log "Stopping containers..."
+        docker compose -f "$COMPOSE_FILE" stop 2>/dev/null || true
+        log "Removing containers..."
+        docker compose -f "$COMPOSE_FILE" rm -f 2>/dev/null || true
+
+        log "Containers stopped and removed."
+        log "The following images (prefix=${PREFIX}) will be deleted:"
+        echo ""
+        docker images \
+            --filter "reference=${PREFIX}/*" \
+            --format "  {{.Repository}}:{{.Tag}}" 2>/dev/null
+        docker images \
+            --filter "reference=*/${PREFIX}/*" \
+            --format "  {{.Repository}}:{{.Tag}}" 2>/dev/null
+        echo ""
+
+        read -p "Delete ALL these images? [y/N] " confirm
+        if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+            log "Cancelled"
+            exit 0
+        fi
+
+        local ids1=$(docker images --filter "reference=${PREFIX}/*" -q 2>/dev/null)
+        local ids2=$(docker images --filter "reference=*/${PREFIX}/*" -q 2>/dev/null)
+        local ids=$( (echo "$ids1"; echo "$ids2") | sort -u )
         if [[ -n "$ids" ]]; then
             echo "$ids" | xargs docker rmi -f 2>/dev/null
         fi
