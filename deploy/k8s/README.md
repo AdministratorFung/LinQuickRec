@@ -73,18 +73,19 @@ bash scripts/deploy-to-k8s.sh start -r <your-docker-hub-ip>:<your-docker-hub-por
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
 | `-r, --registry` | (本地) | 私有 registry 地址，如 `192.168.0.1:5000` |
+| `-p, --prefix` | `linquickrec` | 镜像前缀，与 Docker `.env` 中的 `REGISTRY_PREFIX` 保持一致 |
 | `-n, --namespace` | `linquickrec` | K8s 命名空间（也可设置 `K8S_NAMESPACE` 环境变量） |
 | `--recall-mode` | `novllm` | Recall 部署模式：`vllm` 或 `novllm` |
 | `--discovery-backend` | `etcd` | 服务发现后端：`etcd` 或 `discovery-server` |
 
-**自定义命名空间：**
+**自定义前缀和命名空间：**
 
 ```bash
 # 命令行参数
-bash scripts/deploy-to-k8s.sh start -n dev-haoyu
+bash scripts/deploy-to-k8s.sh start -p dev-haoyu -n dev-haoyu
 
 # 环境变量
-K8S_NAMESPACE=dev-haoyu bash scripts/deploy-to-k8s.sh start
+K8S_NAMESPACE=dev-haoyu bash scripts/deploy-to-k8s.sh start -p dev-haoyu
 
 **停止和删除：**
 

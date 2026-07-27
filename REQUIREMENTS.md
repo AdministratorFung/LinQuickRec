@@ -17,7 +17,7 @@
 | R11 | `build-images.sh` — docker compose build 包装 | P1 | ✅ 已完成 |
 | R12 | `push-to-registry.sh` — 镜像标签推送 | P1 | ✅ 已完成 |
 | R13 | `send-proxy-request.sh` — 代理压测工具 | P2 | ✅ 已完成 |
-| R14 | `watch.sh` — 部署后多阶段健康检查 | P1 | 🔧 调试中 |
+| R14 | `watch-k8s-cluster.sh` — 部署后多阶段健康检查 | P1 | 🔧 调试中 |
 | R15 | kube-prometheus-stack 集成（perf 指标暴露 + Grafana 大盘）| P2 | ⬜ 未开始 |
 | R16 | URMA/UBSocket 集成 — 所有 brpc 服务支持 UB 传输 | P0 | ✅ 已完成 |
 | R17 | ub-demo — URMA/UBSocket 回显示例（Bazel + Docker + K8s）| P1 | ✅ 已完成 |
@@ -80,7 +80,7 @@ docker compose build 包装脚本，可从任意目录执行。支持 `--push <r
 
 代理压测工具，支持 K8s 模式（通过 kubectl proxy）和直连模式（--url）。可配并发度（-c）和请求量（-n），输出每条请求延迟 + Min/Avg/P95/P99/Max 汇总统计。
 
-### R14 — watch.sh
+### R14 — watch-k8s-cluster.sh
 
 部署后 6 阶段健康检查脚本：集群可达性 + 命名空间存在性 → Pod 快照 → etcd 健康检查（curl :32379 /health，错误时自动 kubectl describe + logs）→ Pod 就绪轮询 + 错误状态自动检测（CrashLoopBackOff/ImagePullBackOff/ErrImagePull）→ etcd 服务注册验证 → WebUI 可达性检查（curl :32000 /index.html）。超时可配（默认 600s），错误即时终止。
 

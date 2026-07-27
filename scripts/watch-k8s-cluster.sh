@@ -1,9 +1,50 @@
 #!/bin/bash
 set -euo pipefail
 
-NAMESPACE="${1:-linquickrec}"
-TIMEOUT="${2:-600}"
-ETCD_NODEPORT="${3:-32379}"
+NAMESPACE="linquickrec"
+TIMEOUT="600"
+ETCD_NODEPORT="32379"
+
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [options]
+
+Monitor K8s cluster health — checks etcd, pod readiness, service
+registration, and WebUI reachability.
+
+Options:
+  -n, --namespace <name>     K8s namespace (default: linquickrec)
+  -t, --timeout <seconds>    Max wait time (default: 600)
+  -e, --etcd-port <port>     etcd NodePort (default: 32379)
+  -h, --help                 Show this help
+
+Examples:
+  $(basename "$0")                                    # default namespace
+  $(basename "$0") -n dev-haoyu                       # custom namespace
+  $(basename "$0") -n dev-haoyu -t 300                # 5 min timeout
+EOF
+    exit 0
+}
+
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -h|--help) usage ;;
+            -n|--namespace)
+                [[ $# -lt 2 ]] && { echo "Missing value for $1"; exit 1; }
+                NAMESPACE="$2"; shift 2 ;;
+            -t|--timeout)
+                [[ $# -lt 2 ]] && { echo "Missing value for $1"; exit 1; }
+                TIMEOUT="$2"; shift 2 ;;
+            -e|--etcd-port)
+                [[ $# -lt 2 ]] && { echo "Missing value for $1"; exit 1; }
+                ETCD_NODEPORT="$2"; shift 2 ;;
+            *) echo "Unknown option: $1"; usage ;;
+        esac
+    done
+}
+
+parse_args "$@"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'

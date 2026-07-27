@@ -9,6 +9,7 @@ OVERLAY_DIR="${REPO_ROOT}/deploy/k8s"
 RECALL_MODE="novllm"
 DISCOVERY_BACKEND="etcd"
 REGISTRY=""
+PREFIX="linquickrec"
 ACTION=""
 SERVICE=""
 REPLICAS=""
@@ -48,12 +49,15 @@ Options:
   --discovery-backend etcd|discovery-server  Discovery backend (--all only)
   --replicas <N>                         Override default replicas (start <service> only)
   -r, --registry <host:port>             Private registry (--all only)
+  -p, --prefix <name>                    Image prefix (default: linquickrec)
   -n, --namespace <name>                 K8s namespace (default: linquickrec)
   -h, --help
 
 Examples:
   $(basename "$0") start                         # deploy everything
   $(basename "$0") start -r 192.168.0.1:5000     # deploy with registry
+  $(basename "$0") start -p dev-haoyu            # deploy with custom prefix
+  $(basename "$0") start -n dev-haoyu            # deploy to custom namespace
   $(basename "$0") stop                           # scale all to 0
   $(basename "$0") stop feature                   # scale feature-service to 0
   $(basename "$0") start feature                  # scale feature-service to 1
@@ -100,6 +104,9 @@ parse_args() {
             -n|--namespace)
                 if [[ $# -lt 2 ]]; then die "Missing value for --namespace"; fi
                 NAMESPACE="$2"; shift 2 ;;
+            -p|--prefix)
+                if [[ $# -lt 2 ]]; then die "Missing value for --prefix"; fi
+                PREFIX="$2"; shift 2 ;;
             etcd|feature|proxy|precalc|recall|rank-sub|perf-collector|perf-webui)
                 if [[ -n "$SERVICE" ]]; then die "Only one service allowed, got '${SERVICE}' and '$1'"; fi
                 SERVICE="$1"; shift ;;
@@ -157,8 +164,8 @@ images:
 IMAGES
         for img in base proxy feature recall precalc-and-rank-master perf-collector perf-webui rank-sub kv-worker etcd discovery; do
             cat >> "$OVERLAY_DIR/kustomization.yaml" <<LINE
-  - name: linquickrec/${img}
-    newName: ${REGISTRY}/linquickrec/${img}
+  - name: ${PREFIX}/${img}
+    newName: ${REGISTRY}/${PREFIX}/${img}
 LINE
         done
     fi
