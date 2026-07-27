@@ -89,6 +89,7 @@ main() {
     fi
 
     if [[ "$CLEAN" == true ]]; then
+        # Read REGISTRY_PREFIX from .env file (required — no fallback to env var)
         local env_file="${REPO_ROOT}/deploy/docker/.env"
         if [[ ! -f "$env_file" ]]; then
             die "Env file not found: ${env_file}"
@@ -99,34 +100,45 @@ main() {
             die "REGISTRY_PREFIX not set in ${env_file}"
         fi
 
+        # Step 1: stop all compose containers
         log "Stopping containers..."
         docker compose -f "$COMPOSE_FILE" stop 2>/dev/null || true
+
+        # Step 2: remove all compose containers
         log "Removing containers..."
         docker compose -f "$COMPOSE_FILE" rm -f 2>/dev/null || true
 
+        # Step 3: find image IDs matching the prefix (single source of truth)
+        # Both local tags (prefix/*) and registry-pushed tags (*/prefix/*)
+        local ids1=$(docker images --filter "reference=${PREFIX}/*" -q 2>/dev/null)
+        local ids2=$(docker images --filter "reference=*/${PREFIX}/*" -q 2>/dev/null)
+        local ids=$( (echo "$ids1"; echo "$ids2") | sort -u | sed '/^$/d' )
+
+        if [[ -z "$ids" ]]; then
+            log "No images found with prefix ${PREFIX}"
+            exit 0
+        fi
+
+        # Step 4: show ALL tags referencing these image IDs
+        # This ensures the user sees exactly what will be deleted (including
+        # tags from other prefixes that share the same image SHA)
         log "Containers stopped and removed."
-        log "The following images (prefix=${PREFIX}) will be deleted:"
+        log "The following images will be deleted:"
         echo ""
-        docker images \
-            --filter "reference=${PREFIX}/*" \
-            --format "  {{.Repository}}:{{.Tag}}" 2>/dev/null
-        docker images \
-            --filter "reference=*/${PREFIX}/*" \
-            --format "  {{.Repository}}:{{.Tag}}" 2>/dev/null
+        docker images --format "{{.ID}} {{.Repository}}:{{.Tag}}" \
+            | grep -Ff <(echo "$ids") \
+            | awk '{printf "  %-50s (SHA: %s)\n", $2, substr($1,1,12)}'
         echo ""
 
+        # Step 5: user confirmation (default N for safety)
         read -p "Delete ALL these images? [y/N] " confirm
         if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
             log "Cancelled"
             exit 0
         fi
 
-        local ids1=$(docker images --filter "reference=${PREFIX}/*" -q 2>/dev/null)
-        local ids2=$(docker images --filter "reference=*/${PREFIX}/*" -q 2>/dev/null)
-        local ids=$( (echo "$ids1"; echo "$ids2") | sort -u )
-        if [[ -n "$ids" ]]; then
-            echo "$ids" | xargs docker rmi -f 2>/dev/null
-        fi
+        # Step 6: delete images by ID (docker rmi operates on SHA hashes)
+        echo "$ids" | xargs docker rmi -f 2>/dev/null
         log "Clean complete"
         exit 0
     fi
