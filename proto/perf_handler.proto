@@ -3,8 +3,21 @@ package common.perf;
 
 option cc_generic_services = true;
 
+message PerfSpan {
+    uint64 ts_us = 1;
+    string service = 2;
+    string stage = 3;
+    string metric = 4;
+    string trace_id = 5;
+    float duration_ms = 6;
+    string status = 7;
+}
+
 message PerfRequest {}
-message PerfResponse {}
+message PerfResponse {
+    repeated PerfSpan spans = 1;
+    uint64 dropped = 2;
+}
 
 service Perf {
   rpc Dump(PerfRequest) returns (PerfResponse);
