@@ -13,8 +13,8 @@ namespace perf {
 class PerfService : public Perf {
 public:
     void Dump(google::protobuf::RpcController* controller,
-              const PerfRequest* request,
-              PerfResponse* response,
+              const PerfRequest*,
+              PerfResponse*,
               google::protobuf::Closure* done) override {
         auto* cntl = static_cast<brpc::Controller*>(controller);
         auto& registry = PerfRingRegistry::Instance();
@@ -28,20 +28,6 @@ public:
 
         auto snapshot = registry.TakeAll();
 
-        // Fill protobuf response fields (for protobuf RPC clients)
-        for (auto& s : snapshot.spans) {
-            auto* span = response->add_spans();
-            span->set_ts_us(s.ts_us);
-            span->set_service(std::string(s.service));
-            span->set_stage(std::string(s.stage));
-            span->set_metric(std::string(s.metric));
-            span->set_trace_id(std::string(s.trace_id));
-            span->set_duration_ms(s.duration_ms);
-            span->set_status(std::string(s.status));
-        }
-        response->set_dropped(snapshot.dropped);
-
-        // Also write JSON for HTTP backward compat (curl still works)
         cntl->http_response().set_status_code(200);
         cntl->http_response().set_content_type("application/json");
 
