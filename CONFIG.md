@@ -239,6 +239,7 @@ KV Worker 已纳入 docker-compose.yml，通过 `kv-worker` 服务定义启动�
 | `KV_WORKER_ADDRESS` | string | "kv-worker:31501" | 必须指定 | Worker 监听地址（容器名:端口） |
 | `etcd_address` | string | "etcd:2379" | 必须指定 | Etcd 集群地址（容器名:端口） |
 | `ENABLE_URMA` | int | 0 | 必须指定 | 是否启用 URMA (0/1) |
+| `DATASYSTEM_USE_BRPC` | string | "false" | 允许调整 | 是否启用 BRPC 传输 (true/false)。服务端：dscli `--use_brpc` 参数；客户端：SDK 直接读取该环境变量 |
 | `CPU_AFFINITY` | string | "0-64" | 允许调整 | CPU 核绑定范围 |
 
 ### dscli 启动参数
@@ -249,6 +250,7 @@ KV Worker 已纳入 docker-compose.yml，通过 `kv-worker` 服务定义启动�
 | `--arena_per_tenant` | int | 1 | 不建议修改 | 每 tenant 的 arena 数 |
 | `--skip_authenticate` | int | 1 | 不建议修改 | 跳过认证 |
 | `--urma_mode` | string | "UB" | 不建议修改 | URMA 模式 |
+| `--use_brpc` | string | "false" | 允许调整 | 是否启用 BRPC 传输 (true/false)，由 env `DATASYSTEM_USE_BRPC` 控制 |
 | `--minloglevel` | int | 1 | 不建议修改 | 最小日志级别 |
 | `--oc_thread_num` | int | 64 | 不建议修改 | OC 线程数 |
 | `--oc_shm_transfer_threshold_kb` | int | 0 | 不建议修改 | 共享内存传输阈值 (KB) |

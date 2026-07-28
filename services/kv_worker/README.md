@@ -62,6 +62,7 @@ Dockerfile 构建流程：
 | `--worker_address` | `worker_address` | **必填** | worker 注册到 etcd 的可达地址，格式 `IP:Port`，不能写 `127.0.0.1` |
 | `--etcd_address` | `etcd_address` | **必填** | etcd 服务器地址，格式 `IP:Port` |
 | `--enable_urma` | `enable_urma` | **必填** | 是否启用 URMA，`0`=不启用，`1`=启用（x86 推荐 0） |
+| `--use_brpc` | `DATASYSTEM_USE_BRPC` | `false` | 是否启用 BRPC 传输，`true`=启用，`false`=不启用。由 K8s configmap 统一控制服务端和客户端 |
 | `--host_id_env_name` | (固定) | `HOST_ID` | 节点亲和匹配所依据的环境变量名，需与客户端一致 |
 | `--shared_memory_size_mb` | `shared_memory_size_mb` | `2048` | worker 共享内存大小 (MB) |
 | `--cpu_affinity` | `cpu_affinity` | `0-64` | CPU 核心绑定范围，通过 `taskset -c` 设置 |
@@ -107,6 +108,7 @@ dscli start --worker_args \
     --skip_authenticate 1 \
     --enable_urma 0 \
     --urma_mode UB \
+    --use_brpc false \
     --minloglevel 1 \
     --oc_thread_num 64 \
     --oc_shm_transfer_threshold_kb 0 \
@@ -138,6 +140,7 @@ docker run -d \
   -e worker_address="X.X.X.X:31501" \
   -e etcd_address="X.X.X.X:2379" \
   -e enable_urma=0 \
+  -e DATASYSTEM_USE_BRPC=false \
   linquickrec/kv_worker:latest
 ```
 
@@ -152,6 +155,7 @@ docker run -d \
 | `-e worker_address` | **必须** | worker 注册地址，**必须是宿主机 IP**，不能写 `127.0.0.1` |
 | `-e etcd_address` | **必须** | etcd 可访问地址 |
 | `-e enable_urma` | **必须** | `0` 或 `1` |
+| `-e DATASYSTEM_USE_BRPC` | 可选 | `true` 或 `false`（默认 `false`）。由 K8s configmap `DATASYSTEM_USE_BRPC` 统一控制服务端（dscli `--use_brpc`）和客户端（SDK 环境变量）|
 
 **注意：**
 - 宿主机需预先设置 huge page（`echo 4096 > /proc/sys/vm/nr_hugepages`）
