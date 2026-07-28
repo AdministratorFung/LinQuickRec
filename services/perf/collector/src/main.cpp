@@ -121,7 +121,7 @@ int main(int argc, char* argv[]) {
         [](void* arg) -> void* {
             auto* p = static_cast<std::tuple<
                 std::shared_ptr<common::ServiceDiscovery>,
-                SqliteStore*, int>*>(arg);
+                perf::SqliteStore*, int>*>(arg);
             perf::StartPuller(std::get<0>(*p), std::get<1>(*p),
                               std::get<2>(*p));
             delete p;
