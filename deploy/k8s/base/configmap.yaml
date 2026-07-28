@@ -150,3 +150,11 @@ data:
   # RankSub
   # ========================
   # RankSub 为纯打分服务，接收 user_feat + sku_ids，返回 skus_id + skus_score。
+
+  # ========================
+  # UBSocket / URMA 传输（所有 brpc 服务，perf-collector 除外）
+  # true  = 启用 UB socket 传输
+  # false = TCP 传输（默认）
+  # ========================
+  USE_UB: "false"
+  UBSOCKET_ENABLE: "false"
