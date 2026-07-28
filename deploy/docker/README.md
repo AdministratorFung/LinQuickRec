@@ -163,7 +163,8 @@ sleep 2 && nc -z localhost 8100 && echo "Discovery OK" && kill %1
 docker run --rm --privileged --ipc=host -v /dev/shm:/dev/shm \
   -e worker_address="127.0.0.1:31501" \
   -e etcd_address="127.0.0.1:2379" \
-  -e use_ub=0 \
+  -e enable_urma=0 \
+  -e DATASYSTEM_USE_BRPC=false \
   linquickrec/kv-worker:latest &
 sleep 3 && docker ps | grep kv-worker && echo "KV Worker OK" && kill %1
 ```

@@ -20,6 +20,7 @@ ETCD_ENDPOINTS="${ETCD_ENDPOINTS:-etcd:2379}"
 DISCOVERY_ADDR="${DISCOVERY_ADDR:-discovery-server:8100}"
 USE_UB="${USE_UB:-false}"
 UBSOCKET_ENABLE="${UBSOCKET_ENABLE:-false}"
+export DATASYSTEM_USE_BRPC="${DATASYSTEM_USE_BRPC:-false}"
 
 # 元戎 SDK 不接受 DNS hostname，需解析为 IP
 if [ "$REGISTRY_BACKEND" = "etcd" ]; then

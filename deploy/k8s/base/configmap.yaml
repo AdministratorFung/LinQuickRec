@@ -38,6 +38,17 @@ data:
   CPU_AFFINITY: "0-64"
 
   # ========================
+  # Datasystem BRPC Transport (unified server + client control)
+  # When "true", datasystem uses BRPC as transport layer cluster-wide.
+  # Server (kv-worker): start_datasystem.sh reads this env var and passes
+  #   --use_brpc to the "dscli start --worker_args" invocation.
+  # Client (precalc, recall): the datasystem SDK reads this env var
+  #   directly (DATASYSTEM_USE_BRPC) to enable BRPC in KVClient Set/Get.
+  # Set "true" at K8s cluster deployment time to enable BRPC globally.
+  # ========================
+  DATASYSTEM_USE_BRPC: "false"
+
+  # ========================
   # Discovery Client (sidecar) 心跳与健康检查
   # ========================
   HEARTBEAT_INTERVAL: "5"

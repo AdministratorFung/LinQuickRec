@@ -1,10 +1,12 @@
 #!/bin/bash
 
 # ===================== Environment Variables =====================
-# worker_address: Datasystem worker address (IP:port), eg: 141.61.84.245:31501
-# etcd_address:   Etcd server address (IP:port), eg: 141.61.84.245:2379
-# cpu_affinity:   CPU core binding range, eg: "0-64" (env, default 0-64)
-# shared_memory_size_mb: Worker shared memory size in MB (env, default 2048)
+# worker_address:         Datasystem worker address (IP:port), eg: 141.61.84.245:31501
+# etcd_address:           Etcd server address (IP:port), eg: 141.61.84.245:2379
+# enable_urma:            Enable URMA transport (0=off, 1=on)
+# DATASYSTEM_USE_BRPC:    Enable BRPC transport for datasystem (true/false, default false)
+# cpu_affinity:           CPU core binding range, eg: "0-64" (env, default 0-64)
+# shared_memory_size_mb:  Worker shared memory size in MB (env, default 2048)
 # =================================================================
 
 # Unset proxy to avoid network interference
@@ -21,8 +23,8 @@ if [ -z "${etcd_address}" ]; then
     exit 1
 fi
 
-if [ -z "${use_ub}" ]; then
-     echo "[ERROR] use_ub is not set. Please set it to 0 or 1"
+if [ -z "${enable_urma}" ]; then
+     echo "[ERROR] enable_urma is not set. Please set it to 0 or 1"
      exit 1
 fi
 
@@ -40,11 +42,13 @@ fi
 
 # Default configuration
 cpu_affinity="${cpu_affinity:-0-64}"
+datasystem_use_brpc="${DATASYSTEM_USE_BRPC:-false}"
 
 echo "=== System Info ==="
 echo "Worker Address:   ${worker_address}"
 echo "Etcd Addrress:    ${etcd_address}"
-echo "Enable Urma:      ${use_ub}"
+echo "Enable Urma:      ${enable_urma}"
+echo "Use BRPC (ds):    ${datasystem_use_brpc}"
 echo "==================="
 
 # Start Worker
@@ -57,8 +61,9 @@ dscli start --worker_args \
     --log_dir "./datasystem_log/log_${worker_port}" \
     --arena_per_tenant 1 \
     --skip_authenticate 1 \
-    --use_ub ${use_ub} \
+    --enable_urma ${enable_urma} \
     --urma_mode UB \
+    --use_brpc ${datasystem_use_brpc} \
     --minloglevel 1 \
     --oc_thread_num 64 \
     --oc_shm_transfer_threshold_kb 0 \
