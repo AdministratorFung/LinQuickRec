@@ -5,7 +5,6 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="${SCRIPT_DIR}/.."
 NAMESPACE="${K8S_NAMESPACE:-linquickrec}"
 OVERLAY_DIR="${REPO_ROOT}/deploy/k8s"
-OVERLAY_TMP="${OVERLAY_DIR}/tmp"
 
 RECALL_MODE="novllm"
 DISCOVERY_BACKEND="etcd"
@@ -118,52 +117,50 @@ parse_args() {
 }
 
 generate_kustomize_overlay() {
-    mkdir -p "$OVERLAY_TMP"
-
     # Generate namespace.yaml with dynamic name
-    cat > "${OVERLAY_TMP}/namespace.yaml" <<EOF
+    cat > "${OVERLAY_DIR}/namespace.yaml" <<EOF
 apiVersion: v1
 kind: Namespace
 metadata:
   name: ${NAMESPACE}
 EOF
 
-    cat > "${OVERLAY_TMP}/kustomization.yaml" <<KUSTOMIZE
+    cat > "${OVERLAY_DIR}/kustomization.yaml" <<KUSTOMIZE
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: ${NAMESPACE}
 
 resources:
   - namespace.yaml
-  - ../base/configmap.yaml
-  - ../base/etcd-headless-svc.yaml
-  - ../base/etcd-client-svc.yaml
-  - ../base/etcd-statefulset.yaml
-  - ../base/kv-worker.yaml
-  - ../base/feature.yaml
-  - ../base/proxy.yaml
-  - ../base/precalc-and-rank-master.yaml
-  - ../base/perf-collector.yaml
-  - ../base/perf-webui.yaml
-  - ../base/rank-sub.yaml
+  - base/configmap.yaml
+  - base/etcd-headless-svc.yaml
+  - base/etcd-client-svc.yaml
+  - base/etcd-statefulset.yaml
+  - base/kv-worker.yaml
+  - base/feature.yaml
+  - base/proxy.yaml
+  - base/precalc-and-rank-master.yaml
+  - base/perf-collector.yaml
+  - base/perf-webui.yaml
+  - base/rank-sub.yaml
 KUSTOMIZE
 
     if [ "$DISCOVERY_BACKEND" = "discovery-server" ]; then
-        cat >> "${OVERLAY_TMP}/kustomization.yaml" <<COMP
-  - ../components/discovery/deployment.yaml
-  - ../components/discovery/service.yaml
+        cat >> "${OVERLAY_DIR}/kustomization.yaml" <<COMP
+  - components/discovery/deployment.yaml
+  - components/discovery/service.yaml
 COMP
     fi
 
     if [ "$RECALL_MODE" = "vllm" ]; then
-        cat >> "${OVERLAY_TMP}/kustomization.yaml" <<COMP
-  - ../components/recall-vllm/deployment.yaml
-  - ../components/recall-vllm/service.yaml
+        cat >> "${OVERLAY_DIR}/kustomization.yaml" <<COMP
+  - components/recall-vllm/deployment.yaml
+  - components/recall-vllm/service.yaml
 COMP
     else
-        cat >> "${OVERLAY_TMP}/kustomization.yaml" <<COMP
-  - ../components/recall-novllm/deployment.yaml
-  - ../components/recall-novllm/service.yaml
+        cat >> "${OVERLAY_DIR}/kustomization.yaml" <<COMP
+  - components/recall-novllm/deployment.yaml
+  - components/recall-novllm/service.yaml
 COMP
     fi
 
@@ -175,12 +172,12 @@ COMP
         if [[ -n "$REGISTRY" ]]; then
             new_prefix="${REGISTRY}/${PREFIX}"
         fi
-        cat >> "${OVERLAY_TMP}/kustomization.yaml" <<IMAGES
+        cat >> "${OVERLAY_DIR}/kustomization.yaml" <<IMAGES
 
 images:
 IMAGES
         for img in base proxy feature recall precalc-and-rank-master perf-collector perf-webui rank-sub kv-worker etcd discovery; do
-            cat >> "${OVERLAY_TMP}/kustomization.yaml" <<LINE
+            cat >> "${OVERLAY_DIR}/kustomization.yaml" <<LINE
   - name: linquickrec/${img}
     newName: ${new_prefix}/${img}
 LINE
@@ -197,7 +194,7 @@ do_start() {
     log "=========================================="
 
     generate_kustomize_overlay
-    kubectl apply -k "$OVERLAY_TMP"
+    kubectl apply -k "$OVERLAY_DIR"
 
     log "=========================================="
     log "Deployment complete"
@@ -215,7 +212,7 @@ do_stop() {
 do_delete() {
     log "Deleting all resources in ${NAMESPACE}..."
     generate_kustomize_overlay
-    kubectl delete -k "$OVERLAY_TMP" --ignore-not-found
+    kubectl delete -k "$OVERLAY_DIR" --ignore-not-found
     log "All resources deleted"
 }
 

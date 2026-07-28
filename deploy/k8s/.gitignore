@@ -1,1 +1,2 @@
-tmp/
+kustomization.yaml
+namespace.yaml
