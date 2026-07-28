@@ -18,62 +18,78 @@ services:
     build:
       context: ../..
       dockerfile: deploy/docker/etcd/Dockerfile
-    image: ${REGISTRY_PREFIX:-linquickrec}/etcd:latest
+      args:
+        IMAGE_PREFIX: "${IMAGE_PREFIX:-linquickrec}"
+    image: ${IMAGE_PREFIX:-linquickrec}/etcd:latest
 
   kv-worker:
     build:
       context: ../..
       dockerfile: deploy/docker/kv_worker/Dockerfile
-    image: ${REGISTRY_PREFIX:-linquickrec}/kv-worker:latest
+      args:
+        IMAGE_PREFIX: "${IMAGE_PREFIX:-linquickrec}"
+    image: ${IMAGE_PREFIX:-linquickrec}/kv-worker:latest
 
   feature:
     build:
       context: ../..
       dockerfile: deploy/docker/feature/Dockerfile
-    image: ${REGISTRY_PREFIX:-linquickrec}/feature:latest
+      args:
+        IMAGE_PREFIX: "${IMAGE_PREFIX:-linquickrec}"
+    image: ${IMAGE_PREFIX:-linquickrec}/feature:latest
 
   precalc-and-rank-master:
     build:
       context: ../..
       dockerfile: deploy/docker/precalc-and-rank-master/Dockerfile
-    image: ${REGISTRY_PREFIX:-linquickrec}/precalc-and-rank-master:latest
+      args:
+        IMAGE_PREFIX: "${IMAGE_PREFIX:-linquickrec}"
+    image: ${IMAGE_PREFIX:-linquickrec}/precalc-and-rank-master:latest
 
   rank-sub:
     build:
       context: ../..
       dockerfile: deploy/docker/rank-sub/Dockerfile
-    image: ${REGISTRY_PREFIX:-linquickrec}/rank-sub:latest
+      args:
+        IMAGE_PREFIX: "${IMAGE_PREFIX:-linquickrec}"
+    image: ${IMAGE_PREFIX:-linquickrec}/rank-sub:latest
 
   proxy:
     build:
       context: ../..
       dockerfile: deploy/docker/proxy/Dockerfile
-    image: ${REGISTRY_PREFIX:-linquickrec}/proxy:latest
+      args:
+        IMAGE_PREFIX: "${IMAGE_PREFIX:-linquickrec}"
+    image: ${IMAGE_PREFIX:-linquickrec}/proxy:latest
 
   recall:
     build:
       context: ../..
       dockerfile: deploy/docker/recall/Dockerfile
       args:
+        IMAGE_PREFIX: "${IMAGE_PREFIX:-linquickrec}"
         ENABLE_VLLM: "${ENABLE_VLLM:-false}"
         PROXY_IP: "${PROXY_IP:-}"
         PROXY_PORT: "${PROXY_PORT:-3128}"
-    image: ${REGISTRY_PREFIX:-linquickrec}/recall:latest
+    image: ${IMAGE_PREFIX:-linquickrec}/recall:latest
 
   perf-collector:
     build:
       context: ../..
       dockerfile: deploy/docker/perf-collector/Dockerfile
       args:
+        IMAGE_PREFIX: "${IMAGE_PREFIX:-linquickrec}"
         PROXY_IP: "${PROXY_IP:-}"
         PROXY_PORT: "${PROXY_PORT:-3128}"
-    image: ${REGISTRY_PREFIX:-linquickrec}/perf-collector:latest
+    image: ${IMAGE_PREFIX:-linquickrec}/perf-collector:latest
 
   perf-webui:
     build:
       context: ../..
       dockerfile: deploy/docker/perf-webui/Dockerfile
-    image: ${REGISTRY_PREFIX:-linquickrec}/perf-webui:latest
+      args:
+        IMAGE_PREFIX: "${IMAGE_PREFIX:-linquickrec}"
+    image: ${IMAGE_PREFIX:-linquickrec}/perf-webui:latest
     ports:
       - "32000:32000"
     depends_on:
@@ -86,4 +102,6 @@ services:
     build:
       context: ../..
       dockerfile: deploy/docker/discovery/Dockerfile
-    image: ${REGISTRY_PREFIX:-linquickrec}/discovery:latest
+      args:
+        IMAGE_PREFIX: "${IMAGE_PREFIX:-linquickrec}"
+    image: ${IMAGE_PREFIX:-linquickrec}/discovery:latest

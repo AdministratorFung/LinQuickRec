@@ -86,15 +86,15 @@ main() {
     fi
 
     if [[ "$CLEAN" == true ]]; then
-        # Read REGISTRY_PREFIX from .env file (required — no fallback to env var)
+        # Read IMAGE_PREFIX from .env file (required — no fallback to env var)
         local env_file="${REPO_ROOT}/deploy/docker/.env"
         if [[ ! -f "$env_file" ]]; then
             die "Env file not found: ${env_file}"
         fi
         local PREFIX
-        PREFIX=$(grep '^REGISTRY_PREFIX=' "$env_file" | cut -d= -f2)
+        PREFIX=$(grep '^IMAGE_PREFIX=' "$env_file" | cut -d= -f2)
         if [[ -z "$PREFIX" ]]; then
-            die "REGISTRY_PREFIX not set in ${env_file}"
+            die "IMAGE_PREFIX not set in ${env_file}"
         fi
 
         # Step 1: stop all compose containers
@@ -152,7 +152,7 @@ main() {
         fi
         local push_prefix="linquickrec"
         if [[ -f "${REPO_ROOT}/deploy/docker/.env" ]]; then
-            push_prefix=$(grep '^REGISTRY_PREFIX=' "${REPO_ROOT}/deploy/docker/.env" | cut -d= -f2)
+            push_prefix=$(grep '^IMAGE_PREFIX=' "${REPO_ROOT}/deploy/docker/.env" | cut -d= -f2)
             push_prefix="${push_prefix:-linquickrec}"
         fi
         bash "${SCRIPT_DIR}/push-to-registry.sh" -r "$PUSH_REG" --prefix "$push_prefix" ${push_targets:-all}

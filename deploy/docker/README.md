@@ -53,7 +53,7 @@ deploy/docker/
 
 ```bash
 # 镜像前缀（多人开发时设置为自定义值，避免冲突）
-REGISTRY_PREFIX=linquickrec
+IMAGE_PREFIX=linquickrec
 
 # 若使用vLLM，该参数需要设置为true
 ENABLE_VLLM=false
@@ -82,7 +82,7 @@ docker compose --profile discovery-server build
 docker compose build recall
 
 # 自定义镜像前缀（多人开发时避免冲突）
-REGISTRY_PREFIX=dev-haoyu docker compose build
+IMAGE_PREFIX=dev-haoyu docker compose build
 ```
 
 产物镜像 `<name>:latest` 存储在本地 Docker 缓存中：
@@ -115,7 +115,7 @@ bash scripts/push-to-registry.sh -r 192.168.0.1:5000 recall
 
 # 自定义前缀推送
 bash scripts/push-to-registry.sh -r 192.168.0.1:5000 --prefix dev-haoyu
-REGISTRY_PREFIX=dev-haoyu bash scripts/push-to-registry.sh -r 192.168.0.1:5000
+IMAGE_PREFIX=dev-haoyu bash scripts/push-to-registry.sh -r 192.168.0.1:5000
 ```
 
 ## 验证镜像

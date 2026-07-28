@@ -21,7 +21,7 @@
 | R15 | kube-prometheus-stack 集成（perf 指标暴露 + Grafana 大盘）| P2 | ⬜ 未开始 |
 | R16 | URMA/UBSocket 集成 — 所有 brpc 服务支持 UB 传输 | P0 | ✅ 已完成 |
 | R17 | ub-demo — URMA/UBSocket 回显示例（Bazel + Docker + K8s）| P1 | ✅ 已完成 |
-| R18 | 可配置镜像前缀 + K8s 命名空间（REGISTRY_PREFIX, -n flag）| P1 | ✅ 已完成 |
+| R18 | 可配置镜像前缀 + K8s 命名空间（IMAGE_PREFIX, -n flag）| P1 | ✅ 已完成 |
 | R19 | 容器镜像体积优化指南（docs/image-size-optimization.md）| P2 | ✅ 已完成 |
 
 ---
@@ -70,7 +70,7 @@ Single / Sequential / Concurrent 三种压测模式。可配置 user_id（序列
 
 ### R11 — build-images.sh
 
-docker compose build 包装脚本，可从任意目录执行。支持 `--push <reg>` 自动构建后推送、`--clean` 清理本地镜像（从 `.env` 读取 `REGISTRY_PREFIX`，列出待删除镜像并等待 y/N 确认）、`--vllm` 启用 vLLM 模式、`--no-cache` 强制重建。默认构建全部服务，可指定单服务。
+docker compose build 包装脚本，可从任意目录执行。支持 `--push <reg>` 自动构建后推送、`--clean` 清理本地镜像（从 `.env` 读取 `IMAGE_PREFIX`，列出待删除镜像并等待 y/N 确认）、`--vllm` 启用 vLLM 模式、`--no-cache` 强制重建。默认构建全部服务，可指定单服务。
 
 ### R12 — push-to-registry.sh
 
@@ -98,7 +98,7 @@ docker compose build 包装脚本，可从任意目录执行。支持 `--push <r
 
 ### R18 — 可配置镜像前缀 + K8s 命名空间
 
-Docker 镜像前缀通过 `deploy/docker/.env` 中的 `REGISTRY_PREFIX` 配置，默认值为 `linquickrec`。docker-compose.yml 使用 `${REGISTRY_PREFIX:-linquickrec}` 进行变量替换。`push-to-registry.sh` 支持 `--prefix` 参数和 `REGISTRY_PREFIX` 环境变量。K8s 部署脚本 `deploy-to-k8s.sh` 支持 `-n/--namespace` 参数和 `K8S_NAMESPACE` 环境变量。所有 YAML 文件均删除了硬编码的 `namespace: linquickrec`，由 kustomize 通过脚本生成的 kustomization.yaml 统一管理。`build-images.sh --clean` 逻辑已修复：从 `.env` 读取前缀、匹配 `${PREFIX}` 和 `*/${PREFIX}/*` 两种模式的镜像、列出待删除镜像后要求用户 y/N 确认（默认 N 取消）、删除前先执行 `docker compose stop` 和 `docker compose rm -f` 清理容器。
+Docker 镜像前缀通过 `deploy/docker/.env` 中的 `IMAGE_PREFIX` 配置，默认值为 `linquickrec`。docker-compose.yml 使用 `${IMAGE_PREFIX:-linquickrec}` 进行变量替换。`push-to-registry.sh` 支持 `--prefix` 参数和 `IMAGE_PREFIX` 环境变量。K8s 部署脚本 `deploy-to-k8s.sh` 支持 `-n/--namespace` 参数和 `K8S_NAMESPACE` 环境变量。所有 YAML 文件均删除了硬编码的 `namespace: linquickrec`，由 kustomize 通过脚本生成的 kustomization.yaml 统一管理。`build-images.sh --clean` 逻辑已修复：从 `.env` 读取前缀、匹配 `${PREFIX}` 和 `*/${PREFIX}/*` 两种模式的镜像、列出待删除镜像后要求用户 y/N 确认（默认 N 取消）、删除前先执行 `docker compose stop` 和 `docker compose rm -f` 清理容器。
 
 ### R19 — 容器镜像体积优化指南
 

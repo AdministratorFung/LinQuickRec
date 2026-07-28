@@ -1,4 +1,5 @@
-FROM linquickrec/base:latest
+ARG IMAGE_PREFIX=linquickrec
+FROM ${IMAGE_PREFIX}/base:latest
 
 ARG PROTO_DIR=proto/
 ARG COMMON_DIR=common/

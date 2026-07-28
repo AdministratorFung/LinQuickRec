@@ -1,4 +1,5 @@
-FROM linquickrec/base:latest
+ARG IMAGE_PREFIX=linquickrec
+FROM ${IMAGE_PREFIX}/base:latest
 
 ENV YR_SDK_PATH="/usr/local/lib64/python3.11/site-packages/yr/datasystem"
 

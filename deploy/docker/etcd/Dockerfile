@@ -1,4 +1,5 @@
-FROM linquickrec/base:latest
+ARG IMAGE_PREFIX=linquickrec
+FROM ${IMAGE_PREFIX}/base:latest
 
 # 从 share/ 复制 etcd 离线 tar 包并安装
 COPY share/etcd-v3.5.12-linux-arm64.tar.gz /tmp/etcd.tar.gz

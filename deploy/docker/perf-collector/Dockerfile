@@ -1,4 +1,5 @@
-FROM linquickrec/base:latest
+ARG IMAGE_PREFIX=linquickrec
+FROM ${IMAGE_PREFIX}/base:latest
 
 ARG PROXY_IP=""
 ARG PROXY_PORT="3128"
