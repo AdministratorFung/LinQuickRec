@@ -209,12 +209,14 @@ int main(int argc, char* argv[]) {
             }
         } else {
             fail_count++;
-            LOG_WARN << "Health check failed (" << fail_count
+            if (fail_count <= FLAGS_fail_threshold) {
+                LOG_WARN << "Health check failed (" << fail_count
                          << "/" << FLAGS_fail_threshold << ")";
+            }
 
             if (g_registered && fail_count >= FLAGS_fail_threshold) {
                 backend->Deregister(FLAGS_service_type, g_instance_id);
-                LOG_INFO << "Deregistered due to health check failure";
+                LOG_INFO << "Deregistered due to health check failure, monitoring for recovery...";
                 g_registered = false;
             }
         }
