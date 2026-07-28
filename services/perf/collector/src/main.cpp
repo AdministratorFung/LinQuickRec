@@ -128,6 +128,7 @@ int main(int argc, char* argv[]) {
             return nullptr;
         },
         puller_args);
+    bthread_join(puller_tid, nullptr);
 
     LOG_INFO << "Perf-collector stopped";
     return 0;
