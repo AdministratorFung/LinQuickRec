@@ -1,7 +1,10 @@
 #include <brpc/server.h>
+#include <bthread/bthread.h>
 #include <gflags/gflags.h>
 
+#include <memory>
 #include <thread>
+#include <tuple>
 
 #include "common/logger.h"
 #include "common/perf_handler.h"
@@ -108,7 +111,23 @@ int main(int argc, char* argv[]) {
     });
     rebuild_thread.detach();
 
-    perf::StartPuller(discovery, &sqlite, FLAGS_retention_days);
+    // Run puller on a bthread to avoid TLS key crash on main thread
+    // (brpc Channel::CallMethod from main thread hits invalid bthread_key)
+    bthread_t puller_tid;
+    auto* puller_args = new std::tuple(
+        discovery, &sqlite, FLAGS_retention_days);
+    bthread_start_background(
+        &puller_tid, nullptr,
+        [](void* arg) -> void* {
+            auto* p = static_cast<std::tuple<
+                std::shared_ptr<common::ServiceDiscovery>,
+                SqliteStore*, int>*>(arg);
+            perf::StartPuller(std::get<0>(*p), std::get<1>(*p),
+                              std::get<2>(*p));
+            delete p;
+            return nullptr;
+        },
+        puller_args);
 
     LOG_INFO << "Perf-collector stopped";
     return 0;
