@@ -1,10 +1,10 @@
 #include <brpc/channel.h>
 #include <brpc/controller.h>
+#include <bthread/bthread.h>
 
 #include "perf_handler.pb.h"
 
 #include <chrono>
-#include <future>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -15,7 +15,6 @@
 #include "common/logger.h"
 #include "common/perf_registry.h"
 #include "common/service_discovery.h"
-#include "common/thread_pool.h"
 #include "series_manager.h"
 #include "sqlite_store.h"
 #include "stats_engine.h"
@@ -66,8 +65,7 @@ public:
            SqliteStore* sqlite, int retention_days)
         : discovery_(std::move(discovery))
         , sqlite_(sqlite)
-        , retention_days_(retention_days)
-        , pool_(std::make_unique<common::ThreadPool>(8)) {}
+        , retention_days_(retention_days) {}
 
     void Start() {
         LOG_INFO << "Puller started, pulling from "
@@ -88,15 +86,44 @@ public:
                 }
             }
 
-            std::vector<std::future<PullResult>> futures;
+            // Launch a bthread per target for parallel pull
+            struct PullTask {
+                Puller* self;
+                std::string service_name;
+                std::string host;
+                int port;
+                PullResult result;
+            };
+
+            std::vector<std::unique_ptr<PullTask>> tasks;
+            std::vector<bthread_t> tids;
+
             for (const auto& t : targets) {
-                futures.push_back(pool_->submit(
-                    [this, &t]() { return PullOne(t.service_name, t.host, t.port); }));
+                auto task = std::make_unique<PullTask>();
+                task->self = this;
+                task->service_name = t.service_name;
+                task->host = t.host;
+                task->port = t.port;
+
+                bthread_t tid;
+                bthread_start_background(&tid, nullptr,
+                    [](void* arg) -> void* {
+                        auto* task = static_cast<PullTask*>(arg);
+                        task->result = task->self->PullOne(
+                            task->service_name, task->host, task->port);
+                        return nullptr;
+                    }, task.get());
+                tids.push_back(tid);
+                tasks.push_back(std::move(task));
+            }
+
+            for (auto& tid : tids) {
+                bthread_join(tid, nullptr);
             }
 
             batch.clear();
-            for (auto& f : futures) {
-                auto result = f.get();
+            for (auto& task : tasks) {
+                auto& result = task->result;
                 if (result.success) {
                     LOG_INFO << "Puller: pulled " << result.spans.size()
                              << " spans from " << result.service_name;
@@ -192,8 +219,6 @@ private:
 
     std::mutex channel_mutex_;
     std::unordered_map<std::string, std::shared_ptr<brpc::Channel>> channels_;
-
-    std::unique_ptr<common::ThreadPool> pool_;
 };
 
 } // namespace
