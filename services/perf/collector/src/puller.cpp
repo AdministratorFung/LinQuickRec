@@ -1,6 +1,7 @@
 #include <brpc/channel.h>
 #include <brpc/controller.h>
-#include <rapidjson/document.h>
+
+#include "perf_handler.pb.h"
 
 #include <chrono>
 #include <memory>
@@ -30,15 +31,15 @@ const std::vector<std::string> kTargetServices = {
     "rank_sub",
 };
 
-common::perf::Span SpanFromJson(const rapidjson::Value& v) {
+common::perf::Span SpanFromProto(const common::perf::PerfSpan& pb) {
     common::perf::Span s;
-    s.ts_us = v["ts_us"].GetUint64();
-    s.SetService(v["service"].GetString());
-    s.SetStage(v["stage"].GetString());
-    s.SetMetric(v["metric"].GetString());
-    s.SetTraceId(v["trace_id"].GetString());
-    s.duration_ms = static_cast<float>(v["duration_ms"].GetDouble());
-    s.SetStatus(v["status"].GetString());
+    s.ts_us = pb.ts_us();
+    s.SetService(pb.service());
+    s.SetStage(pb.stage());
+    s.SetMetric(pb.metric());
+    s.SetTraceId(pb.trace_id());
+    s.duration_ms = static_cast<float>(pb.duration_ms());
+    s.SetStatus(pb.status());
     return s;
 }
 
@@ -47,7 +48,7 @@ bool PullService(const std::string& host, int port,
                  uint64_t& out_dropped) {
     brpc::Channel channel;
     brpc::ChannelOptions opts;
-    opts.protocol = "http";
+    opts.protocol = "baidu_std";
     opts.timeout_ms = 2000;
     opts.use_ub = FLAGS_use_ub;
     opts.connection_type = "short";
@@ -59,34 +60,21 @@ bool PullService(const std::string& host, int port,
         return false;
     }
 
+    common::perf::Perf_Stub stub(&channel);
+    common::perf::PerfRequest req;
+    common::perf::PerfResponse rsp;
     brpc::Controller cntl;
-    cntl.http_request().uri() = "/debug/perf";
-    cntl.http_request().set_method(brpc::HTTP_METHOD_GET);
 
-    channel.CallMethod(nullptr, &cntl, nullptr, nullptr, nullptr);
+    stub.Dump(&cntl, &req, &rsp, nullptr);
 
     if (cntl.Failed()) {
         LOG_WARN << "Puller: RPC failed for " << addr << ": " << cntl.ErrorText();
         return false;
     }
-    if (cntl.http_response().status_code() != 200) {
-        LOG_WARN << "Puller: HTTP " << cntl.http_response().status_code()
-                 << " from " << addr;
-        return false;
-    }
 
-    butil::IOBuf& body = cntl.response_attachment();
-    std::string json_str = body.to_string();
-
-    rapidjson::Document doc;
-    if (doc.Parse(json_str.c_str()).HasParseError()) {
-        LOG_ERROR << "Failed to parse /debug/perf JSON from " << addr;
-        return false;
-    }
-
-    out_dropped = doc["dropped"].GetUint64();
-    for (auto& s : doc["spans"].GetArray()) {
-        out_spans.push_back(SpanFromJson(s));
+    out_dropped = rsp.dropped();
+    for (const auto& pb : rsp.spans()) {
+        out_spans.push_back(SpanFromProto(pb));
     }
     return true;
 }
