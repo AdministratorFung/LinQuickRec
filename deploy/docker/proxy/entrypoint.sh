@@ -25,7 +25,7 @@ else
     DISCOVERY_FLAGS="--discovery_addr=$DISCOVERY_ADDR"
 fi
 
-USE_UB="${USE_UB:-false}"
+UBSOCKET_USE_UB="${UBSOCKET_USE_UB:-false}"
 UBSOCKET_ENABLE="${UBSOCKET_ENABLE:-false}"
 
 /app/build/bin/proxy_server \
@@ -53,7 +53,7 @@ UBSOCKET_ENABLE="${UBSOCKET_ENABLE:-false}"
     --rank_backup_request_ms=${RANK_BACKUP_REQUEST_MS:--1} \
     --rank_master_parallelism=${RANK_MASTER_PARALLELISM:-4} \
     --top_k=${TOP_K:-100} \
-    --use_ub=${USE_UB} \
+    --ubsocket_use_ub=${UBSOCKET_USE_UB} \
     --ubsocket_enable=${UBSOCKET_ENABLE} \
     "$@" &
 PID_PROXY=$!

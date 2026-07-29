@@ -90,7 +90,7 @@ docker compose build 包装脚本，可从任意目录执行。支持 `--push <r
 
 ### R16 — URMA/UBSocket 集成
 
-在 7 个 brpc 服务中添加 `--use_ub` gflags，设置 `ServerOptions.use_ub`（服务端）和 `ChannelOptions.use_ub`（下游通道）。通过 `options.use_ub` 启用 UB socket 传输。`--ubsocket_enable` flag 由 brpc 的 `libbrpc.a`（`ubsocket_wrapper.cpp`）提供，在 brpc 内部触发 `InitializeUBSocket()`。entrypoint.sh 支持 `USE_UB` 和 `UBSOCKET_ENABLE` 环境变量。所有服务的 `BRPC_LIBRARIES` 均添加了 `ubsocket`。默认值为 `false`——未显式启用时行为与之前一致。若使用 CMake 编译 brpc，需在 CMakeLists.txt 中添加 `option(WITH_URMA)`（约 15 行），然后通过 `cmake -DWITH_URMA=ON && make && make install` 安装带 URMA 的 `libbrpc.a`。
+在 7 个 brpc 服务中添加 `--ubsocket_use_ub` gflags，设置 `ServerOptions.use_ub`（服务端）和 `ChannelOptions.use_ub`（下游通道）。通过 `options.use_ub` 启用 UB socket 传输。`--ubsocket_enable` flag 由 brpc 的 `libbrpc.a`（`ubsocket_wrapper.cpp`）提供，在 brpc 内部触发 `InitializeUBSocket()`。entrypoint.sh 支持 `UBSOCKET_USE_UB` 和 `UBSOCKET_ENABLE` 环境变量。所有服务的 `BRPC_LIBRARIES` 均添加了 `ubsocket`。默认值为 `false`——未显式启用时行为与之前一致。若使用 CMake 编译 brpc，需在 CMakeLists.txt 中添加 `option(WITH_URMA)`（约 15 行），然后通过 `cmake -DWITH_URMA=ON && make && make install` 安装带 URMA 的 `libbrpc.a`。
 
 ### R17 — ub-demo（URMA/UBSocket 回显示例）
 

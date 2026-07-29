@@ -9,7 +9,7 @@ fi
 REGISTRY_BACKEND="${REGISTRY_BACKEND:-discovery_server}"
 ETCD_ENDPOINTS="${ETCD_ENDPOINTS:-etcd:2379}"
 DISCOVERY_ADDR="${DISCOVERY_ADDR:-discovery-server:8100}"
-USE_UB="${USE_UB:-false}"
+UBSOCKET_USE_UB="${UBSOCKET_USE_UB:-false}"
 UBSOCKET_ENABLE="${UBSOCKET_ENABLE:-false}"
 
 echo "==========================================="
@@ -27,7 +27,7 @@ cd /app/build
     --user_log_count=${USER_LOG_COUNT:-10} \
     --user_log_vec_size=${USER_LOG_VEC_SIZE:-30} \
     --sku_feat_length=${SKU_FEAT_LENGTH:-20} \
-    --use_ub=${USE_UB} \
+    --ubsocket_use_ub=${UBSOCKET_USE_UB} \
     --ubsocket_enable=${UBSOCKET_ENABLE} \
     "$@" &
 SERVICE_PID=$!

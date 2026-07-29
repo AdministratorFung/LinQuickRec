@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
     std::string server_addr = "0.0.0.0:" + std::to_string(FLAGS_server_port);
 
     brpc::ServerOptions server_options;
-    server_options.use_ub = FLAGS_use_ub;
+    server_options.use_ub = FLAGS_ubsocket_use_ub;
     if (FLAGS_server_num_threads > 0) {
         server_options.num_threads = FLAGS_server_num_threads;
     }

@@ -167,5 +167,5 @@ data:
   # true  = 启用 UB socket 传输
   # false = TCP 传输（默认）
   # ========================
-  USE_UB: "false"
+  UBSOCKET_USE_UB: "false"
   UBSOCKET_ENABLE: "false"

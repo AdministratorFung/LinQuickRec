@@ -5,7 +5,7 @@
 #include "common/logger.h"
 #include "discovery.pb.h"
 
-DECLARE_bool(use_ub);
+DECLARE_bool(ubsocket_use_ub);
 
 namespace discovery {
 
@@ -13,7 +13,7 @@ BrpcDiscoveryProvider::BrpcDiscoveryProvider(
     const std::string& discovery_addr) {
     brpc::ChannelOptions opts;
     opts.timeout_ms = 3000;
-    opts.use_ub = FLAGS_use_ub;
+    opts.use_ub = FLAGS_ubsocket_use_ub;
     opts.max_retry = 2;
     if (channel_.Init(discovery_addr.c_str(), &opts) != 0) {
         LOG_ERROR << "Failed to init discovery channel to " << discovery_addr;

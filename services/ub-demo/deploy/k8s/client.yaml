@@ -24,7 +24,7 @@ spec:
         image: linquickrec/ub-demo:latest
         args:
           - "/app/build/bin/ub_demo_client"
-          - "--use_ub"
+          - "--ubsocket_use_ub"
           - "--server=ub-demo-server:8080"
           - "--count=10"
           - "--message=hello_k8s"

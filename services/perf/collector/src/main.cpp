@@ -22,7 +22,7 @@ DEFINE_string(etcd_endpoints, "etcd-client:2379", "etcd endpoints");
 DEFINE_int32(server_num_threads, 0, "Server bthread num_threads, 0=BRPC default");
 DEFINE_string(sqlite_db_path, "/var/lib/perf/perf.db", "SQLite database path");
 DEFINE_int32(retention_days, 30, "Data retention days, 0 = unlimited");
-DECLARE_bool(use_ub);
+DECLARE_bool(ubsocket_use_ub);
 
 namespace perf {
 void StartPuller(std::shared_ptr<common::ServiceDiscovery> discovery,
@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
              << " retention=" << FLAGS_retention_days << "d";
 
     brpc::ServerOptions opts;
-    opts.use_ub = FLAGS_use_ub;
+    opts.use_ub = FLAGS_ubsocket_use_ub;
     opts.has_builtin_services = false;
     if (FLAGS_server_num_threads > 0) opts.num_threads = FLAGS_server_num_threads;
 

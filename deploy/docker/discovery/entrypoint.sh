@@ -5,7 +5,7 @@ echo "==========================================="
 echo "Starting Discovery Server"
 echo "==========================================="
 
-USE_UB="${USE_UB:-false}"
+UBSOCKET_USE_UB="${UBSOCKET_USE_UB:-false}"
 UBSOCKET_ENABLE="${UBSOCKET_ENABLE:-false}"
 
 exec /app/build/bin/discovery_server \
@@ -14,6 +14,6 @@ exec /app/build/bin/discovery_server \
     --heartbeat_grace_factor=${HEARTBEAT_GRACE_FACTOR:-2.0} \
     --cleanup_factor=${CLEANUP_FACTOR:-5.0} \
     --default_heartbeat_interval_sec=${DEFAULT_HEARTBEAT_INTERVAL_SEC:-5} \
-    --use_ub=${USE_UB} \
+    --ubsocket_use_ub=${UBSOCKET_USE_UB} \
     --ubsocket_enable=${UBSOCKET_ENABLE} \
     "$@"

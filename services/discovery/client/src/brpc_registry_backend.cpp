@@ -5,14 +5,14 @@
 #include "common/logger.h"
 #include "discovery.pb.h"
 
-DECLARE_bool(use_ub);
+DECLARE_bool(ubsocket_use_ub);
 
 namespace discovery {
 
 BrpcRegistryBackend::BrpcRegistryBackend(const std::string& discovery_addr) {
     brpc::ChannelOptions opts;
     opts.timeout_ms = 5000;
-    opts.use_ub = FLAGS_use_ub;
+    opts.use_ub = FLAGS_ubsocket_use_ub;
     opts.max_retry = 2;
     if (channel_.Init(discovery_addr.c_str(), &opts) != 0) {
         LOG_ERROR << "Failed to connect to discovery server at "

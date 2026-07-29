@@ -23,7 +23,7 @@ DECLARE_int32(heartbeat_check_interval_ms);
 DECLARE_double(heartbeat_grace_factor);
 DECLARE_double(cleanup_factor);
 DECLARE_int32(default_heartbeat_interval_sec);
-DECLARE_bool(use_ub);
+DECLARE_bool(ubsocket_use_ub);
 
 namespace discovery {
 

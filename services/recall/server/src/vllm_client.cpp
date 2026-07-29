@@ -16,7 +16,7 @@ VllmClient::VllmClient(const std::string& base_url, const std::string& endpoint,
 
     brpc::ChannelOptions channel_opts;
     channel_opts.timeout_ms = timeout_ms_;
-    channel_opts.use_ub = FLAGS_use_ub;
+    channel_opts.use_ub = FLAGS_ubsocket_use_ub;
     channel_opts.protocol = "http";
     channel_opts.connection_type = FLAGS_vllm_connection_type.c_str();
     channel_opts.max_retry = FLAGS_vllm_max_retry;

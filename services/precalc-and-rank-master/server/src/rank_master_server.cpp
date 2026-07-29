@@ -98,7 +98,7 @@ bool RankMasterServiceImpl::call_sub_worker(
     brpc::Channel channel;
     brpc::ChannelOptions opts;
     opts.timeout_ms = FLAGS_sub_worker_timeout_ms;
-    opts.use_ub = FLAGS_use_ub;
+    opts.use_ub = FLAGS_ubsocket_use_ub;
     opts.connection_type = FLAGS_sub_worker_connection_type.c_str();
     opts.max_retry = FLAGS_sub_worker_max_retry;
     if (FLAGS_sub_worker_connect_timeout_ms >= 0) opts.connect_timeout_ms = FLAGS_sub_worker_connect_timeout_ms;

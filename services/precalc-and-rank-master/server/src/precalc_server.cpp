@@ -25,7 +25,7 @@ using namespace datasystem;
 
 using namespace datasystem;
 
-DEFINE_bool(use_ub, false, "Enable UBSocket/URMA transport");
+DEFINE_bool(ubsocket_use_ub, false, "Enable UBSocket/URMA transport");
 
 DEFINE_int32(server_port, 8003, "服务器监听端口");
 DEFINE_string(registry_backend, "discovery_server",

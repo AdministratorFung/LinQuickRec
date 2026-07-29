@@ -12,7 +12,7 @@ DEFINE_int32(server_idle_timeout_sec, -1, "");
 DEFINE_int32(server_max_concurrency, 0, "");
 
 static void configure_opts(brpc::ServerOptions& opts) {
-    opts.use_ub = FLAGS_use_ub;
+    opts.use_ub = FLAGS_ubsocket_use_ub;
     if (FLAGS_server_num_threads > 0) opts.num_threads = FLAGS_server_num_threads;
     if (FLAGS_server_idle_timeout_sec >= 0) opts.idle_timeout_sec = FLAGS_server_idle_timeout_sec;
     if (FLAGS_server_max_concurrency > 0) opts.max_concurrency = FLAGS_server_max_concurrency;

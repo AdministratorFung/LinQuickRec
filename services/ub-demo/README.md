@@ -82,13 +82,13 @@ Bazel 会自动：
 
 ```bash
 # 启用 URMA（需要 UB 硬件，或回退到 TCP）：
-bazel-bin/ub_demo_server --use_ub --port=8080
+bazel-bin/ub_demo_server --ubsocket_use_ub --port=8080
 
 # 纯 TCP：
 bazel-bin/ub_demo_server --port=8080
 
 # 全部 ubsocket gflag（在编译 libbrpc.a 时启用 URMA 时可用）：
-bazel-bin/ub_demo_server --use_ub --port=8080 \
+bazel-bin/ub_demo_server --ubsocket_use_ub --port=8080 \
     --ubsocket_trans_mode=ub \
     --ubsocket_dev_name=udma2 \
     --ubsocket_dev_ip=192.168.1.100 \
@@ -99,14 +99,14 @@ bazel-bin/ub_demo_server --use_ub --port=8080 \
 
 ```bash
 # 启用 URMA：
-bazel-bin/ub_demo_client --use_ub --server=127.0.0.1:8080 --count=10
+bazel-bin/ub_demo_client --ubsocket_use_ub --server=127.0.0.1:8080 --count=10
 
 # 纯 TCP：
 bazel-bin/ub_demo_client --server=127.0.0.1:8080 --count=10
 
 # 客户端 gflag：
 bazel-bin/ub_demo_client \
-    --use_ub \
+    --ubsocket_use_ub \
     --server=127.0.0.1:8080 \
     --count=10 \
     --message="hello" \
@@ -192,11 +192,11 @@ kubectl delete -f deploy/k8s/server.yaml
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | **服务端** | | | |
-| `--use_ub` | bool | false | 调用 brpc::InitializeUBSocket() |
+| `--ubsocket_use_ub` | bool | false | 调用 brpc::InitializeUBSocket() |
 | `--port` | int32 | 8080 | 服务端监听端口 |
 | `--ubsocket_*` | 多个 | 见 brpc | 由 libbrpc.a 提供的 UBSocket gflags（约 50 个） |
 | **客户端** | | | |
-| `--use_ub` | bool | false | 调用 brpc::InitializeUBSocket() |
+| `--ubsocket_use_ub` | bool | false | 调用 brpc::InitializeUBSocket() |
 | `--server` | string | 127.0.0.1:8080 | 服务端地址（host:port） |
 | `--count` | int32 | 1 | 待发送的回显请求数量 |
 | `--timeout_ms` | int32 | 3000 | RPC 超时（毫秒） |

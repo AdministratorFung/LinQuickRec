@@ -25,7 +25,7 @@ DECLARE_int32(user_feat_key_size_kb);
 
 DECLARE_int32(payload_size_kb);
 DECLARE_int32(precalc_sleep_time_ms);
-DECLARE_bool(use_ub);
+DECLARE_bool(ubsocket_use_ub);
 
 namespace precalc {
 

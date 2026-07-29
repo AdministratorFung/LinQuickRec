@@ -19,7 +19,7 @@ services:
         BUILD_BIN_DIR: services/ub-demo/bazel-bin
     command:
       - "/app/ub_demo_server"
-      - "--use_ub"
+      - "--ubsocket_use_ub"
       - "--port=8080"
       - "--ubsocket_auto_fallback_tcp=true"
     ports:
@@ -38,7 +38,7 @@ services:
         BUILD_BIN_DIR: services/ub-demo/bazel-bin
     command:
       - "/app/ub_demo_client"
-      - "--use_ub"
+      - "--ubsocket_use_ub"
       - "--server=server:8080"
       - "--count=10"
       - "--message=hello_ub"

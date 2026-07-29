@@ -10,7 +10,7 @@ REGISTRY_BACKEND="${REGISTRY_BACKEND:-discovery_server}"
 ETCD_ENDPOINTS="${ETCD_ENDPOINTS:-etcd:2379}"
 DISCOVERY_ADDR="${DISCOVERY_ADDR:-discovery-server:8100}"
 ENABLE_VLLM="${ENABLE_VLLM:-false}"
-USE_UB="${USE_UB:-false}"
+UBSOCKET_USE_UB="${UBSOCKET_USE_UB:-false}"
 UBSOCKET_ENABLE="${UBSOCKET_ENABLE:-false}"
 export DATASYSTEM_USE_BRPC="${DATASYSTEM_USE_BRPC:-false}"
 
@@ -93,7 +93,7 @@ fi
     --kvcache_hit_sleep_time_ms=${KVCACHE_HIT_SLEEP_TIME_MS:-10} \
     --kvcache_miss_sleep_time_ms=${KVCACHE_MISS_SLEEP_TIME_MS:-100} \
     $KV_DISCOVERY_FLAGS \
-    --use_ub=${USE_UB} \
+    --ubsocket_use_ub=${UBSOCKET_USE_UB} \
     --ubsocket_enable=${UBSOCKET_ENABLE} \
     "$@" &
 RECALL_PID=$!

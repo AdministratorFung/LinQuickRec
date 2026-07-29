@@ -19,7 +19,7 @@
 #include "sqlite_store.h"
 #include "stats_engine.h"
 
-DEFINE_bool(use_ub, false, "Enable UBSocket/URMA transport");
+DEFINE_bool(ubsocket_use_ub, false, "Enable UBSocket/URMA transport");
 
 namespace perf {
 
@@ -182,7 +182,7 @@ private:
             brpc::ChannelOptions opts;
             opts.protocol = "baidu_std";
             opts.timeout_ms = 2000;
-            opts.use_ub = FLAGS_use_ub;
+            opts.use_ub = FLAGS_ubsocket_use_ub;
             opts.connection_type = "pooled";
             opts.max_retry = 0;
             if (channel->Init(addr.c_str(), &opts) != 0) {
