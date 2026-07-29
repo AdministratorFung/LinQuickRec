@@ -14,6 +14,12 @@
 
 namespace common {
 
+struct InstanceInfo {
+    std::string host;
+    int port = 0;
+    std::string instance_id;
+};
+
 class ServiceDiscovery {
 public:
     ServiceDiscovery(const std::string& backend_type,
@@ -25,6 +31,9 @@ public:
                      std::string& host,
                      int& port,
                      std::string& instance_id);
+
+    bool GetAllInstances(const std::string& service_name,
+                         std::vector<InstanceInfo>& instances);
 
     void ReportSuccess(const std::string& instance_id);
     void ReportFailure(const std::string& instance_id);

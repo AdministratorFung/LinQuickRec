@@ -40,36 +40,46 @@ void ServiceDiscovery::refresh_loop() {
 }
 
 void ServiceDiscovery::refresh_all() {
-    // No-op if no services have been queried yet.
-    // Subclasses or callers should populate the service list.
-    // This base implementation refreshes all cached services.
     if (!provider_) return;
 
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    for (auto& [svc, _] : cache_) {
-        auto instances = provider_->Discover(svc);
-
-        int old_count = static_cast<int>(cache_[svc].size());
-        int new_count = static_cast<int>(instances.size());
-
-        cache_[svc] = std::move(instances);
-        if (rr_index_.find(svc) == rr_index_.end()) {
-            rr_index_[svc] = 0;
+    std::vector<std::string> services;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        for (auto& [svc, _] : cache_) {
+            services.push_back(svc);
         }
+    }
 
-        bool is_first = !first_refresh_[svc];
-        first_refresh_[svc] = true;
+    std::unordered_map<std::string,
+        std::vector<discovery::ServiceInstance>> new_cache;
+    for (const auto& svc : services) {
+        new_cache[svc] = provider_->Discover(svc);
+    }
 
-        if (is_first) {
-            LOG_INFO << "Discover(" << svc << "): "
-                     << new_count << " instance(s) (initial)";
-        } else if (new_count != old_count) {
-            LOG_INFO << "Discover(" << svc << "): "
-                     << old_count << " -> " << new_count << " instance(s)";
-        } else {
-            LOG_DEBUG << "Discover(" << svc << "): "
-                      << new_count << " instance(s)";
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        for (auto& [svc, instances] : new_cache) {
+            int old_count = static_cast<int>(cache_[svc].size());
+            int new_count = static_cast<int>(instances.size());
+
+            cache_[svc] = std::move(instances);
+            if (rr_index_.find(svc) == rr_index_.end()) {
+                rr_index_[svc] = 0;
+            }
+
+            bool is_first = !first_refresh_[svc];
+            first_refresh_[svc] = true;
+
+            if (is_first) {
+                LOG_INFO << "Discover(" << svc << "): "
+                         << new_count << " instance(s) (initial)";
+            } else if (new_count != old_count) {
+                LOG_INFO << "Discover(" << svc << "): "
+                         << old_count << " -> " << new_count << " instance(s)";
+            } else {
+                LOG_DEBUG << "Discover(" << svc << "): "
+                          << new_count << " instance(s)";
+            }
         }
     }
 }
@@ -125,6 +135,46 @@ bool ServiceDiscovery::GetInstance(const std::string& service_name,
     }
 
     return false;
+}
+
+bool ServiceDiscovery::GetAllInstances(const std::string& service_name,
+                                        std::vector<InstanceInfo>& instances) {
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        auto it = cache_.find(service_name);
+        if (it != cache_.end() && !it->second.empty()) {
+            for (const auto& inst : it->second) {
+                instances.push_back(
+                    {inst.host(), inst.port(), inst.instance_id()});
+            }
+            return true;
+        }
+    }
+
+    if (!provider_) return false;
+
+    auto fresh = provider_->Discover(service_name);
+    LOG_INFO << "Discover(" << service_name << "): "
+             << fresh.size() << " instance(s) (lazy init)";
+
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        cache_[service_name] = std::move(fresh);
+        rr_index_[service_name] = 0;
+        first_refresh_[service_name] = true;
+
+        auto it = cache_.find(service_name);
+        if (it == cache_.end() || it->second.empty()) {
+            LOG_WARN << "Discover(" << service_name
+                     << "): provider returned 0 instances (lazy init)";
+            return false;
+        }
+        for (const auto& inst : it->second) {
+            instances.push_back(
+                {inst.host(), inst.port(), inst.instance_id()});
+        }
+    }
+    return !instances.empty();
 }
 
 void ServiceDiscovery::ReportSuccess(const std::string& instance_id) {
