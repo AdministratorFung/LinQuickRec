@@ -21,6 +21,7 @@ DEFINE_string(discovery_addr, "127.0.0.1:8100", "Discovery server address");
 DEFINE_string(etcd_endpoints, "etcd-client:2379", "etcd endpoints");
 DEFINE_int32(server_num_threads, 0, "Server bthread num_threads, 0=BRPC default");
 DEFINE_string(sqlite_db_path, "/var/lib/perf/perf.db", "SQLite database path");
+DEFINE_string(log_level, "info", "Log level: debug, info, warn, error");
 DEFINE_int32(retention_days, 30, "Data retention days, 0 = unlimited");
 DECLARE_bool(ubsocket_use_ub);
 
