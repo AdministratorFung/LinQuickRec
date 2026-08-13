@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 project(perf_collector)
 
 set(BRPC_INCLUDE_DIR /usr/local/include /usr/local/include/absl/strings/)
-set(BRPC_LIBRARIES brpc gflags ssl crypto z pthread leveldb)
+set(BRPC_LIBRARIES brpc gflags ssl crypto z pthread leveldb ubsocket)
 link_directories(/usr/local/lib64)
 
 find_package(Protobuf REQUIRED)
