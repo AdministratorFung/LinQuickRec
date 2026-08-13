@@ -74,7 +74,7 @@ main() {
     log "Compose file: ${COMPOSE_FILE}"
     log "vLLM mode:    ${ENABLE_VLLM}"
 
-    local compose_opts=("-f" "$COMPOSE_FILE")
+    local compose_opts=("-f" "$COMPOSE_FILE" "--env-file" "${REPO_ROOT}/deploy/docker/.env")
     local build_opts=()
     [[ "$NO_CACHE" == true ]] && build_opts+=(--no-cache)
 
@@ -100,11 +100,11 @@ main() {
 
         # Step 1: stop all compose containers
         log "Stopping containers..."
-        docker compose -f "$COMPOSE_FILE" stop 2>/dev/null || true
+        docker compose "${compose_opts[@]}" stop 2>/dev/null || true
 
         # Step 2: remove all compose containers
         log "Removing containers..."
-        docker compose -f "$COMPOSE_FILE" rm -f 2>/dev/null || true
+        docker compose "${compose_opts[@]}" rm -f 2>/dev/null || true
 
         # Step 3: find image names matching the prefix (full name: repository:tag)
         # Both local tags (prefix/*) and registry-pushed tags (*/prefix/*)
