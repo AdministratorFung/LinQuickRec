@@ -75,7 +75,8 @@ main() {
     log "vLLM mode:    ${ENABLE_VLLM}"
 
     local compose_opts=("-f" "$COMPOSE_FILE")
-    [[ "$NO_CACHE" == true ]] && compose_opts+=(--no-cache)
+    local build_opts=()
+    [[ "$NO_CACHE" == true ]] && build_opts+=(--no-cache)
 
     local build_services=()
     if [[ ${#SERVICES[@]} -gt 0 ]]; then
@@ -140,7 +141,7 @@ main() {
 
     log "Building images..."
     export ENABLE_VLLM
-    docker compose "${compose_opts[@]}" build "${build_services[@]}"
+    docker compose "${compose_opts[@]}" build "${build_opts[@]}" "${build_services[@]}"
 
     log "Build complete"
 
