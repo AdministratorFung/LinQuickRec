@@ -165,9 +165,15 @@ set_target_properties(proxy_integration_test PROPERTIES
 )
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    target_compile_options(proxy_server PRIVATE -Wall -Wextra -O2)
-    target_compile_options(proxy_test_client PRIVATE -Wall -Wextra -O2)
-    target_compile_options(proxy_integration_test PRIVATE -Wall -Wextra -O2)
+    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_compile_options(proxy_server PRIVATE -Wall -Wextra -O2)
+        target_compile_options(proxy_test_client PRIVATE -Wall -Wextra -O2)
+        target_compile_options(proxy_integration_test PRIVATE -Wall -Wextra -O2)
+    else()
+        target_compile_options(proxy_server PRIVATE -Wall -Wextra -O0 -g3)
+        target_compile_options(proxy_test_client PRIVATE -Wall -Wextra -O0 -g3)
+        target_compile_options(proxy_integration_test PRIVATE -Wall -Wextra -O0 -g3)
+    endif()
 endif()
 
 # ============================================================================
