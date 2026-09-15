@@ -97,7 +97,7 @@ Content-Type: application/json
 
 ## 配置参考
 
-所有可配置参数详见 [CONFIG.md](CONFIG.md)，包括各服务 gflag、环境变量映射及生效方式。
+所有可配置参数详见 [CONFIG.md](docs/CONFIG.md)，包括各服务 gflag、环境变量映射及生效方式。
 
 ## 编译命令
 

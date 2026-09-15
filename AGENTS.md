@@ -46,8 +46,8 @@ AI 辅助的 commit 必须在末尾加 `AI-assisted: opencode` 脚注。详见 `
 
 | 用途 | 路径 |
 |------|------|
-| 全量配置参考 | `CONFIG.md` |
-| 系统设计文档 | `DESIGN.md` |
+| 全量配置参考 | `docs/CONFIG.md` |
+| 系统设计文档 | `docs/DESIGN.md` |
 | API 文档 | `docs/API.md` |
 | 端口分配 | `docs/ports.md` |
 | Proto 定义 | `proto/*.proto` |

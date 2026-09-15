@@ -39,7 +39,7 @@ After ANY change, review whether these 4 files need updates:
 | 1 | `README.md` (project root) | Architecture diagram, quick start, build instructions, ports, service list |
 | 2 | `deploy/docker/README.md` | Directory tree, build steps, image list, entrypoint behavior |
 | 3 | `deploy/k8s/README.md` | Directory tree, deploy commands, config map keys, parameter docs |
-| 4 | `CONFIG.md` (project root) | All gflags, env vars, config map keys referenced in changed files |
+| 4 | `docs/CONFIG.md` (project root) | All gflags, env vars, config map keys referenced in changed files |
 
 If the change introduces a new flag, env var, port, image, or command,
 the relevant global doc MUST be updated. If unsure, flag it to the user.
@@ -50,5 +50,5 @@ the relevant global doc MUST be updated. If unsure, flag it to the user.
 - [ ] `README.md` (root) checked
 - [ ] `deploy/docker/README.md` checked
 - [ ] `deploy/k8s/README.md` checked
-- [ ] `CONFIG.md` checked
+- [ ] `docs/CONFIG.md` checked
 - [ ] New flags/env-vars/ports documented in all relevant places
